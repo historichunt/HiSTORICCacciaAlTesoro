@@ -1,0 +1,15 @@
+#https://cloud.google.com/appengine/docs/python/config/cron?hl=en
+
+cron:
+#- description: restart users in non-start states for over a week
+#  url: /restartOldUsers
+#  schedule: every sunday 12:00
+#- description: info weekly ride for all
+#  url: /infoweek_all
+#  schedule: every friday 21:00
+#  timezone: Europe/Rome
+#- description: day people count
+#  url: /dayPeopleCount
+#  schedule: every day 00:00
+#  timezone: Europe/Rome
+

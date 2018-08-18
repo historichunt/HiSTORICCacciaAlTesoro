@@ -1,0 +1,29 @@
+
+runtime: python27
+api_version: 1
+threadsafe: false
+
+#inbound_services:
+#- channel_presence
+
+builtins:
+- remote_api: on
+- deferred: on
+
+handlers:
+- url: /telegram_*
+  login: admin
+  script: main.app
+
+- url: /_ah/queue/deferred
+  script: google.appengine.ext.deferred.deferred.application
+  login: admin
+
+- url: .*
+  script: main.app
+
+libraries:
+- name: webapp2
+  version: latest
+- name: ssl
+  version: latest
