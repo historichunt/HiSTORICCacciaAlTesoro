@@ -10,7 +10,6 @@ from time import sleep
 import key
 from person import Person
 
-
 import requests
 
 
@@ -24,14 +23,14 @@ def sendRequest(p, url, data, debugInfo):
     try:
         resp = requests.post(url, data)
         logging.info('Response: {}'.format(resp.text))
-        respJson = json.loads(resp.text)
-        success = respJson['ok']
+        resp_json = json.loads(resp.text)
+        success = resp_json['ok']
         if success:
             return True
         else:
             status_code = resp.status_code
-            error_code = respJson['error_code']
-            description = respJson['description']
+            error_code = resp_json['error_code']
+            description = resp_json['description']
             if error_code == 403:
                 # Disabled user
                 p.setEnabled(False, put=True)
@@ -162,7 +161,7 @@ def sendPhotoViaUrlOrId(chat_id, url_id, kb=None, caption=None, inline_keyboard=
         if caption:
             data['caption'] = caption
         resp = requests.post(key.TELEGRAM_API_URL + 'sendPhoto', data)
-        logging.info('Response: {}'.format(resp.text))
+        check_telegram_response(resp)
     except:
         report_exception()
 
@@ -173,7 +172,7 @@ def sendPhotoFromPngImage(chat_id, img_data, filename='image.png'):
             'chat_id': chat_id,
         }
         resp = requests.post(key.TELEGRAM_API_URL + 'sendPhoto', data=data, files=img)
-        logging.info('Response: {}'.format(resp.text))
+        check_telegram_response(resp)
     except:
         report_exception()
 
@@ -185,7 +184,7 @@ def answerCallbackQuery(callback_query_id, text):
             'show_alert': True
         }
         resp = requests.post(key.TELEGRAM_API_URL + 'answerCallbackQuery', data)
-        logging.info('Response: {}'.format(resp.text))
+        check_telegram_response(resp)
     except:
         report_exception()
 
@@ -212,7 +211,7 @@ def sendDocument(chat_id, file_id):
             'document': file_id,
         }
         resp = requests.post(key.TELEGRAM_API_URL + 'sendDocument', data)
-        logging.info('Response: {}'.format(resp.text))
+        check_telegram_response(resp)
     except:
         report_exception()
 
@@ -225,7 +224,7 @@ def sendExcelDocument(chat_id, sheet_tables, filename='file'):
             'chat_id': chat_id,
         }
         resp = requests.post(key.TELEGRAM_API_URL + 'sendDocument', data=data, files=files)
-        logging.info('Response: {}'.format(resp.text))
+        check_telegram_response(resp)
     except:
         report_exception()
 
@@ -236,7 +235,7 @@ def sendTextDocument(chat_id, text, filename='file'):
             'chat_id': chat_id,
         }
         resp = requests.post(key.TELEGRAM_API_URL + 'sendDocument', data=data, files=files)
-        #logging.info('Response: {}'.format(resp.text))
+        check_telegram_response(resp)
     except:
         report_exception()
 
@@ -340,9 +339,22 @@ class WebhookHandler(SafeRequestHandler):
             photo=photo, document=document, voice=voice
         )
 
+def check_telegram_response(resp):
+    from main import tell_admin
+    import inspect
+    previous_method =  inspect.stack()[1][3]
+    response = resp.text.encode('utf-8')
+    logging.info('Response: {}'.format(response))
+    resp_json = json.loads(resp.text)
+    success = resp_json['ok']
+    if not success:
+        msg = "❗ Response problem from {}: {}".format(previous_method, response)
+        tell_admin(msg)
+
 def report_exception():
     from main import tell_admin
     import traceback
     msg = "❗ Detected Exception: " + traceback.format_exc()
     tell_admin(msg)
     logging.error(msg)
+

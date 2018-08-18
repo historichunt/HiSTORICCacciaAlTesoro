@@ -49,8 +49,8 @@ def getSurveyData():
 # GAME TABLE
 #################
 
-GAMES_TABLE = Airtable(key.SUFFRAGIO_TABLE_ID, 'Games', api_key=key.AIRTABLE_API_KEY)
-SURVEY_TABLE = Airtable(key.SUFFRAGIO_TABLE_ID, 'Survey', api_key=key.AIRTABLE_API_KEY)
+GAMES_TABLE = Airtable(key.AIRTABLE_TABLE_ID, 'Games', api_key=key.AIRTABLE_API_KEY)
+SURVEY_TABLE = Airtable(key.AIRTABLE_TABLE_ID, 'Survey', api_key=key.AIRTABLE_API_KEY)
 
 GENERAL_HEADERS = ['ID', 'GROUP_NAME', 'NOME', 'COGNOME', 'USERNAME', 'EMAIL', 'START_TIME', 'END_TIME', 'DURATION']
 

@@ -32,10 +32,11 @@ import re
 import photos
 
 ########################
+ACTIVE_HUNT = True
 WORK_IN_PROGRESS = False
-SEND_NOTIFICATIONS_TO_GROUP = True
+SEND_NOTIFICATIONS_TO_GROUP = False
 MANUAL_VALIDATION_SELFIE_INDOVINELLLI = False
-JUMP_TO_SURVEY = False
+JUMP_TO_SURVEY = True
 ########################
 
 
@@ -154,8 +155,6 @@ def broadcast(sender, msg, qry = None, restart_user=False,
         users, cursor, more = qry.fetch_page(100, start_cursor=cursor)
         for p in users:
             try:
-                #if p.getId() not in key.TESTERS:
-                #    continue
                 if not p.enabled:
                     continue
                 if blackList_sender and sender and p.getId() == sender.getId():
@@ -544,32 +543,38 @@ def state_SELFIE_INDOVINELLO(p, **kwargs):
             photo_file_id = photo[-1]['file_id']
             current_riddle = game.getCurrentRiddle(p)
             current_riddle['SELFIE'] = photo_file_id
-            p.put()
             if MANUAL_VALIDATION_SELFIE_INDOVINELLLI:
                 squadra_name = game.getGroupName(p)
                 riddle_number = game.completedRiddlesNumber(p) + 1
                 indovinello_name = current_riddle['NOME']
+                # store a random password to make sure the approval is correct
+                # (the team may have restarted the game in the meanwhile):
+                approval_signature = utility.randomAlphaNumericString(5)
+                current_riddle['sign'] = approval_signature
                 send_message(p, STRINGS['MSG_WAIT_SELFIE_APPROVAL'])
                 inline_kb_validation = [
                     [
-                        ux.SI_BUTTON(json.dumps({'approved': True, 'user_id':p.getId()})), #, 'squadra_name': squadra_name
-                        ux.NO_BUTTON(json.dumps({'approved': False, 'user_id': p.getId()})), #, 'squadra_name': squadra_name
+                        ux.SI_BUTTON(json.dumps({'ok': True, 'uid':p.getId(), 'sign': approval_signature})),
+                        ux.NO_BUTTON(json.dumps({'ok': False, 'uid': p.getId(), 'sign': approval_signature})),
                     ]
                 ]
                 caption = 'Selfie indovinello {} squadra {} per indovinello {}'.format(riddle_number, squadra_name, indovinello_name)
                 logging.debug('Sending photo to validator')
                 send_photo_url(game.VALIDATOR, photo_file_id, inline_kb_validation, caption=caption, inline_keyboard=True)
             else:
-                approve_selfie_indovinello(p, approved=True)
+                approve_selfie_indovinello(p, approved=True, signature=None)
+            p.put()
         else:
             send_message(p, STRINGS['MSG_WRONG_INPUT_SEND_PHOTO'])
 
-def approve_selfie_indovinello(p, approved):
+def approve_selfie_indovinello(p, approved, signature):
     # need to double check if team is still waiting for approval
     # (e.g., could have restarted the game, or validator pressed approve twice in a row)
+    current_riddle = game.getCurrentRiddle(p)
+    if current_riddle is None or (MANUAL_VALIDATION_SELFIE_INDOVINELLLI and signature != current_riddle['sign']):
+        return False
     if approved:
         send_message(p, STRINGS['MSG_SELFIE_INDOVINELLO_OK'])
-        current_riddle = game.getCurrentRiddle(p)
         photo_file_id = current_riddle['SELFIE']
         if SEND_NOTIFICATIONS_TO_GROUP:
             squadra_name = game.getGroupName(p)
@@ -590,6 +595,7 @@ def approve_selfie_indovinello(p, approved):
             redirectToState(p, GIOCO_STATE)
     else:
         send_message(p, STRINGS['MSG_SELFIE_INDOVINELLO_WRONG'])
+    return True
 
 # ================================
 # GIOCHI state
@@ -711,20 +717,26 @@ def state_END(p, **kwargs):
 
 def dealWithCallbackQuery(callback_query_dict):
     callback_query_data = json.loads(callback_query_dict['data'])
-    approved = callback_query_data['approved']
-    user_id = callback_query_data['user_id']
+    approved = callback_query_data['ok']
+    user_id = callback_query_data['uid']
+    approval_signature = callback_query_data['sign']
     p = person.getPersonById(user_id)
     squadra_name = game.getGroupName(p)
     callback_query_id = callback_query_dict['id']
-    if approved:
-        answer = "Messaggio di conferma inviato alla squadra {}!\nL'immagine verrà ora rimossa.".format(squadra_name)
-    else:
-        answer = "Inviato messsaggio di rifare il selfie alla squadra {}!\nL'immagine verrà ora rimossa.".format(squadra_name)
-    main_telegram.answerCallbackQuery(callback_query_id, answer)
     chat_id = callback_query_dict['from']['id']
     message_id = callback_query_dict['message']['message_id']
     main_telegram.deleteMessage(chat_id, message_id)
-    approve_selfie_indovinello(p, approved)
+    validation_success = approve_selfie_indovinello(p, approved, signature=approval_signature)
+    if validation_success:
+        if approved:
+            answer = "Messaggio di conferma inviato alla squadra {}!".format(squadra_name)
+        else:
+            answer = "Inviato messsaggio di rifare il selfie alla squadra {}!".format(squadra_name)
+    else:
+        answer = "Problema di validazione. La squadra {} ha ricomnciato il gioco " \
+                 "o l'approvazione è stata mandata più volte".format(squadra_name)
+    main_telegram.answerCallbackQuery(callback_query_id, answer)
+
 
 def dealWithUserInteraction(chat_id, name, last_name, username, application, text,
                             location, contact, photo, document, voice):
@@ -753,14 +765,19 @@ def dealWithUserInteraction(chat_id, name, last_name, username, application, tex
     if WORK_IN_PROGRESS and p.getId() not in key.ADMIN_IDS:
         send_message(p, "🏗 Il sistema è in aggiornamento, ti preghiamo di riprovare più tardi.")
     elif text.lower().startswith('/start'):
-        msg = "Ciao 😀\n" \
-              "In questo momento la caccia al tesoro non è attiva.\n" \
-              "Vieni a trovarci su [historic](https://www.historictrento.it) " \
-              "o contattaci via email a historic.trento@gmail.com."
-        send_message(p, msg)
-        #restart(p)
-    #elif text.lower() == '/start historictrentoviasuffragio':
-    #    restart(p)
+        if not ACTIVE_HUNT:
+            msg = "Ciao 😀\n" \
+                  "In questo momento la caccia al tesoro non è attiva.\n" \
+                  "Vieni a trovarci su [historic](https://www.historictrento.it) " \
+                  "o contattaci via email a historic.trento@gmail.com."
+            send_message(p, msg)
+        elif text.lower() == '/start {}'.format(key.CURRENT_GAME_SECRET_START_MSG.lower()):
+            restart(p)
+        else:
+            msg = "Ciao 😀\n" \
+                  "C'è una caccia al tesoro in corso ma devi utilizzare il QR code per accedere.\n" \
+                  "In alternativa digita /start seguito dalla *password* fornita dagli organizzatori."
+            send_message(p, msg)
     elif text == '/state':
         state = p.getState()
         msg = "You are in state {}: {}".format(state, STATES.get(state, '(unknown)'))
