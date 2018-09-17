@@ -32,11 +32,11 @@ import re
 import photos
 
 ########################
-ACTIVE_HUNT = True
+ACTIVE_HUNT = False
 WORK_IN_PROGRESS = False
-SEND_NOTIFICATIONS_TO_GROUP = False
-MANUAL_VALIDATION_SELFIE_INDOVINELLLI = False
-JUMP_TO_SURVEY = True
+SEND_NOTIFICATIONS_TO_GROUP = True
+MANUAL_VALIDATION_SELFIE_INDOVINELLLI = True
+JUMP_TO_SURVEY = False
 ########################
 
 
@@ -453,7 +453,7 @@ def state_GPS(p, **kwargs):
     if giveInstruction:
         current_riddle = game.setNextRiddle(p)
         goal_position = [float(x) for x in current_riddle['GPS'].split(',')]
-        msg = current_riddle['INTRODUZIONE_LOCATION']
+        msg = '*Introduzione al luogo*: ' + current_riddle['INTRODUZIONE_LOCATION'] + '\n\n' + STRINGS['MSG_GO_TO_PLACE']
         kb = [[BOTTONE_LOCATION]]
         send_message(p, msg, kb)
         send_location(p, goal_position[0], goal_position[1])
@@ -757,11 +757,6 @@ def dealWithUserInteraction(chat_id, name, last_name, username, application, tex
             sendTextDocument(p, game.debugTmpVariables(p))
         elif text == '/testInlineKb':
             send_message(p, "Test inline keypboard", kb=[[ux.SI_BUTTON('test'), ux.NO_BUTTON('test')]], inline_keyboard=True)
-        #elif text == '/survey':
-        #    sendExcelDocument(p, sheet_tables={'games': game.getGamesTable()})
-        elif text == '/testAirtable':
-            import airtable_test
-            airtable_test.testInsert()
     if WORK_IN_PROGRESS and p.getId() not in key.ADMIN_IDS:
         send_message(p, "🏗 Il sistema è in aggiornamento, ti preghiamo di riprovare più tardi.")
     elif text.lower().startswith('/start'):

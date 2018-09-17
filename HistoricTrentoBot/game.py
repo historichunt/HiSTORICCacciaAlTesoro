@@ -74,7 +74,7 @@ def saveGameData(p):
 # PEOPLE FOR GAME
 ################################
 
-HISTORIC_GROUP = person.getPersonById(key.HISTORIC_GROUP_ID)
+HISTORIC_GROUP = person.getPersonById(key.HISTORIC_GROUP_ID) #key.FEDE_T_ID
 VALIDATOR = person.getPersonById(key.VALIDATOR_ID)
 
 ################################
