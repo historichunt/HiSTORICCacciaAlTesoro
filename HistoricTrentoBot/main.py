@@ -33,10 +33,10 @@ import photos
 
 ########################
 ACTIVE_HUNT = True
-WORK_IN_PROGRESS = True
+WORK_IN_PROGRESS = False
 SEND_NOTIFICATIONS_TO_GROUP = False
 MANUAL_VALIDATION_SELFIE_INDOVINELLLI = False
-JUMP_TO_SURVEY = False
+JUMP_TO_SURVEY_AFTER = 2 #False
 ########################
 
 
@@ -405,8 +405,8 @@ def state_NOME_GRUPPO(p, **kwargs):
         send_message(p, ux.MSG_GROUP_NAME)
     else:
         if input != '':
-            if len(input) > 15:
-                send_message(p, ux.MSG_GROUP_NAME_TOO_LONG)
+            if len(input) > params.MAX_TEAM_NAME_LENGTH:
+                send_message(p, ux.MSG_GROUP_NAME_TOO_LONG.format(params.MAX_TEAM_NAME_LENGTH))
                 return
             if not utility.hasOnlyLettersAndSpaces(input):
                 send_message(p, ux.MSG_GROUP_NAME_INVALID)
@@ -589,7 +589,8 @@ def approve_selfie_indovinello(p, approved, signature):
         game.appendGroupSelfieFileId(p, photo_file_id)
         game.setCurrentRiddleAsCompleted(p, photo_file_id)
         sendWaitingAction(p, sleep_time=1)
-        if JUMP_TO_SURVEY or game.remainingRiddlesNumber(p) == 0:
+        jump_to_survey = JUMP_TO_SURVEY_AFTER and game.completedRiddlesNumber(p) == JUMP_TO_SURVEY_AFTER
+        if jump_to_survey or game.remainingRiddlesNumber(p) == 0:
             end_time = dtu.nowUtcIsoFormat()
             game.setEndTime(p, end_time)
             send_message(p, ux.MSG_SURVEY_INTRO)
@@ -771,7 +772,7 @@ def dealWithUserInteraction(chat_id, name, last_name, username, application, tex
             send_message(p, "Test inline keypboard", kb=[[ux.BUTTON_SI_CALLBACK('test'), ux.BUTTON_NO_CALLBACK('test')]], inline_keyboard=True)
             return
     if WORK_IN_PROGRESS and p.getId() not in key.ADMIN_IDS:
-        send_message(p, "🏗 Il sistema è in aggiornamento, ti preghiamo di riprovare più tardi.")
+        send_message(p, ux.MSG_WORK_IN_PROGRESS)
     elif text.lower().startswith('/start'):
         if not ACTIVE_HUNT:
             msg = "Ciao 😀\n" \

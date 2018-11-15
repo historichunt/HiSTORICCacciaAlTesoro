@@ -46,13 +46,14 @@ BUTTON_NO_CALLBACK = lambda x: {
 # CONVERSATIONS
 ####################
 
+MSG_WORK_IN_PROGRESS = "🏗 Il sistema è in aggiornamento, ti preghiamo di riprovare più tardi."
 MSG_PRESS_TO_START = "Quando siete pronti per iniziare premete il pulsante. ⏱ Il cronometro partirà appena premete il pulsante."
 MSG_GO = '🏃‍♂️🏃‍♀️ Si parte!'
 MSG_WELCOME = 'Ciao! 😀 Benvenuto nel gioco di hiSTORIC di {}!'
 MSG_GROUP_NAME = 'Come prima cosa scegliete un *nome per la vostra squadra*.'
 MSG_GROUP_NAME_OK = 'Bene, *{}* mi sembra un bellissimo nome! 😉'
 MSG_GROUP_NAME_INVALID = 'Il nome che hai inserito deve contenere *solo lettere o spazi*.\nRiprova.'
-MSG_GROUP_NAME_TOO_LONG = 'Il nome che hai inserito è troppo lungo.\nInseritene uno con *al massimo 15 caratteri*.'
+MSG_GROUP_NAME_TOO_LONG = 'Il nome che hai inserito è troppo lungo.\nInseritene uno con *al massimo {} caratteri*.'
 MSG_GPS_OK = 'Bravi, siete arrivati nei pressi della prossima missione!'
 MSG_GO_TO_PLACE = '📍 Recatevi nel seguente luogo e quando siete arrivati mandatemi la vostra posizione!'
 MSG_TOO_EARLY = "⏱️Troppo presto! Pensaci ancora un po'..."
@@ -69,13 +70,13 @@ MSG_SELFIE_INDOVINELLO_OK = 'Fantastico! 😀'
 MSG_SELFIE_INDOVINELLO_WRONG = "🤔 Mi dispiace, il selfie non è stato accettato perché non rappresenta l'oggetto dell'indovinello.\nRiprova a mandarmi un nuovo selfie! 📷"
 MSG_NEXT_MISSION = '🎳 Prossima missione...'
 MSG_NEXT_GIOCO = '🎲 Ecco un piccolo gioco prima della prossima missione.'
-MSG_SURVEY_INTRO = '⌚ Stop al tempo!\n\n🎉 Bravissimi, avete concluso la caccia al tesoro 🎊!\n\n📋 Prima di dirvi quanto ci avete messo, vorrei farvi alcune domande...'
+MSG_SURVEY_INTRO = '⏱ Stop al tempo!\n\n🎉 Bravissimi, avete concluso la caccia al tesoro 🎊!\n\n📋 Prima di dirvi quanto ci avete messo, vorrei farvi alcune domande...'
 MSG_END = '🏆 Bravi! Avete completato la caccia al tesoro in *{}* secondi!! ({} tempo + {} penalità)'
 MSG_END_NOTIFICATION = "La squadra *{}* ha completato la caccia al tesoro in *{}* ({} tempo + {} penalità)"
 MSG_WRONG_INPUT_USE_BUTTONS = '⛔️ Input non valido, usa i bottoni qui sotto 🎛'
 MSG_WRONG_INPUT_USE_TEXT = '⛔️ Input non valido, devi rispondere con del testo.'
 MSG_WRONG_INPUT_USE_TEXT_OR_BUTTONS = '⛔️ Input non valido, devi rispondere con del testo o usa i bottoni qui sotto 🎛'
 MSG_WRONG_INPUT_SEND_PHOTO = "⛔️ Input non valido, devi mandarmi una foto. Usa l'iconda della macchina fotografica 📷 qua in basso o allega un'immagine dalla tua galleria con la graffetta 📎."
-MSG_WRONG_INPUT_SEND_LOCATION = '⛔️ Input non valido, devi mandarmi la tua posizione premendo il pulsante qua sotto. Ricordati di abilitare il GPS.'
+MSG_WRONG_INPUT_SEND_LOCATION = '⛔️ Input non valido, devi mandarmi la tua posizione premendo il pulsante qua sotto o premendo sul simbolo della graffetta in basso 📎 e selezionando POSIZIONE dal menu che compare. Ricordati che devi avere il GPS attivo.'
 MSG_EMAIL = '📧 Potete scriverci un indirizzo email per contattarvi per altre iniziative simili?'
 MSG_EMAIL_WRONG = '⛔️ Input non valido, devi inserire un indirizzo email o premere su SALTA.'
