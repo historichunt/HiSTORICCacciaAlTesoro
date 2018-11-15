@@ -240,8 +240,8 @@ def removeDuplicatesFromList(list):
             no_dupicated_list.append(x)
     return no_dupicated_list
 
-def emptyStringIfNone(x):
-    return '' if x==None else x
-
-def emptyStringIfZero(x):
-    return '' if x==0 else x
+def sec_to_hms(elapsed_sec):
+    mins, sec = divmod(elapsed_sec, 60)
+    hour, mins = divmod(mins, 60)
+    time_str = "%d:%02d:%02d" % (hour, mins, sec)
+    return time_str

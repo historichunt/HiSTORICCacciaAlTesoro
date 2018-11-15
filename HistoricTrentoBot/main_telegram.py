@@ -230,7 +230,7 @@ def sendExcelDocument(chat_id, sheet_tables, filename='file'):
 
 def sendTextDocument(chat_id, text, filename='file'):
     try:
-        files = [('document', ('{}.txt'.format(filename), text, 'text/plain'))]
+        files = [('document', ('{}'.format(filename), text, 'text/plain'))]
         data = {
             'chat_id': chat_id,
         }

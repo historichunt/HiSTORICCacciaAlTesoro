@@ -5,6 +5,7 @@ import key
 from random import shuffle
 import person
 from airtable import Airtable
+import params
 
 #################
 # INDOVINELLI
@@ -13,13 +14,13 @@ from airtable import Airtable
 INDOVINELLI = utility.import_url_csv_to_dict_list(key.INDOVINELLI_URL)
 # NOME, FINALE, INDOVINELLO, INDIZIO_1, INDIZIO_2, SOLUZIONI, INDIRIZZO, GPS
 
-INDOVINELLI_NON_FINAL = [row for row in INDOVINELLI if row['FINALE'] != 'TRUE']
-INDOVINELLI_FINALI = [row for row in INDOVINELLI if row['FINALE'] == 'TRUE']
+INDOVINELLI_NOT_FINAL = [row for row in INDOVINELLI if row['FINALE'] != 'TRUE']
+INDOVINELLI_FINAL = [row for row in INDOVINELLI if row['FINALE'] == 'TRUE']
 
 def getRandomRiddles():
-    riddle_random = list(INDOVINELLI_NON_FINAL)
+    riddle_random = list(INDOVINELLI_NOT_FINAL)
     shuffle(riddle_random)
-    riddle_random.extend(INDOVINELLI_FINALI)
+    riddle_random.extend(INDOVINELLI_FINAL)
     return riddle_random
 
 #################
@@ -52,7 +53,9 @@ def getSurveyData():
 GAMES_TABLE = Airtable(key.AIRTABLE_TABLE_ID, 'Games', api_key=key.AIRTABLE_API_KEY)
 SURVEY_TABLE = Airtable(key.AIRTABLE_TABLE_ID, 'Survey', api_key=key.AIRTABLE_API_KEY)
 
-GENERAL_HEADERS = ['ID', 'GROUP_NAME', 'NOME', 'COGNOME', 'USERNAME', 'EMAIL', 'START_TIME', 'END_TIME', 'DURATION']
+GENERAL_HEADERS = \
+    ['ID', 'GROUP_NAME', 'NOME', 'COGNOME', 'USERNAME', 'EMAIL', \
+    'START_TIME', 'END_TIME', 'ELAPSED', 'WRONG ANSWERS', 'PENALTY TIME', 'TOTAL TIME']
 
 def saveGameData(p):
     import photos
@@ -100,7 +103,10 @@ def resetGame(p):
     p.tmp_variables['GROUP_SELFIES'] = []
     p.tmp_variables['START_TIME'] = ''
     p.tmp_variables['END_TIME'] = ''
-    p.tmp_variables['DURATION'] = 0 # seconda
+    p.tmp_variables['ELAPSED'] = 0 # seconds
+    p.tmp_variables['WRONG ANSWERS'] = 0
+    p.tmp_variables['PENALTY TIME'] = 0 # seconds
+    p.tmp_variables['TOTAL TIME'] = 0 # seconds
 
 def setGroupName(p, name):
     p.tmp_variables['GROUP_NAME'] = name
@@ -123,8 +129,12 @@ def getStartTime(p):
 def setEndTime(p, time):
     p.tmp_variables['END_TIME'] = time
 
-def setDuration(p, ellapsed_sec):
-    p.tmp_variables['DURATION'] = ellapsed_sec
+def set_elapsed_and_penalty_and_compute_total(p, elapsed_sec, wrong_answers, penalty_time):
+    tvar = p.tmp_variables
+    tvar['ELAPSED'] = elapsed_sec
+    tvar['WRONG ANSWERS'] = wrong_answers
+    tvar['PENALTY TIME'] = penalty_time # seconds
+    tvar['TOTAL TIME'] = elapsed_sec + penalty_time
 
 def getEndTime(p):
     return p.tmp_variables['END_TIME']
@@ -150,6 +160,10 @@ def setNextRiddle(p):
 def getCurrentRiddle(p):
     riddle_info = p.tmp_variables['INDOVINELLI_INFO']
     return riddle_info['CURRENT']
+
+def getCompletedRiddles(p):
+    game_info = p.tmp_variables['INDOVINELLI_INFO']
+    return game_info['COMPLETED']
 
 def setCurrentRiddleAsCompleted(p, photo_file_id):
     riddle_info = p.tmp_variables['INDOVINELLI_INFO']
@@ -180,10 +194,39 @@ def getCurrentGame(p):
     game_info = p.tmp_variables['GIOCHI_INFO']
     return game_info['CURRENT']
 
+def getCompletedGames(p):
+    game_info = p.tmp_variables['GIOCHI_INFO']
+    return game_info['COMPLETED']
+
 def setCurrentGameAsCompleted(p):
     game_info = p.tmp_variables['GIOCHI_INFO']
     game_info['COMPLETED'].append(game_info['CURRENT'])
     game_info['CURRENT'] = None
+
+def get_penalty_current_game(p):
+    wrong_answers = 0
+    current_game = getCurrentGame(p)
+    if current_game:
+        wrong_answers += current_game.get('wrong_answers',0)
+    penalty_time_sec = wrong_answers * params.SEC_PENALITY_WRONG_ANSWER
+    return wrong_answers, penalty_time_sec
+
+def get_penalty_current_indovinello(p):
+    wrong_answers = 0
+    current_indovinello = getCurrentRiddle(p)
+    if current_indovinello:
+        wrong_answers += current_indovinello.get('wrong_answers',0)
+    penalty_time_sec = wrong_answers * params.SEC_PENALITY_WRONG_ANSWER
+    return wrong_answers, penalty_time_sec
+
+def get_total_penalty(p):
+    wrong_answers = 0
+    for var in (p.tmp_variables['INDOVINELLI_INFO'], p.tmp_variables['GIOCHI_INFO']):
+        wrong_answers += sum(g.get('wrong_answers',0) for g in var['COMPLETED'])
+        if var['CURRENT']:
+            wrong_answers += var['CURRENT'].get('wrong_answers',0)
+        penalty_time_sec = wrong_answers * params.SEC_PENALITY_WRONG_ANSWER
+    return wrong_answers, penalty_time_sec
 
 def getTotalQuestions(p):
     return p.tmp_variables['SURVEY_INFO']['TOTAL']
@@ -220,4 +263,4 @@ def setEmail(p, email):
 def debugTmpVariables(p):
     import json
     #return json.dumps(p.tmp_variables['INDOVINELLI_INFO']['CURRENT'], indent=4)
-    return json.dumps(p.tmp_variables, indent=4)
+    return json.dumps(p.tmp_variables, indent=4, ensure_ascii=False)
