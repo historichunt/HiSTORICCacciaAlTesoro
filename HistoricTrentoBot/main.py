@@ -34,9 +34,9 @@ import photos
 ########################
 ACTIVE_HUNT = True
 WORK_IN_PROGRESS = False
-SEND_NOTIFICATIONS_TO_GROUP = False
-MANUAL_VALIDATION_SELFIE_INDOVINELLLI = False
-JUMP_TO_SURVEY_AFTER = 2 #False
+SEND_NOTIFICATIONS_TO_GROUP = True
+MANUAL_VALIDATION_SELFIE_INDOVINELLLI = True
+JUMP_TO_SURVEY_AFTER = False #2
 ########################
 
 
@@ -286,32 +286,32 @@ def repeatState(p, put=False, **kwargs):
 # UNIVERSAL COMMANDS
 # ================================
 
-def dealWithUniversalCommands(p, input):
+def dealWithUniversalCommands(p, text_input):
     from main_exception import deferredSafeHandleException
     if p.isAdmin():
-        if input.startswith('/testText '):
-            text = input.split(' ', 1)[1]
+        if text_input.startswith('/testText '):
+            text = text_input.split(' ', 1)[1]
             if text:
                 msg = '🔔 *Messaggio da hiSTORIC* 🔔\n\n' + text
                 logging.debug("Test broadcast " + msg)
                 send_message(p, msg)
                 return True
-        if input.startswith('/broadcast '):
-            text = input.split(' ', 1)[1]
+        if text_input.startswith('/broadcast '):
+            text = text_input.split(' ', 1)[1]
             if text:
                 msg = '🔔 *Messaggio da hiSTORIC* 🔔\n\n' + text
                 logging.debug("Starting to broadcast " + msg)
                 deferredSafeHandleException(broadcast, p, msg)
                 return True
-        elif input.startswith('/restartBroadcast '):
-            text = input.split(' ', 1)[1]
+        elif text_input.startswith('/restartBroadcast '):
+            text = text_input.split(' ', 1)[1]
             if text:
                 msg = '🔔 *Messaggio da hiSTORIC* 🔔\n\n' + text
                 logging.debug("Starting to broadcast and restart" + msg)
                 deferredSafeHandleException(broadcast, p, msg, restart_user=False)
                 return True
-        elif input.startswith('/textUser '):
-            p_id, text = input.split(' ', 2)[1]
+        elif text_input.startswith('/textUser '):
+            p_id, text = text_input.split(' ', 2)[1]
             if text:
                 p = Person.get_by_id(p_id)
                 if send_message(p, text, kb=p.getLastKeyboard()):
@@ -321,26 +321,26 @@ def dealWithUniversalCommands(p, input):
                     msg_admin = 'Problems sending message to {}'.format(p.getFirstNameLastNameUserName())
                     tell_admin(msg_admin)
                 return True
-        elif input.startswith('/restartUser '):
-            p_id = input.split(' ')[1]
+        elif text_input.startswith('/restartUser '):
+            p_id = text_input.split(' ')[1]
             p = Person.get_by_id(p_id)
             restart(p)
             msg_admin = 'User restarted: {}'.format(p.getFirstNameLastNameUserName())
             tell_admin(msg_admin)
             return True
-        elif input == '/testlist':
+        elif text_input == '/testlist':
             pass
             #p_id = key.FEDE_FB_ID
             #p = Person.get_by_id(p_id)
             #main_fb.sendMessageWithList(p, 'Prova lista template', ['one','twp','three','four'])
             #return True
-        elif input == '/restartAll':
+        elif text_input == '/restartAll':
             deferredSafeHandleException(restartAll)
             return True
-        elif input == '/restartAllNotInInitialState':
+        elif text_input == '/restartAllNotInInitialState':
             deferredSafeHandleException(restartAll)
             return True
-        elif input == '/testSpeech':
+        elif text_input == '/testSpeech':
             redirectToState(p, 8)
             return True
     return False
@@ -377,16 +377,16 @@ STATES = {
 # ================================
 
 def state_START(p, **kwargs):
-    input = kwargs['input'] if 'input' in kwargs.keys() else None
-    giveInstruction = input is None
+    text_input = kwargs['text_input'] if 'text_input' in kwargs.keys() else None
+    giveInstruction = text_input is None
     if giveInstruction:
         kb = [[ux.BUTTON_START_GAME]]
         p.setLastKeyboard(kb)
         send_message(p, ux.MSG_PRESS_TO_START, kb)
     else:
         kb = p.getLastKeyboard()
-        if input in utility.flatten(kb):
-            if input == ux.BUTTON_START_GAME:
+        if text_input in utility.flatten(kb):
+            if text_input == ux.BUTTON_START_GAME:
                 send_message(p, ux.MSG_GO, hide_keyboard=True)
                 sendWaitingAction(p, sleep_time=1)
                 game.resetGame(p)
@@ -399,22 +399,22 @@ def state_START(p, **kwargs):
 # ================================
 
 def state_NOME_GRUPPO(p, **kwargs):
-    input = kwargs['input'] if 'input' in kwargs.keys() else None
-    giveInstruction = input is None
+    text_input = kwargs['text_input'] if 'text_input' in kwargs.keys() else None
+    giveInstruction = text_input is None
     if giveInstruction:
         send_message(p, ux.MSG_GROUP_NAME)
     else:
-        if input != '':
-            if len(input) > params.MAX_TEAM_NAME_LENGTH:
+        if text_input != '':
+            if len(text_input) > params.MAX_TEAM_NAME_LENGTH:
                 send_message(p, ux.MSG_GROUP_NAME_TOO_LONG.format(params.MAX_TEAM_NAME_LENGTH))
                 return
-            if not utility.hasOnlyLettersAndSpaces(input):
+            if not utility.hasOnlyLettersAndSpaces(text_input):
                 send_message(p, ux.MSG_GROUP_NAME_INVALID)
                 return
-            game.setGroupName(p, input)
-            send_message(p, ux.MSG_GROUP_NAME_OK.format(input))
+            game.setGroupName(p, text_input)
+            send_message(p, ux.MSG_GROUP_NAME_OK.format(text_input))
             if SEND_NOTIFICATIONS_TO_GROUP:
-                send_message(game.HISTORIC_GROUP, "Nuova squadra registrata: {}".format(input))
+                send_message(game.HISTORIC_GROUP, "Nuova squadra registrata: {}".format(text_input))
             redirectToState(p, SELFIE_INIZIALE_STATE)
         else:
             send_message(p, ux.MSG_WRONG_INPUT_USE_TEXT)
@@ -424,9 +424,9 @@ def state_NOME_GRUPPO(p, **kwargs):
 # ================================
 
 def state_SELFIE_INIZIALE(p, **kwargs):
-    input = kwargs['input'] if 'input' in kwargs.keys() else None
+    text_input = kwargs['text_input'] if 'text_input' in kwargs.keys() else None
     photo = kwargs['photo'] if 'photo' in kwargs.keys() else None
-    giveInstruction = input is None
+    giveInstruction = text_input is None
     if giveInstruction:
         send_message(p, ux.MSG_SELFIE_INIZIALE)
     else:
@@ -434,7 +434,7 @@ def state_SELFIE_INIZIALE(p, **kwargs):
             photo_file_id = photo[-1]['file_id']
             game.appendGroupSelfieFileId(p, photo_file_id)
             sendWaitingAction(p, sleep_time=1)
-            send_message(p, ux.MSG_SELFIE_INIZIALE_OK.format(input))
+            send_message(p, ux.MSG_SELFIE_INIZIALE_OK.format(text_input))
             game.setStartTime(p, dtu.nowUtcIsoFormat())
             if SEND_NOTIFICATIONS_TO_GROUP:
                 send_photo_url(game.HISTORIC_GROUP, photo_file_id, caption='Selfie iniziale {}'.format(game.getGroupName(p)))
@@ -447,9 +447,9 @@ def state_SELFIE_INIZIALE(p, **kwargs):
 # ================================
 
 def state_GPS(p, **kwargs):
-    input = kwargs['input'] if 'input' in kwargs.keys() else None
+    text_input = kwargs['text_input'] if 'text_input' in kwargs.keys() else None
     location = kwargs['location'] if 'location' in kwargs.keys() else None
-    giveInstruction = input is None
+    giveInstruction = text_input is None
     if giveInstruction:
         current_riddle = game.setNextRiddle(p)
         goal_position = [float(x) for x in current_riddle['GPS'].split(',')]
@@ -478,8 +478,8 @@ def state_GPS(p, **kwargs):
 # INDOVINELLO state
 # ================================
 def state_INDOVINELLO(p, **kwargs):
-    input = kwargs['input'] if 'input' in kwargs.keys() else None
-    giveInstruction = input is None
+    text_input = kwargs['text_input'] if 'text_input' in kwargs.keys() else None
+    giveInstruction = text_input is None
     current_riddle = game.getCurrentRiddle(p)
     if giveInstruction:
         current_riddle['start_time'] = dtu.nowUtcIsoFormat()
@@ -491,12 +491,12 @@ def state_INDOVINELLO(p, **kwargs):
         send_message(p, msg, kb)
         p.put()
     else:
-        if input != '':
+        if text_input != '':
             correct_answers_upper = [x.strip() for x in current_riddle['SOLUZIONI'].upper().split(',')]
             correct_answers_upper_word_set = set(utility.flatten([x.split() for x in correct_answers_upper]))
-            #if input in utility.flatten(kb):
+            #if text_input in utility.flatten(kb):
             now_string = dtu.nowUtcIsoFormat()
-            if input == '💡 PRIMO INDIZIO':
+            if text_input == '💡 PRIMO INDIZIO':
                 before_string = current_riddle['start_time']
                 ellapsed = dtu.delta_seconds_iso(before_string, now_string)
                 if ellapsed > params.MIN_SEC_INDIZIO_1:
@@ -507,7 +507,7 @@ def state_INDOVINELLO(p, **kwargs):
                     send_message(p, msg, kb)
                 else:
                     send_message(p, ux.MSG_TOO_EARLY)
-            elif input == '💡 SECONDO INDIZIO':
+            elif text_input == '💡 SECONDO INDIZIO':
                 before_string = current_riddle['indizio1_time']
                 ellapsed = dtu.delta_seconds_iso(before_string, now_string)
                 if ellapsed > params.MIN_SEC_INDIZIO_2:
@@ -518,10 +518,10 @@ def state_INDOVINELLO(p, **kwargs):
                     send_message(p, msg, kb) #remove_keyboard=True)
                 else:
                     send_message(p, ux.MSG_TOO_EARLY)
-            elif input.upper() in correct_answers_upper:
+            elif text_input.upper() in correct_answers_upper:
                 send_message(p, ux.MSG_ANSWER_OK)
                 redirectToState(p, SELFIE_INDOVINELLO_STATE)
-            elif any(x in correct_answers_upper_word_set for x in input.upper().split()):
+            elif any(x in correct_answers_upper_word_set for x in text_input.upper().split()):
                 send_message(p, ux.MSG_ANSWER_ALMOST)
             else:
                 current_riddle['wrong_answers'] += 1
@@ -537,9 +537,9 @@ def state_INDOVINELLO(p, **kwargs):
 # ================================
 
 def state_SELFIE_INDOVINELLO(p, **kwargs):
-    input = kwargs['input'] if 'input' in kwargs.keys() else None
+    text_input = kwargs['text_input'] if 'text_input' in kwargs.keys() else None
     photo = kwargs['photo'] if 'photo' in kwargs.keys() else None
-    giveInstruction = input is None
+    giveInstruction = text_input is None
     if giveInstruction:
         send_message(p, ux.MSG_SELFIE_INDOVINELLO, remove_keyboard=True)
     else:
@@ -607,8 +607,8 @@ def approve_selfie_indovinello(p, approved, signature):
 # ================================
 
 def state_GIOCO(p, **kwargs):
-    input = kwargs['input'] if 'input' in kwargs.keys() else None
-    giveInstruction = input is None
+    text_input = kwargs['text_input'] if 'text_input' in kwargs.keys() else None
+    giveInstruction = text_input is None
     if giveInstruction:
         current_game = game.setNextGame(p)
         current_game['wrong_answers'] = 0
@@ -620,9 +620,9 @@ def state_GIOCO(p, **kwargs):
         p.put()
     else:
         current_game = game.getCurrentGame(p)
-        if input != '':
+        if text_input != '':
             correct_answers_upper = [x.strip() for x in current_game['SOLUZIONI'].upper().split(',')]
-            if input.upper() in correct_answers_upper:
+            if text_input.upper() in correct_answers_upper:
                 send_message(p, ux.MSG_ANSWER_OK)
                 game.setCurrentGameAsCompleted(p)
                 send_message(p, ux.MSG_NEXT_MISSION)
@@ -642,8 +642,8 @@ def state_GIOCO(p, **kwargs):
 # ================================
 
 def state_SURVEY(p, **kwargs):
-    input = kwargs['input'] if 'input' in kwargs.keys() else None
-    giveInstruction = input is None
+    text_input = kwargs['text_input'] if 'text_input' in kwargs.keys() else None
+    giveInstruction = text_input is None
     if giveInstruction:
         current_question = game.setNextQuestion(p)
         questions_number = game.completedQuestionsNumber(p) + 1
@@ -657,12 +657,12 @@ def state_SURVEY(p, **kwargs):
         kb = p.getLastKeyboard()
         current_question = game.getCurrentQuestion(p)
         question_type_open =  current_question['TYPE']=='Open'
-        if input:
-            if input in utility.flatten(kb):
-                answer = '' if question_type_open else input
+        if text_input:
+            if text_input in utility.flatten(kb):
+                answer = '' if question_type_open else text_input
                 game.setCurrentQuestionAsCompleted(p, answer)
             elif question_type_open:
-                game.setCurrentQuestionAsCompleted(p, input)
+                game.setCurrentQuestionAsCompleted(p, text_input)
             else:
                 send_message(p, ux.MSG_WRONG_INPUT_USE_BUTTONS)
                 return
@@ -681,20 +681,22 @@ def state_SURVEY(p, **kwargs):
 # ================================
 
 def state_EMAIL(p, **kwargs):
-    input = kwargs['input'] if 'input' in kwargs.keys() else None
-    giveInstruction = input is None
+    text_input = kwargs['text_input'] if 'text_input' in kwargs.keys() else None
+    giveInstruction = text_input is None
     if giveInstruction:
         kb = [[ux.BUTTON_SKIP_EMAIL]]
         send_message(p, ux.MSG_EMAIL, kb)
     else:
-        if input != '':
-            if input == ux.BUTTON_SKIP_EMAIL:
+        if text_input != '':
+            if text_input == ux.BUTTON_SKIP_EMAIL:
                 redirectToState(p, END_STATE)
-            elif re.match(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]+$", input):
-                game.setEmail(p, input)
-                redirectToState(p, END_STATE)
-            else:
-                send_message(p, ux.MSG_EMAIL_WRONG)
+            else: 
+                email_split = text_input.split()
+                if any(re.match(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]+$", e) for e in email_split):                
+                    game.setEmail(p, text_input)
+                    redirectToState(p, END_STATE)
+                else:
+                    send_message(p, ux.MSG_EMAIL_WRONG)
         else:
             send_message(p, ux.MSG_WRONG_INPUT_USE_BUTTONS)
 
@@ -703,8 +705,8 @@ def state_EMAIL(p, **kwargs):
 # ================================
 
 def state_END(p, **kwargs):
-    input = kwargs['input'] if 'input' in kwargs.keys() else None
-    giveInstruction = input is None
+    text_input = kwargs['text_input'] if 'text_input' in kwargs.keys() else None
+    giveInstruction = text_input is None
     if giveInstruction:
         end_time = game.getEndTime(p)
         start_time = game.getStartTime(p)
@@ -771,6 +773,13 @@ def dealWithUserInteraction(chat_id, name, last_name, username, application, tex
         elif text == '/testInlineKb':
             send_message(p, "Test inline keypboard", kb=[[ux.BUTTON_SI_CALLBACK('test'), ux.BUTTON_NO_CALLBACK('test')]], inline_keyboard=True)
             return
+        elif text == '/random':
+            from random import shuffle
+            numbers = ['1','2','3','4','5']
+            shuffle(numbers)
+            numbers_str = ', '.join(numbers)
+            send_message(p, numbers_str)
+            return
     if WORK_IN_PROGRESS and p.getId() not in key.ADMIN_IDS:
         send_message(p, ux.MSG_WORK_IN_PROGRESS)
     elif text.lower().startswith('/start'):
@@ -802,10 +811,10 @@ def dealWithUserInteraction(chat_id, name, last_name, username, application, tex
               "In qualsiasi momento puoi riattivarmi scrivendomi qualcosa."
         send_message(p, msg)
     else:
-        if not dealWithUniversalCommands(p, input=text):
+        if not dealWithUniversalCommands(p, text_input=text):
             state = p.getState()
-            logging.debug("Sending {} to state {} with input {}".format(p.getFirstName(), state, text))
-            repeatState(p, input=text, location=location, contact=contact, photo=photo, document=document,
+            logging.debug("Sending {} to state {} with text_input {}".format(p.getFirstName(), state, text))
+            repeatState(p, text_input=text, location=location, contact=contact, photo=photo, document=document,
                         voice=voice)
 
 
