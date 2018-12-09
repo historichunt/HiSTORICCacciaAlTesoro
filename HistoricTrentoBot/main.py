@@ -32,10 +32,10 @@ import re
 import photos
 
 ########################
-ACTIVE_HUNT = True
+ACTIVE_HUNT = False
 WORK_IN_PROGRESS = False
-SEND_NOTIFICATIONS_TO_GROUP = True
-MANUAL_VALIDATION_SELFIE_INDOVINELLLI = True
+SEND_NOTIFICATIONS_TO_GROUP = False
+MANUAL_VALIDATION_SELFIE_INDOVINELLLI = False
 JUMP_TO_SURVEY_AFTER = False #2
 ########################
 
@@ -137,7 +137,7 @@ BROADCAST_COUNT_REPORT = utility.unindent(
     """
 )
 
-def broadcast(sender, msg, qry = None, restart_user=False,
+def broadcast(sender, msg, qry = None, reset_player=False,
               blackList_sender=False, sendNotification=True):
 
     from google.appengine.ext.db import datastore_errors
@@ -162,8 +162,8 @@ def broadcast(sender, msg, qry = None, restart_user=False,
                 total += 1
                 if send_message(p, msg, sleepDelay=True): #p.enabled
                     enabledCount += 1
-                    if restart_user:
-                        restart(p)
+                    if reset_player:
+                        reset_player(p)
             except datastore_errors.Timeout:
                 msg = '❗ datastore_errors. Timeout in broadcast :('
                 tell_admin(msg)
@@ -195,7 +195,7 @@ def broadcastUserIdList(sender, msg, userIdList, blackList_sender, markdown):
 # Restart All
 # ---------
 
-def restartAll(qry = None):
+def resetAll(qry = None):
     from google.appengine.ext.db import datastore_errors
     if qry is None:
         qry = Person.query()
@@ -210,17 +210,18 @@ def restartAll(qry = None):
         try:
             for p in users:
                 if p.enabled:
-                    if p.state == START_STATE:
+                    if p.state == INITIAL_STATE:
                         continue
                     #logging.debug('Restarting {}'.format(p.chat_id))
                     total += 1
-                    restart(p)
+                    reset_player(p)
                 sleep(0.1)
         except datastore_errors.Timeout:
             msg = '❗ datastore_errors. Timeout in broadcast :('
             tell_admin(msg)
 
-    logging.debug('Restarted {} users.'.format(total))
+    msg_admin = 'Resetted {} users.'.format(total)
+    tell_admin(msg_admin)
 
 # ================================
 # UTILIITY TELL FUNCTIONS
@@ -249,9 +250,16 @@ def send_message_to_person(id, msg, markdown=False):
     return False
 
 # ================================
-# RESTART
+# RESET PLAYER
 # ================================
-def restart(p):
+def reset_player(p):
+    game.resetGame(p)
+    redirectToState(p, INITIAL_STATE)
+
+# ================================
+# START GAME
+# ================================
+def start_game(p):
     send_message(p, ux.MSG_WELCOME.format(key.CURRENT_GAME_NAME))
     redirectToState(p, START_STATE)
 
@@ -283,12 +291,26 @@ def repeatState(p, put=False, **kwargs):
         method(p, **kwargs)
 
 # ================================
-# UNIVERSAL COMMANDS
+# ADMIN COMMANDS
 # ================================
 
-def dealWithUniversalCommands(p, text_input):
+def dealWithAdminCommands(p, text_input):
     from main_exception import deferredSafeHandleException
     if p.isAdmin():
+        if text_input == '/debug':
+            #send_message(p, game.debugTmpVariables(p), markdown=False)
+            sendTextDocument(p, game.debugTmpVariables(p), filename='tmp_vars.json')
+            return True
+        elif text_input == '/testInlineKb':
+            send_message(p, "Test inline keypboard", kb=[[ux.BUTTON_SI_CALLBACK('test'), ux.BUTTON_NO_CALLBACK('test')]], inline_keyboard=True)
+            return True
+        elif text_input == '/random':
+            from random import shuffle
+            numbers = ['1','2','3','4','5']
+            shuffle(numbers)
+            numbers_str = ', '.join(numbers)
+            send_message(p, numbers_str)
+            return True
         if text_input.startswith('/testText '):
             text = text_input.split(' ', 1)[1]
             if text:
@@ -303,12 +325,12 @@ def dealWithUniversalCommands(p, text_input):
                 logging.debug("Starting to broadcast " + msg)
                 deferredSafeHandleException(broadcast, p, msg)
                 return True
-        elif text_input.startswith('/restartBroadcast '):
+        elif text_input.startswith('/resetBroadcast '):
             text = text_input.split(' ', 1)[1]
             if text:
                 msg = '🔔 *Messaggio da hiSTORIC* 🔔\n\n' + text
-                logging.debug("Starting to broadcast and restart" + msg)
-                deferredSafeHandleException(broadcast, p, msg, restart_user=False)
+                logging.debug("Starting to broadcast and reset players" + msg)
+                deferredSafeHandleException(broadcast, p, msg, reset_player=True)
                 return True
         elif text_input.startswith('/textUser '):
             p_id, text = text_input.split(' ', 2)[1]
@@ -321,12 +343,19 @@ def dealWithUniversalCommands(p, text_input):
                     msg_admin = 'Problems sending message to {}'.format(p.getFirstNameLastNameUserName())
                     tell_admin(msg_admin)
                 return True
-        elif text_input.startswith('/restartUser '):
+        elif text_input.startswith('/resetUser '):
             p_id = text_input.split(' ')[1]
             p = Person.get_by_id(p_id)
-            restart(p)
-            msg_admin = 'User restarted: {}'.format(p.getFirstNameLastNameUserName())
-            tell_admin(msg_admin)
+            if p:
+                msg_admin = 'User resetted: {}'.format(p.getFirstNameLastNameUserName())
+                tell_admin(msg_admin)
+                reset_player(p)
+            else:
+                msg_admin = 'No user found: {}'.format(p_id)
+                tell_admin(msg_admin)
+            return True
+        elif text_input == '/resetAll':
+            deferredSafeHandleException(resetAll)
             return True
         elif text_input == '/testlist':
             pass
@@ -334,12 +363,6 @@ def dealWithUniversalCommands(p, text_input):
             #p = Person.get_by_id(p_id)
             #main_fb.sendMessageWithList(p, 'Prova lista template', ['one','twp','three','four'])
             #return True
-        elif text_input == '/restartAll':
-            deferredSafeHandleException(restartAll)
-            return True
-        elif text_input == '/restartAllNotInInitialState':
-            deferredSafeHandleException(restartAll)
-            return True
         elif text_input == '/testSpeech':
             redirectToState(p, 8)
             return True
@@ -347,6 +370,7 @@ def dealWithUniversalCommands(p, text_input):
 
 ## +++++ BEGIN OF STATES +++++ ###
 
+INITIAL_STATE = 'INITIAL'
 START_STATE = 'START'
 NOME_GRUPPO_STATE = 'NOME_GRUPPO'
 SELFIE_INIZIALE_STATE = 'SELFIE_INIZIALE'
@@ -359,7 +383,8 @@ EMAIL_STATE = 'EMAIL'
 END_STATE = 'END'
 
 STATES = {
-    START_STATE: 'Initial state',
+    INITIAL_STATE: 'Initial state',
+    START_STATE: 'Start game state',
     NOME_GRUPPO_STATE: 'Richiesta nome gruppo',
     SELFIE_INIZIALE_STATE: 'Richiesta di invio selfie di gruppo',
     GPS_STATE: 'Invio GPS e conferma raggiungimento posto',
@@ -375,6 +400,25 @@ STATES = {
 # ================================
 # Initial State
 # ================================
+
+def state_INITIAL(p, **kwargs):
+    text_input = kwargs['text_input'] if 'text_input' in kwargs.keys() else None
+    if text_input is None:
+        pass #don't reply anything
+    else: #text_input.lower().startswith('/start'):
+        if not ACTIVE_HUNT:
+            msg = "Ciao 😀\n" \
+                  "In questo momento la caccia al tesoro non è attiva.\n" \
+                  "Vieni a trovarci su [historic](https://www.historictrento.it) " \
+                  "o contattaci via email a historic.trento@gmail.com."
+            send_message(p, msg)
+        elif text_input.lower() == '/start {}'.format(key.CURRENT_GAME_SECRET_START_MSG.lower()):
+            start_game(p)
+        else:
+            msg = "Ciao 😀\n" \
+                  "C'è una caccia al tesoro in corso ma devi utilizzare il QR code per accedere.\n" \
+                  "In alternativa digita /start seguito dalla *password* fornita dagli organizzatori."
+            send_message(p, msg)
 
 def state_START(p, **kwargs):
     text_input = kwargs['text_input'] if 'text_input' in kwargs.keys() else None
@@ -761,45 +805,18 @@ def dealWithUserInteraction(chat_id, name, last_name, username, application, tex
         p = person.addPerson(chat_id, name, last_name, username, application)
         tellMaster("New {} user: {}".format(application, p.getFirstNameLastNameUserName()))
     else:
-        modified, was_disabled = p.updateUserInfo(name, last_name, username)
+        _, was_disabled = p.updateUserInfo(name, last_name, username)
         if was_disabled:
             msg = "Bot riattivato!"
             send_message(p, msg)
-    if p.isAdmin():
-        if text == '/debug':
-            #send_message(p, game.debugTmpVariables(p), markdown=False)
-            sendTextDocument(p, game.debugTmpVariables(p), filename='tmp_vars.json')
-            return
-        elif text == '/testInlineKb':
-            send_message(p, "Test inline keypboard", kb=[[ux.BUTTON_SI_CALLBACK('test'), ux.BUTTON_NO_CALLBACK('test')]], inline_keyboard=True)
-            return
-        elif text == '/random':
-            from random import shuffle
-            numbers = ['1','2','3','4','5']
-            shuffle(numbers)
-            numbers_str = ', '.join(numbers)
-            send_message(p, numbers_str)
-            return
+    if dealWithAdminCommands(p, text_input=text):
+        return
     if WORK_IN_PROGRESS and p.getId() not in key.ADMIN_IDS:
         send_message(p, ux.MSG_WORK_IN_PROGRESS)
-    elif text.lower().startswith('/start'):
-        if not ACTIVE_HUNT:
-            msg = "Ciao 😀\n" \
-                  "In questo momento la caccia al tesoro non è attiva.\n" \
-                  "Vieni a trovarci su [historic](https://www.historictrento.it) " \
-                  "o contattaci via email a historic.trento@gmail.com."
-            send_message(p, msg)
-        elif text.lower() == '/start {}'.format(key.CURRENT_GAME_SECRET_START_MSG.lower()):
-            restart(p)
-        else:
-            msg = "Ciao 😀\n" \
-                  "C'è una caccia al tesoro in corso ma devi utilizzare il QR code per accedere.\n" \
-                  "In alternativa digita /start seguito dalla *password* fornita dagli organizzatori."
-            send_message(p, msg)
     elif text == '/state':
         state = p.getState()
         msg = "You are in state {}: {}".format(state, STATES.get(state, '(unknown)'))
-        send_message(p, msg)
+        send_message(p, msg, markdown=False)
     elif text == '/refresh':
         repeatState(p)
     elif text in ['/help', 'HELP', 'AIUTO']:
@@ -811,11 +828,9 @@ def dealWithUserInteraction(chat_id, name, last_name, username, application, tex
               "In qualsiasi momento puoi riattivarmi scrivendomi qualcosa."
         send_message(p, msg)
     else:
-        if not dealWithUniversalCommands(p, text_input=text):
-            state = p.getState()
-            logging.debug("Sending {} to state {} with text_input {}".format(p.getFirstName(), state, text))
-            repeatState(p, text_input=text, location=location, contact=contact, photo=photo, document=document,
-                        voice=voice)
+        state = p.getState()
+        logging.debug("Sending {} to state {} with text_input {}".format(p.getFirstName(), state, text))
+        repeatState(p, text_input=text, location=location, contact=contact, photo=photo, document=document, voice=voice)
 
 
 app = webapp2.WSGIApplication([

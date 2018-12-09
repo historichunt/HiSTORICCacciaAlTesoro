@@ -25,4 +25,4 @@ def downloadSelfies(table_name, output_dir):
 
 if __name__ == "__main__":
     #downloadSelfies('Suffragio_1_July_2018', '/Users/fedja/Downloads/caccia')
-    downloadSelfies('Piazza_Dante_16_September_2018', '/Users/fedja/Downloads/caccia')
+    downloadSelfies('SantaMassenza_09_December_2018', '/Users/fedja/Downloads/Caccia_Santa_Massenza_9_Dicembre')
