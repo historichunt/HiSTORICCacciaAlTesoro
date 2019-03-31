@@ -34,8 +34,8 @@ import photos
 ########################
 ACTIVE_HUNT = False
 WORK_IN_PROGRESS = False
-SEND_NOTIFICATIONS_TO_GROUP = False
-MANUAL_VALIDATION_SELFIE_INDOVINELLLI = False
+SEND_NOTIFICATIONS_TO_GROUP = True
+MANUAL_VALIDATION_SELFIE_INDOVINELLLI = True
 JUMP_TO_SURVEY_AFTER = False #2
 ########################
 
@@ -45,11 +45,11 @@ JUMP_TO_SURVEY_AFTER = False #2
 # ================================
 
 def send_message(p, msg, kb=None, markdown=True, inline_keyboard=False, one_time_keyboard=False,
-                 sleepDelay=False, hide_keyboard=False, force_reply=False, remove_keyboard=False,
+                 sleepDelay=False, force_reply=False, remove_keyboard=False,
                  disable_web_page_preview=True):
     if p.isTelegramUser():
         return main_telegram.send_message(p, msg, kb, markdown, inline_keyboard, one_time_keyboard,
-                           sleepDelay, hide_keyboard, force_reply, remove_keyboard, disable_web_page_preview)
+                           sleepDelay, force_reply, remove_keyboard, disable_web_page_preview)
     else:
         if kb is None:
             kb = p.getLastKeyboard()
@@ -195,7 +195,7 @@ def broadcastUserIdList(sender, msg, userIdList, blackList_sender, markdown):
 # Restart All
 # ---------
 
-def resetAll(qry = None):
+def resetAll(qry = None, message=None):
     from google.appengine.ext.db import datastore_errors
     if qry is None:
         qry = Person.query()
@@ -210,11 +210,11 @@ def resetAll(qry = None):
         try:
             for p in users:
                 if p.enabled:
-                    if p.state == INITIAL_STATE:
-                        continue
+                    #if p.state == INITIAL_STATE:
+                    #    continue
                     #logging.debug('Restarting {}'.format(p.chat_id))
                     total += 1
-                    reset_player(p)
+                    reset_player(p, message)
                 sleep(0.1)
         except datastore_errors.Timeout:
             msg = '❗ datastore_errors. Timeout in broadcast :('
@@ -252,8 +252,10 @@ def send_message_to_person(id, msg, markdown=False):
 # ================================
 # RESET PLAYER
 # ================================
-def reset_player(p):
+def reset_player(p, message=None):
     game.resetGame(p)
+    if message:
+        send_message(p, message, remove_keyboard=True)
     redirectToState(p, INITIAL_STATE)
 
 # ================================
@@ -344,12 +346,12 @@ def dealWithAdminCommands(p, text_input):
                     tell_admin(msg_admin)
                 return True
         elif text_input.startswith('/resetUser '):
-            p_id = text_input.split(' ')[1]
+            p_id = ' '.join(text_input.split(' ')[1:])
             p = Person.get_by_id(p_id)
             if p:
+                reset_player(p, message='Reset')
                 msg_admin = 'User resetted: {}'.format(p.getFirstNameLastNameUserName())
-                tell_admin(msg_admin)
-                reset_player(p)
+                tell_admin(msg_admin)                
             else:
                 msg_admin = 'No user found: {}'.format(p_id)
                 tell_admin(msg_admin)
@@ -431,7 +433,7 @@ def state_START(p, **kwargs):
         kb = p.getLastKeyboard()
         if text_input in utility.flatten(kb):
             if text_input == ux.BUTTON_START_GAME:
-                send_message(p, ux.MSG_GO, hide_keyboard=True)
+                send_message(p, ux.MSG_GO, remove_keyboard=True)
                 sendWaitingAction(p, sleep_time=1)
                 game.resetGame(p)
                 redirectToState(p, NOME_GRUPPO_STATE)
@@ -761,7 +763,7 @@ def state_END(p, **kwargs):
         ellapsed_hms = utility.sec_to_hms(elapsed_sec)
         penalty_hms = utility.sec_to_hms(penalty_sec)
         msg = ux.MSG_END.format(total_hms,ellapsed_hms,penalty_hms)
-        send_message(p, msg, hide_keyboard=True)
+        send_message(p, msg, remove_keyboard=True)
         if SEND_NOTIFICATIONS_TO_GROUP:
             msg_group = ux.MSG_END_NOTIFICATION.format(game.getGroupName(p), total_hms, ellapsed_hms, penalty_hms)
             send_message(game.HISTORIC_GROUP, msg_group)
@@ -813,6 +815,8 @@ def dealWithUserInteraction(chat_id, name, last_name, username, application, tex
         return
     if WORK_IN_PROGRESS and p.getId() not in key.ADMIN_IDS:
         send_message(p, ux.MSG_WORK_IN_PROGRESS)
+    elif text.startswith('/start '):
+        state_INITIAL(p, text_input=text)
     elif text == '/state':
         state = p.getState()
         msg = "You are in state {}: {}".format(state, STATES.get(state, '(unknown)'))
