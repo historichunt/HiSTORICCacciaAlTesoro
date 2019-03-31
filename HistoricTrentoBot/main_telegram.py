@@ -56,7 +56,7 @@ def sendRequest(p, url, data, debugInfo):
 # ================================
 
 def send_message(p, msg, kb=None, markdown=True, inline_keyboard=False, one_time_keyboard=False,
-                 sleepDelay=False, hide_keyboard=False, force_reply=False, remove_keyboard=False,
+                 sleepDelay=False, force_reply=False, remove_keyboard=False,
                  disable_web_page_preview=False):
     # reply_markup: InlineKeyboardMarkup or ReplyKeyboardMarkup or ReplyKeyboardHide or ForceReply
     if inline_keyboard:
@@ -68,10 +68,6 @@ def send_message(p, msg, kb=None, markdown=True, inline_keyboard=False, one_time
             'keyboard': kb,
             'resize_keyboard': True,
             'one_time_keyboard': one_time_keyboard,
-        }
-    elif hide_keyboard:
-        replyMarkup = {  # ReplyKeyboardHide
-            'hide_keyboard': hide_keyboard
         }
     elif remove_keyboard:
         replyMarkup = {
