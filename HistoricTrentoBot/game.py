@@ -57,13 +57,16 @@ GENERAL_HEADERS = \
     ['ID', 'GROUP_NAME', 'NOME', 'COGNOME', 'USERNAME', 'EMAIL', \
     'START_TIME', 'END_TIME', 'ELAPSED', 'WRONG ANSWERS', 'PENALTY TIME', 'TOTAL TIME']
 
-def saveGameData(p):
+def save_game_data_in_airtable(p):
     import photos
     game_data = p.tmp_variables
     games_row = {}
     for h in GENERAL_HEADERS:
         games_row[h] = game_data[h]
-    games_row['GROUP_SELFIES'] = [{'url': photos.prepareAndGetPhotoTelegramUrl(file_id)} for file_id in game_data['GROUP_SELFIES']]
+    games_row['GROUP_SELFIES'] = [
+        {'url': photos.prepareAndGetPhotoTelegramUrl(file_id)} 
+        for file_id in game_data['GROUP_SELFIES']
+    ]
     GAMES_TABLE.insert(games_row)
     survey_row = {'ID': game_data['ID']}
     for question in SURVEY_QUESTIONS:
@@ -94,6 +97,7 @@ def resetGame(p):
     p.tmp_variables['COGNOME'] = p.getLastName(escapeMarkdown=False)
     p.tmp_variables['USERNAME'] = p.getUsername(escapeMarkdown=False)
     p.tmp_variables['EMAIL'] = ''
+    p.tmp_variables['MISSION_TIMES'] = []
     p.tmp_variables['INDOVINELLI_INFO'] = {'TODO': riddles, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(riddles)}
     # riddle -> 'PHOTO_FILE_ID'
     p.tmp_variables['GIOCHI_INFO'] = {'TODO': games, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(games)}
@@ -120,21 +124,54 @@ def getGroupName(p, escapeMarkdown=True):
 def appendGroupSelfieFileId(p, file_id):
     p.tmp_variables['GROUP_SELFIES'].append(file_id)
 
-def setStartTime(p, time):
-    p.tmp_variables['START_TIME'] = time
+def setStartTime(p):
+    import date_time_util as dtu
+    start_time = dtu.nowUtcIsoFormat()
+    p.tmp_variables['START_TIME'] = start_time
 
 def getStartTime(p):
     return p.tmp_variables['START_TIME']
 
-def setEndTime(p, time):
-    p.tmp_variables['END_TIME'] = time
+def setEndTime(p):
+    import date_time_util as dtu
+    end_time = dtu.nowUtcIsoFormat()
+    p.tmp_variables['END_TIME'] = end_time
 
-def set_elapsed_and_penalty_and_compute_total(p, elapsed_sec, wrong_answers, penalty_time):
-    tvar = p.tmp_variables
+def set_mission_start_time(p):
+    import date_time_util as dtu
+    start_time = dtu.nowUtcIsoFormat()
+    p.tmp_variables['MISSION_TIMES'].append([start_time])
+
+def set_mission_end_time(p):
+    import date_time_util as dtu
+    end_time = dtu.nowUtcIsoFormat()
+    last_mission_time = p.tmp_variables['MISSION_TIMES'][-1]
+    last_mission_time.append(end_time)
+    mission_ellapsed = dtu.delta_seconds_iso(*last_mission_time)
+    return mission_ellapsed
+
+def set_elapsed_and_penalty_and_compute_total(p):
+    import date_time_util as dtu
+    tvar = p.tmp_variables    
+    if params.DISCARD_TRAVELING_TIME:        
+        elapsed_sec = sum(dtu.delta_seconds_iso(s, e) for s,e in tvar['MISSION_TIMES'])
+    else:
+        end_time = getEndTime(p)
+        start_time = getStartTime(p)
+        elapsed_sec = dtu.delta_seconds_iso(start_time, end_time)
+
+    wrong_answers, penalty_sec = get_total_penalty(p)
+    total_sec = elapsed_sec + penalty_sec
+    total_hms = utility.sec_to_hms(total_sec)
+    ellapsed_hms = utility.sec_to_hms(elapsed_sec)
+    penalty_hms = utility.sec_to_hms(penalty_sec)
+    
     tvar['ELAPSED'] = elapsed_sec
     tvar['WRONG ANSWERS'] = wrong_answers
-    tvar['PENALTY TIME'] = penalty_time # seconds
-    tvar['TOTAL TIME'] = elapsed_sec + penalty_time
+    tvar['PENALTY TIME'] = penalty_sec # seconds
+    tvar['TOTAL TIME'] = elapsed_sec + penalty_sec
+    p.put()
+    return total_hms, ellapsed_hms, penalty_hms
 
 def getEndTime(p):
     return p.tmp_variables['END_TIME']

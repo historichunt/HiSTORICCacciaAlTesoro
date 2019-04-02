@@ -32,11 +32,11 @@ import re
 import photos
 
 ########################
-ACTIVE_HUNT = False
-WORK_IN_PROGRESS = False
-SEND_NOTIFICATIONS_TO_GROUP = True
-MANUAL_VALIDATION_SELFIE_INDOVINELLLI = True
-JUMP_TO_SURVEY_AFTER = False #2
+ACTIVE_HUNT = True
+WORK_IN_PROGRESS = True
+SEND_NOTIFICATIONS_TO_GROUP = False
+MANUAL_VALIDATION_SELFIE_INDOVINELLLI = False
+JUMP_TO_SURVEY_AFTER = 2 # False
 ########################
 
 
@@ -429,6 +429,8 @@ def state_START(p, **kwargs):
         kb = [[ux.BUTTON_START_GAME]]
         p.setLastKeyboard(kb)
         send_message(p, ux.MSG_PRESS_TO_START, kb)
+        if not params.DISCARD_TRAVELING_TIME:
+            send_message(p, ux.MSG_TIME_WILL_START_ON_PRESS)            
     else:
         kb = p.getLastKeyboard()
         if text_input in utility.flatten(kb):
@@ -481,9 +483,11 @@ def state_SELFIE_INIZIALE(p, **kwargs):
             game.appendGroupSelfieFileId(p, photo_file_id)
             sendWaitingAction(p, sleep_time=1)
             send_message(p, ux.MSG_SELFIE_INIZIALE_OK.format(text_input))
-            game.setStartTime(p, dtu.nowUtcIsoFormat())
+            game.setStartTime(p)
             if SEND_NOTIFICATIONS_TO_GROUP:
                 send_photo_url(game.HISTORIC_GROUP, photo_file_id, caption='Selfie iniziale {}'.format(game.getGroupName(p)))
+            if not params.DISCARD_TRAVELING_TIME:
+                send_message(p, ux.MSG_START_TIME, sleepDelay=True)
             redirectToState(p, GPS_STATE)
         else:
             send_message(p, ux.MSG_WRONG_INPUT_SEND_PHOTO)
@@ -528,10 +532,13 @@ def state_INDOVINELLO(p, **kwargs):
     giveInstruction = text_input is None
     current_riddle = game.getCurrentRiddle(p)
     if giveInstruction:
+        game.set_mission_start_time(p)
         current_riddle['start_time'] = dtu.nowUtcIsoFormat()
         current_riddle['wrong_answers'] = 0
         riddle_number = game.completedRiddlesNumber(p) + 1
         total_riddles = game.getTotalRiddles(p)
+        if params.DISCARD_TRAVELING_TIME:
+            send_message(p, ux.MSG_START_TIME_MISSION, sleepDelay=True)
         msg = '*Indovinello {}/{}*: {}'.format(riddle_number, total_riddles, current_riddle['INDOVINELLO'])
         kb = [['💡 PRIMO INDIZIO']]
         send_message(p, msg, kb)
@@ -565,6 +572,7 @@ def state_INDOVINELLO(p, **kwargs):
                 else:
                     send_message(p, ux.MSG_TOO_EARLY)
             elif text_input.upper() in correct_answers_upper:
+                current_riddle['end_time'] = dtu.nowUtcIsoFormat()
                 send_message(p, ux.MSG_ANSWER_OK)
                 redirectToState(p, SELFIE_INDOVINELLO_STATE)
             elif any(x in correct_answers_upper_word_set for x in text_input.upper().split()):
@@ -637,9 +645,15 @@ def approve_selfie_indovinello(p, approved, signature):
         sendWaitingAction(p, sleep_time=1)
         jump_to_survey = JUMP_TO_SURVEY_AFTER and game.completedRiddlesNumber(p) == JUMP_TO_SURVEY_AFTER
         if jump_to_survey or game.remainingRiddlesNumber(p) == 0:
-            end_time = dtu.nowUtcIsoFormat()
-            game.setEndTime(p, end_time)
-            send_message(p, ux.MSG_SURVEY_INTRO)
+            mission_ellapsed = game.set_mission_end_time(p)
+            game.setEndTime(p)
+            if params.DISCARD_TRAVELING_TIME:
+                mission_ellapsed_hms = utility.sec_to_hms(mission_ellapsed)
+                send_message(p, ux.MSG_ELLAPSED_TIME_MISSION.format(mission_ellapsed_hms), sleepDelay=True)    
+            else:
+                send_message(p, uk.MSG_TIME_STOP, sleepDelay=True)
+            send_message(p, ux.MSG_CONGRATS_PRE_SURVEY, sleepDelay=True)
+            send_message(p, ux.MSG_SURVEY_INTRO, sleepDelay=True)
             redirectToState(p, SURVEY_STATE)
         else:
             send_message(p, ux.MSG_NEXT_GIOCO)
@@ -656,20 +670,26 @@ def state_GIOCO(p, **kwargs):
     text_input = kwargs['text_input'] if 'text_input' in kwargs.keys() else None
     giveInstruction = text_input is None
     if giveInstruction:
-        current_game = game.setNextGame(p)
+        current_game = game.setNextGame(p)        
         current_game['wrong_answers'] = 0
         game_number = game.completedGamesNumber(p) + 1
         total_games = game.getTotalGames(p)
         msg = '*Gioco {}/{}*: {}'.format(game_number, total_games, current_game['ISTRUZIONI'])
         send_photo_url(p, url=current_game['IMG_URL'])
         send_message(p, msg)
+        current_game['start_time'] = dtu.nowUtcIsoFormat()
         p.put()
     else:
         current_game = game.getCurrentGame(p)
         if text_input != '':
             correct_answers_upper = [x.strip() for x in current_game['SOLUZIONI'].upper().split(',')]
             if text_input.upper() in correct_answers_upper:
-                send_message(p, ux.MSG_ANSWER_OK)
+                current_game['end_time'] = dtu.nowUtcIsoFormat()
+                mission_ellapsed = game.set_mission_end_time(p)
+                send_message(p, ux.MSG_ANSWER_OK)                
+                if params.DISCARD_TRAVELING_TIME:
+                    mission_ellapsed_hms = utility.sec_to_hms(mission_ellapsed)
+                    send_message(p, ux.MSG_ELLAPSED_TIME_MISSION.format(mission_ellapsed_hms), sleepDelay=True)                    
                 game.setCurrentGameAsCompleted(p)
                 send_message(p, ux.MSG_NEXT_MISSION)
                 sendWaitingAction(p, sleep_time=1)
@@ -753,22 +773,14 @@ def state_EMAIL(p, **kwargs):
 def state_END(p, **kwargs):
     text_input = kwargs['text_input'] if 'text_input' in kwargs.keys() else None
     giveInstruction = text_input is None
-    if giveInstruction:
-        end_time = game.getEndTime(p)
-        start_time = game.getStartTime(p)
-        elapsed_sec = dtu.delta_seconds_iso(start_time, end_time)
-        wrong_answers, penalty_sec = game.get_total_penalty(p)
-        total_sec = elapsed_sec + penalty_sec
-        total_hms = utility.sec_to_hms(total_sec)
-        ellapsed_hms = utility.sec_to_hms(elapsed_sec)
-        penalty_hms = utility.sec_to_hms(penalty_sec)
+    if giveInstruction:        
+        total_hms, ellapsed_hms, penalty_hms = game.set_elapsed_and_penalty_and_compute_total(p)
         msg = ux.MSG_END.format(total_hms,ellapsed_hms,penalty_hms)
         send_message(p, msg, remove_keyboard=True)
         if SEND_NOTIFICATIONS_TO_GROUP:
             msg_group = ux.MSG_END_NOTIFICATION.format(game.getGroupName(p), total_hms, ellapsed_hms, penalty_hms)
-            send_message(game.HISTORIC_GROUP, msg_group)
-        game.set_elapsed_and_penalty_and_compute_total(p, elapsed_sec, wrong_answers, penalty_sec)
-        game.saveGameData(p)
+            send_message(game.HISTORIC_GROUP, msg_group)        
+        game.save_game_data_in_airtable(p)
     else:
         pass
 
