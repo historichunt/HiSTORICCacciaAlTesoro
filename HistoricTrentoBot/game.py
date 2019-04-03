@@ -2,22 +2,24 @@
 
 import utility
 import key
+from airtable import Airtable
 from random import shuffle
 import person
-from airtable import Airtable
 import params
 
 #################
 # INDOVINELLI
 #################
 
-INDOVINELLI = utility.import_url_csv_to_dict_list(key.INDOVINELLI_URL)
+INDOVINELLI_TABLE = Airtable(key.AIRTABLE_TABLE_MISSIONI_ID, 'Indovinelli', api_key=key.AIRTABLE_API_KEY)
+
+INDOVINELLI = [row['fields'] for row in utility.utify(INDOVINELLI_TABLE.get_all())]
 # NOME, FINALE, INDOVINELLO, INDIZIO_1, INDIZIO_2, SOLUZIONI, INDIRIZZO, GPS
 
-INDOVINELLI_NOT_FINAL = [row for row in INDOVINELLI if row['FINALE'] != 'TRUE']
-INDOVINELLI_FINAL = [row for row in INDOVINELLI if row['FINALE'] == 'TRUE']
+INDOVINELLI_NOT_FINAL = [row for row in INDOVINELLI if not row.get('FINALE', False)]
+INDOVINELLI_FINAL = [row for row in INDOVINELLI if row.get('FINALE', False)]
 
-def getRandomRiddles():
+def getRandomIndovinello():
     riddle_random = list(INDOVINELLI_NOT_FINAL)
     shuffle(riddle_random)
     riddle_random.extend(INDOVINELLI_FINAL)
@@ -27,8 +29,10 @@ def getRandomRiddles():
 # GIOCHI
 #################
 
-GIOCHI = utility.import_url_csv_to_dict_list(key.GIOCHI_URL)
-# NOME, ISTRUZIONI, IMG_URL, SOLUZIONI
+GIOCHI_TABLE = Airtable(key.AIRTABLE_TABLE_MISSIONI_ID, 'Giochi', api_key=key.AIRTABLE_API_KEY)
+GIOCHI = [row['fields'] for row in utility.utify(GIOCHI_TABLE.get_all())]
+# NOME, ISTRUZIONI, IMG, SOLUZIONI
+# IMG['url'] -> url of image
 
 def getRandomGiochi():
     giochi_random = list(GIOCHI)
@@ -39,7 +43,9 @@ def getRandomGiochi():
 # SURVEY
 #################
 
-SURVEY = [row for row in utility.import_url_csv_to_dict_list(key.SURVEY_URL) if not row['DOMANDA'].startswith('#')]
+SURVEY_TABLE = Airtable(key.AIRTABLE_CONFIG_ID, 'Survey', api_key=key.AIRTABLE_API_KEY)
+SURVEY = [row['fields'] for row in utility.utify(SURVEY_TABLE.get_all())]
+
 # DOMANDA, RISPOSTE
 SURVEY_QUESTIONS = [s['DOMANDA'] for s in SURVEY]
 
@@ -47,13 +53,13 @@ def getSurveyData():
     return list(SURVEY)
 
 #################
-# GAME TABLE
+# RESULT GAME TABLE
 #################
 
-GAMES_TABLE = Airtable(key.AIRTABLE_TABLE_ID, 'Games', api_key=key.AIRTABLE_API_KEY)
-SURVEY_TABLE = Airtable(key.AIRTABLE_TABLE_ID, 'Survey', api_key=key.AIRTABLE_API_KEY)
+RESULTS_GAME_TABLE = Airtable(key.AIRTABLE_TABLE_RISULTATI_ID, 'Games', api_key=key.AIRTABLE_API_KEY)
+RESULTS_SURVEY_TABLE = Airtable(key.AIRTABLE_TABLE_RISULTATI_ID, 'Survey', api_key=key.AIRTABLE_API_KEY)
 
-GENERAL_HEADERS = \
+RESULTS_GAME_TABLE_HEADERS = \
     ['ID', 'GROUP_NAME', 'NOME', 'COGNOME', 'USERNAME', 'EMAIL', \
     'START_TIME', 'END_TIME', 'ELAPSED', 'WRONG ANSWERS', 'PENALTY TIME', 'TOTAL TIME']
 
@@ -61,19 +67,19 @@ def save_game_data_in_airtable(p):
     import photos
     game_data = p.tmp_variables
     games_row = {}
-    for h in GENERAL_HEADERS:
+    for h in RESULTS_GAME_TABLE_HEADERS:
         games_row[h] = game_data[h]
     games_row['GROUP_SELFIES'] = [
         {'url': photos.prepareAndGetPhotoTelegramUrl(file_id)} 
         for file_id in game_data['GROUP_SELFIES']
     ]
-    GAMES_TABLE.insert(games_row)
+    RESULTS_GAME_TABLE.insert(games_row)
     survey_row = {'ID': game_data['ID']}
     for question in SURVEY_QUESTIONS:
         questions_data = game_data['SURVEY_INFO']['COMPLETED']
         answer = next(row['ANSWER'] for row in questions_data if row['DOMANDA'] == question)
         survey_row[question] = answer
-    SURVEY_TABLE.insert(survey_row)
+    RESULTS_SURVEY_TABLE.insert(survey_row)
 
 
 ################################
@@ -88,7 +94,7 @@ VALIDATOR = person.getPersonById(key.VALIDATOR_ID)
 ################################
 
 def resetGame(p):
-    riddles = getRandomRiddles()
+    riddles = getRandomIndovinello()
     games = getRandomGiochi()
     survey = getSurveyData()
     p.tmp_variables = {}
@@ -176,14 +182,14 @@ def set_elapsed_and_penalty_and_compute_total(p):
 def getEndTime(p):
     return p.tmp_variables['END_TIME']
 
-def getTotalRiddles(p):
+def getTotalIndovinelli(p):
     return p.tmp_variables['INDOVINELLI_INFO']['TOTAL']
 
-def remainingRiddlesNumber(p):
+def remainingIndovinelloNumber(p):
     riddle_info = p.tmp_variables['INDOVINELLI_INFO']
     return len(riddle_info['TODO'])
 
-def completedRiddlesNumber(p):
+def completedIndovinelloNumber(p):
     riddle_info = p.tmp_variables['INDOVINELLI_INFO']
     return len(riddle_info['COMPLETED'])
 
@@ -198,7 +204,7 @@ def getCurrentRiddle(p):
     riddle_info = p.tmp_variables['INDOVINELLI_INFO']
     return riddle_info['CURRENT']
 
-def getCompletedRiddles(p):
+def getCompletedIndovinello(p):
     game_info = p.tmp_variables['INDOVINELLI_INFO']
     return game_info['COMPLETED']
 

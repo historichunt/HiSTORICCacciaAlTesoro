@@ -85,4 +85,4 @@ MSG_WRONG_INPUT_USE_TEXT_OR_BUTTONS = '⛔️ Input non valido, devi rispondere 
 MSG_WRONG_INPUT_SEND_PHOTO = "⛔️ Input non valido, devi mandarmi una foto. Usa l'iconda della macchina fotografica 📷 qua in basso o allega un'immagine dalla tua galleria con la graffetta 📎."
 MSG_WRONG_INPUT_SEND_LOCATION = '⛔️ Input non valido, devi mandarmi la tua posizione premendo il pulsante qua sotto o premendo sul simbolo della graffetta in basso 📎 e selezionando POSIZIONE dal menu che compare. Ricordati che devi avere il GPS attivo.'
 MSG_EMAIL = '📧 Potete lasciarci i vostri indirizzi email (separati da spazio) per informarvi di altre iniziative simili?'
-MSG_EMAIL_WRONG = '⛔️ Input non valido, devi inserire uno o più indirizzi email o premere su SALTA.'
+MSG_EMAIL_WRONG = '⛔️ Input non valido, devi inserire uno o più indirizzi email o premere su ⏩ SALTA.'

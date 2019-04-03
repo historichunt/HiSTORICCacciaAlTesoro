@@ -33,12 +33,11 @@ import photos
 
 ########################
 ACTIVE_HUNT = True
-WORK_IN_PROGRESS = True
+WORK_IN_PROGRESS = False
 SEND_NOTIFICATIONS_TO_GROUP = False
 MANUAL_VALIDATION_SELFIE_INDOVINELLLI = False
-JUMP_TO_SURVEY_AFTER = 2 # False
+JUMP_TO_SURVEY_AFTER = False # 2
 ########################
-
 
 # ================================
 # TEMPLATE API CALLS
@@ -535,8 +534,8 @@ def state_INDOVINELLO(p, **kwargs):
         game.set_mission_start_time(p)
         current_riddle['start_time'] = dtu.nowUtcIsoFormat()
         current_riddle['wrong_answers'] = 0
-        riddle_number = game.completedRiddlesNumber(p) + 1
-        total_riddles = game.getTotalRiddles(p)
+        riddle_number = game.completedIndovinelloNumber(p) + 1
+        total_riddles = game.getTotalIndovinelli(p)
         if params.DISCARD_TRAVELING_TIME:
             send_message(p, ux.MSG_START_TIME_MISSION, sleepDelay=True)
         msg = '*Indovinello {}/{}*: {}'.format(riddle_number, total_riddles, current_riddle['INDOVINELLO'])
@@ -603,7 +602,7 @@ def state_SELFIE_INDOVINELLO(p, **kwargs):
             current_riddle['SELFIE'] = photo_file_id
             if MANUAL_VALIDATION_SELFIE_INDOVINELLLI:
                 squadra_name = game.getGroupName(p)
-                riddle_number = game.completedRiddlesNumber(p) + 1
+                riddle_number = game.completedIndovinelloNumber(p) + 1
                 indovinello_name = current_riddle['NOME']
                 # store a random password to make sure the approval is correct
                 # (the team may have restarted the game in the meanwhile):
@@ -636,15 +635,15 @@ def approve_selfie_indovinello(p, approved, signature):
         photo_file_id = current_riddle['SELFIE']
         if SEND_NOTIFICATIONS_TO_GROUP:
             squadra_name = game.getGroupName(p)
-            riddle_number = game.completedRiddlesNumber(p) + 1
+            riddle_number = game.completedIndovinelloNumber(p) + 1
             indovinello_name = current_riddle['NOME']
             caption = 'Selfie indovinello {} squadra {} per indovinello {}'.format(riddle_number, squadra_name, indovinello_name)
             send_photo_url(game.HISTORIC_GROUP, photo_file_id, caption=caption)
         game.appendGroupSelfieFileId(p, photo_file_id)
         game.setCurrentRiddleAsCompleted(p, photo_file_id)
         sendWaitingAction(p, sleep_time=1)
-        jump_to_survey = JUMP_TO_SURVEY_AFTER and game.completedRiddlesNumber(p) == JUMP_TO_SURVEY_AFTER
-        if jump_to_survey or game.remainingRiddlesNumber(p) == 0:
+        jump_to_survey = JUMP_TO_SURVEY_AFTER and game.completedIndovinelloNumber(p) == JUMP_TO_SURVEY_AFTER
+        if jump_to_survey or game.remainingIndovinelloNumber(p) == 0:
             mission_ellapsed = game.set_mission_end_time(p)
             game.setEndTime(p)
             if params.DISCARD_TRAVELING_TIME:
@@ -675,7 +674,7 @@ def state_GIOCO(p, **kwargs):
         game_number = game.completedGamesNumber(p) + 1
         total_games = game.getTotalGames(p)
         msg = '*Gioco {}/{}*: {}'.format(game_number, total_games, current_game['ISTRUZIONI'])
-        send_photo_url(p, url=current_game['IMG_URL'])
+        send_photo_url(p, url=current_game['IMG'][0]['url'])
         send_message(p, msg)
         current_game['start_time'] = dtu.nowUtcIsoFormat()
         p.put()
@@ -722,7 +721,7 @@ def state_SURVEY(p, **kwargs):
     else:
         kb = p.getLastKeyboard()
         current_question = game.getCurrentQuestion(p)
-        question_type_open =  current_question['TYPE']=='Open'
+        question_type_open = current_question['TYPE'] == 'Open'
         if text_input:
             if text_input in utility.flatten(kb):
                 answer = '' if question_type_open else text_input
@@ -757,8 +756,7 @@ def state_EMAIL(p, **kwargs):
             if text_input == ux.BUTTON_SKIP_EMAIL:
                 redirectToState(p, END_STATE)
             else: 
-                email_split = text_input.split()
-                if any(re.match(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]+$", e) for e in email_split):                
+                if utility.check_email(text_input):                
                     game.setEmail(p, text_input)
                     redirectToState(p, END_STATE)
                 else:

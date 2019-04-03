@@ -3,6 +3,24 @@ import re
 import textwrap
 from collections import OrderedDict
 
+def utify(data):
+    # if this is a unicode string, return its string representation
+    if isinstance(data, unicode):
+        return data.encode('utf-8')
+    # if this is a list of values, return list of byteified values
+    if isinstance(data, list):
+        return [ utify(item) for item in data ]
+    # if this is a dictionary, return dictionary of byteified keys and values
+    # but only if we haven't already byteified it
+    if isinstance(data, dict):
+        return {utify(key): utify(value) for key, value in data.iteritems()}
+    # if it's anything else, return it in its original form
+    return data
+
+def check_email(text_input):
+    email_split = text_input.split()
+    return any(re.match(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]+$", e) for e in email_split)
+
 def import_url_csv_to_dict_list(url_csv, remove_new_line_escape=True): #escapeMarkdown=True
     import csv
     import requests
