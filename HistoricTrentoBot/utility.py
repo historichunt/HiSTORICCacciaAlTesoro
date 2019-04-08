@@ -21,6 +21,37 @@ def check_email(text_input):
     email_split = text_input.split()
     return any(re.match(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]+$", e) for e in email_split)
 
+def levenshtein(s1, s2):
+    if len(s1) < len(s2):
+        return levenshtein(s2, s1)
+
+    # len(s1) >= len(s2)
+    if len(s2) == 0:
+        return len(s1)
+
+    previous_row = range(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1 # j+1 instead of j since previous_row and current_row are one character longer
+            deletions = current_row[j] + 1       # than s2
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+    
+    return previous_row[-1]
+
+def answer_is_almost_correct(guess, solution_set):
+    solution_set_word = [x for x in solution_set if len(x)>=4]
+    if any(x.isdigit() for x in solution_set_word):
+        return False    
+    if min(len(x) for x in solution_set_word) <= 3:
+        return False
+    if any(x in solution_set_word for x in guess.split()):
+        return True
+    if min(levenshtein(guess, s) for s in solution_set_word) <= 2:
+        return True
+
 def import_url_csv_to_dict_list(url_csv, remove_new_line_escape=True): #escapeMarkdown=True
     import csv
     import requests
