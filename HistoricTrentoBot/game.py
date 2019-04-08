@@ -13,28 +13,34 @@ import params
 
 INDOVINELLI_TABLE = Airtable(key.AIRTABLE_TABLE_MISSIONI_ID, 'Indovinelli', api_key=key.AIRTABLE_API_KEY)
 
-INDOVINELLI = [row['fields'] for row in utility.utify(INDOVINELLI_TABLE.get_all())]
-# NOME, FINALE, INDOVINELLO, INDIZIO_1, INDIZIO_2, SOLUZIONI, INDIRIZZO, GPS
+def get_random_indovinelli():
+    INDOVINELLI = [row['fields'] for row in utility.utify(INDOVINELLI_TABLE.get_all())]
+    # NOME, FINALE, INDOVINELLO, INDIZIO_1, INDIZIO_2, SOLUZIONI, INDIRIZZO, GPS
 
-INDOVINELLI_NOT_FINAL = [row for row in INDOVINELLI if not row.get('FINALE', False)]
-INDOVINELLI_FINAL = [row for row in INDOVINELLI if row.get('FINALE', False)]
+    INDOVINELLI_NOT_FINAL = [row for row in INDOVINELLI if not row.get('FINALE', False)]
+    INDOVINELLI_FINAL = [row for row in INDOVINELLI if row.get('FINALE', False)]
 
-def getRandomIndovinello():
-    riddle_random = list(INDOVINELLI_NOT_FINAL)
-    shuffle(riddle_random)
-    riddle_random.extend(INDOVINELLI_FINAL)
-    return riddle_random
+    indovinello_random = list(INDOVINELLI_NOT_FINAL)
+    shuffle(indovinello_random)    
+    # random_indexes = [INDOVINELLI_NOT_FINAL.index(x) for x in indovinello_random]        
+    indovinello_random.extend(INDOVINELLI_FINAL)    
+    # if True:
+    #     from main import tell_admin   
+    #     random_indovinelli_names = [x['NOME'] for x in indovinello_random]     
+    #     tell_admin("Random indexes: {}".format(random_indexes))
+    #     tell_admin("Random indovinelli: {}".format(random_indovinelli_names))
+    return indovinello_random
 
 #################
 # GIOCHI
 #################
 
-GIOCHI_TABLE = Airtable(key.AIRTABLE_TABLE_MISSIONI_ID, 'Giochi', api_key=key.AIRTABLE_API_KEY)
-GIOCHI = [row['fields'] for row in utility.utify(GIOCHI_TABLE.get_all())]
-# NOME, ISTRUZIONI, IMG, SOLUZIONI
-# IMG['url'] -> url of image
+def get_random_giochi():
+    GIOCHI_TABLE = Airtable(key.AIRTABLE_TABLE_MISSIONI_ID, 'Giochi', api_key=key.AIRTABLE_API_KEY)
+    GIOCHI = [row['fields'] for row in utility.utify(GIOCHI_TABLE.get_all())]
+    # NOME, ISTRUZIONI, IMG, SOLUZIONI
+    # IMG['url'] -> url of image
 
-def getRandomGiochi():
     giochi_random = list(GIOCHI)
     shuffle(giochi_random)
     return giochi_random
@@ -49,7 +55,7 @@ SURVEY = [row['fields'] for row in utility.utify(SURVEY_TABLE.get_all())]
 # DOMANDA, RISPOSTE
 SURVEY_QUESTIONS = [s['DOMANDA'] for s in SURVEY]
 
-def getSurveyData():
+def get_survey_data():
     return list(SURVEY)
 
 #################
@@ -61,14 +67,17 @@ RESULTS_SURVEY_TABLE = Airtable(key.AIRTABLE_TABLE_RISULTATI_ID, 'Survey', api_k
 
 RESULTS_GAME_TABLE_HEADERS = \
     ['ID', 'GROUP_NAME', 'NOME', 'COGNOME', 'USERNAME', 'EMAIL', \
-    'START_TIME', 'END_TIME', 'ELAPSED', 'WRONG ANSWERS', 'PENALTY TIME', 'TOTAL TIME']
+    'START_TIME', 'END_TIME', 'ELAPSED GAME', 'ELAPSED MISSIONS', \
+    'WRONG ANSWERS', 'PENALTY TIME', 'TOTAL TIME GAME', 'TOTAL TIME MISSIONS']
 
 def save_game_data_in_airtable(p):
     import photos
+    import json
     game_data = p.tmp_variables
     games_row = {}
     for h in RESULTS_GAME_TABLE_HEADERS:
         games_row[h] = game_data[h]
+    games_row['GAME VARS'] = json.dumps(game_data,ensure_ascii=False)
     games_row['GROUP_SELFIES'] = [
         {'url': photos.prepareAndGetPhotoTelegramUrl(file_id)} 
         for file_id in game_data['GROUP_SELFIES']
@@ -94,9 +103,9 @@ VALIDATOR = person.getPersonById(key.VALIDATOR_ID)
 ################################
 
 def resetGame(p):
-    riddles = getRandomIndovinello()
-    games = getRandomGiochi()
-    survey = getSurveyData()
+    indovinelli = get_random_indovinelli()
+    games = get_random_giochi()
+    survey = get_survey_data()
     p.tmp_variables = {}
     p.tmp_variables['ID'] = p.getId()
     p.tmp_variables['NOME'] = p.getFirstName(escapeMarkdown=False)
@@ -104,8 +113,8 @@ def resetGame(p):
     p.tmp_variables['USERNAME'] = p.getUsername(escapeMarkdown=False)
     p.tmp_variables['EMAIL'] = ''
     p.tmp_variables['MISSION_TIMES'] = []
-    p.tmp_variables['INDOVINELLI_INFO'] = {'TODO': riddles, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(riddles)}
-    # riddle -> 'PHOTO_FILE_ID'
+    p.tmp_variables['INDOVINELLI_INFO'] = {'TODO': indovinelli, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(indovinelli)}
+    # indovinello -> 'PHOTO_FILE_ID'
     p.tmp_variables['GIOCHI_INFO'] = {'TODO': games, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(games)}
     p.tmp_variables['SURVEY_INFO'] = {'TODO': survey, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(survey)}
     # question -> 'ANSWER'
@@ -114,7 +123,7 @@ def resetGame(p):
     p.tmp_variables['START_TIME'] = ''
     p.tmp_variables['END_TIME'] = ''
     p.tmp_variables['ELAPSED'] = 0 # seconds
-    p.tmp_variables['WRONG ANSWERS'] = 0
+    p.tmp_variables['WRONG ANSWERS'] = 0    
     p.tmp_variables['PENALTY TIME'] = 0 # seconds
     p.tmp_variables['TOTAL TIME'] = 0 # seconds
 
@@ -159,25 +168,28 @@ def set_mission_end_time(p):
 def set_elapsed_and_penalty_and_compute_total(p):
     import date_time_util as dtu
     tvar = p.tmp_variables    
-    if params.DISCARD_TRAVELING_TIME:        
-        elapsed_sec = sum(dtu.delta_seconds_iso(s, e) for s,e in tvar['MISSION_TIMES'])
-    else:
-        end_time = getEndTime(p)
-        start_time = getStartTime(p)
-        elapsed_sec = dtu.delta_seconds_iso(start_time, end_time)
+    end_time = getEndTime(p)
+    start_time = getStartTime(p)
+    
+    elapsed_sec_game = dtu.delta_seconds_iso(start_time, end_time)
+    elapsed_sec_missions = sum(dtu.delta_seconds_iso(s, e) for s,e in tvar['MISSION_TIMES'])            
 
     wrong_answers, penalty_sec = get_total_penalty(p)
-    total_sec = elapsed_sec + penalty_sec
-    total_hms = utility.sec_to_hms(total_sec)
-    ellapsed_hms = utility.sec_to_hms(elapsed_sec)
     penalty_hms = utility.sec_to_hms(penalty_sec)
+    total_sec_game = elapsed_sec_game + penalty_sec
+    total_sec_game_missions = elapsed_sec_missions + penalty_sec
+    ellapsed_hms_game = utility.sec_to_hms(elapsed_sec_game)
+    total_hms_game = utility.sec_to_hms(total_sec_game)    
+    ellapsed_hms_missions = utility.sec_to_hms(elapsed_sec_missions)
+    total_hms_missions = utility.sec_to_hms(total_sec_game_missions)    
     
-    tvar['ELAPSED'] = elapsed_sec
-    tvar['WRONG ANSWERS'] = wrong_answers
+    tvar['ELAPSED GAME'] = elapsed_sec_game
+    tvar['ELAPSED MISSIONS'] = elapsed_sec_missions
     tvar['PENALTY TIME'] = penalty_sec # seconds
-    tvar['TOTAL TIME'] = elapsed_sec + penalty_sec
+    tvar['TOTAL TIME GAME'] = elapsed_sec_game + penalty_sec
+    tvar['TOTAL TIME MISSIONS'] = elapsed_sec_missions + penalty_sec
     p.put()
-    return total_hms, ellapsed_hms, penalty_hms
+    return penalty_hms, total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions
 
 def getEndTime(p):
     return p.tmp_variables['END_TIME']
@@ -186,34 +198,34 @@ def getTotalIndovinelli(p):
     return p.tmp_variables['INDOVINELLI_INFO']['TOTAL']
 
 def remainingIndovinelloNumber(p):
-    riddle_info = p.tmp_variables['INDOVINELLI_INFO']
-    return len(riddle_info['TODO'])
+    indovinello_info = p.tmp_variables['INDOVINELLI_INFO']
+    return len(indovinello_info['TODO'])
 
 def completedIndovinelloNumber(p):
-    riddle_info = p.tmp_variables['INDOVINELLI_INFO']
-    return len(riddle_info['COMPLETED'])
+    indovinello_info = p.tmp_variables['INDOVINELLI_INFO']
+    return len(indovinello_info['COMPLETED'])
 
-def setNextRiddle(p):
-    riddle_info = p.tmp_variables['INDOVINELLI_INFO']
-    todo_riddles = riddle_info['TODO']
-    current_riddle = todo_riddles.pop(0)
-    riddle_info['CURRENT'] = current_riddle
-    return current_riddle
+def setNextIndovinello(p):
+    indovinello_info = p.tmp_variables['INDOVINELLI_INFO']
+    todo_indovinelli = indovinello_info['TODO']
+    current_indovinello = todo_indovinelli.pop(0)
+    indovinello_info['CURRENT'] = current_indovinello
+    return current_indovinello
 
-def getCurrentRiddle(p):
-    riddle_info = p.tmp_variables['INDOVINELLI_INFO']
-    return riddle_info['CURRENT']
+def getCurrentIndovinello(p):
+    indovinello_info = p.tmp_variables['INDOVINELLI_INFO']
+    return indovinello_info['CURRENT']
 
 def getCompletedIndovinello(p):
     game_info = p.tmp_variables['INDOVINELLI_INFO']
     return game_info['COMPLETED']
 
-def setCurrentRiddleAsCompleted(p, photo_file_id):
-    riddle_info = p.tmp_variables['INDOVINELLI_INFO']
-    current_riddle = riddle_info['CURRENT']
-    current_riddle['PHOTO_FILE_ID'] = photo_file_id
-    riddle_info['COMPLETED'].append(current_riddle)
-    riddle_info['CURRENT'] = None
+def setCurrentIndovinelloAsCompleted(p, photo_file_id):
+    indovinello_info = p.tmp_variables['INDOVINELLI_INFO']
+    current_indovinello = indovinello_info['CURRENT']
+    current_indovinello['PHOTO_FILE_ID'] = photo_file_id
+    indovinello_info['COMPLETED'].append(current_indovinello)
+    indovinello_info['CURRENT'] = None
 
 def getTotalGames(p):
     return p.tmp_variables['GIOCHI_INFO']['TOTAL']
@@ -246,6 +258,22 @@ def setCurrentGameAsCompleted(p):
     game_info['COMPLETED'].append(game_info['CURRENT'])
     game_info['CURRENT'] = None
 
+def increase_wrong_answers_current_indovinello(p, put=True):
+    indovinello_info = p.tmp_variables['INDOVINELLI_INFO']
+    current_indovinello = indovinello_info['CURRENT']
+    current_indovinello['wrong_answers'] += 1
+    p.tmp_variables['WRONG ANSWERS'] += 1
+    if put:
+        p.put()                
+
+def increase_wrong_answers_current_game(p, put=True):
+    game_info = p.tmp_variables['GIOCHI_INFO']
+    current_game = game_info['CURRENT']
+    current_game['wrong_answers'] += 1
+    p.tmp_variables['WRONG ANSWERS'] += 1
+    if put:
+        p.put()                
+
 def get_penalty_current_game(p):
     wrong_answers = 0
     current_game = getCurrentGame(p)
@@ -256,19 +284,20 @@ def get_penalty_current_game(p):
 
 def get_penalty_current_indovinello(p):
     wrong_answers = 0
-    current_indovinello = getCurrentRiddle(p)
+    current_indovinello = getCurrentIndovinello(p)
     if current_indovinello:
         wrong_answers += current_indovinello.get('wrong_answers',0)
     penalty_time_sec = wrong_answers * params.SEC_PENALITY_WRONG_ANSWER
     return wrong_answers, penalty_time_sec
 
-def get_total_penalty(p):
-    wrong_answers = 0
-    for var in (p.tmp_variables['INDOVINELLI_INFO'], p.tmp_variables['GIOCHI_INFO']):
-        wrong_answers += sum(g.get('wrong_answers',0) for g in var['COMPLETED'])
-        if var['CURRENT']:
-            wrong_answers += var['CURRENT'].get('wrong_answers',0)
-        penalty_time_sec = wrong_answers * params.SEC_PENALITY_WRONG_ANSWER
+def get_total_penalty(p):    
+    wrong_answers = p.tmp_variables['WRONG ANSWERS']
+    # wrong_answers = 0
+    # for var in (p.tmp_variables['INDOVINELLI_INFO'], p.tmp_variables['GIOCHI_INFO']):
+    #     wrong_answers += sum(g.get('wrong_answers',0) for g in var['COMPLETED'])
+    #     if var['CURRENT']:
+    #         wrong_answers += var['CURRENT'].get('wrong_answers',0)
+    penalty_time_sec = wrong_answers * params.SEC_PENALITY_WRONG_ANSWER
     return wrong_answers, penalty_time_sec
 
 def getTotalQuestions(p):

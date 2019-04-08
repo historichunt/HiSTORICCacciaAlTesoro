@@ -12,7 +12,6 @@ MIN_SEC_INDIZIO_1 = 60
 MIN_SEC_INDIZIO_2 = 60
 GPS_TOLERANCE_METERS = 80
 SEC_PENALITY_WRONG_ANSWER = 20
-DISCARD_TRAVELING_TIME = True # if set to true sum only times for each missions (no travelling time)
 
 
 
