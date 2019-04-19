@@ -86,6 +86,13 @@ def send_photo_url(p, url, kb=None, caption=None, inline_keyboard=False):
             kb_flat = utility.flatten(kb)[:11]  # no more than 11
             main_fb.sendMessageWithQuickReplies(p, msg, kb_flat)
 
+def send_audio_mp3_url(p, url, kb=None, inline_keyboard=False):
+    if p.isTelegramUser():
+        main_telegram.sendAudioViaUrlOrId(p.chat_id, url, kb, inline_keyboard)
+    else:
+        pass
+
+
 def sendDocument(p, file_id):
     if p.isTelegramUser():
         main_telegram.sendDocument(p.chat_id, file_id)
@@ -585,9 +592,16 @@ def state_GIOCO(p, **kwargs):
         current_game = game.setNextGame(p)        
         current_game['wrong_answers'] = 0
         game_number = game.completedGamesNumber(p) + 1
-        total_games = game.getTotalGames(p)
+        total_games = game.getTotalGames(p)        
+        url_attachment = current_game['ATTACHMENT'][0]['url']
+        attach_type = url_attachment[-3:].lower()
+        if attach_type in ['jpg','png']:
+            send_photo_url(p, url=url_attachment)
+        elif attach_type in ['mp3']:
+            send_audio_mp3_url(p, url=url_attachment)        
+        else:
+            assert False
         msg = '*Gioco {}/{}*: {}'.format(game_number, total_games, current_game['ISTRUZIONI'])
-        send_photo_url(p, url=current_game['IMG'][0]['url'])
         send_message(p, msg)
         current_game['start_time'] = dtu.nowUtcIsoFormat()
         p.put()

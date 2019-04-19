@@ -30,12 +30,3 @@ libraries:
 - name: ssl
   version: latest
 
-skip_files:
-  - ^Makefile$
-  - ^env$
-  # Defaults
-  - ^(.*/)?#.*#$
-  - ^(.*/)?.*~$
-  - ^(.*/)?.*\.py[co]$
-  - ^(.*/)?.*/RCS/.*$
-  - ^(.*/)?\..*$

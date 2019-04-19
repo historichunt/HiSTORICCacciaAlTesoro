@@ -161,6 +161,7 @@ def sendPhotoViaUrlOrId(chat_id, url_id, kb=None, caption=None, inline_keyboard=
     except:
         report_exception()
 
+
 def sendPhotoFromPngImage(chat_id, img_data, filename='image.png'):
     try:
         img = [('photo', (filename, img_data, 'image/png'))]
@@ -171,6 +172,39 @@ def sendPhotoFromPngImage(chat_id, img_data, filename='image.png'):
         check_telegram_response(resp)
     except:
         report_exception()
+
+# ================================
+# SEND AUDIO
+# ================================
+
+def sendAudioViaUrlOrId(chat_id, url_id, kb=None, inline_keyboard=False):
+    try:
+        if kb:
+            if inline_keyboard:
+                replyMarkup = {  # InlineKeyboardMarkup
+                    'inline_keyboard': kb
+                }
+            else:
+                replyMarkup = {  # ReplyKeyboardMarkup
+                    'keyboard': kb,
+                    'resize_keyboard': True,
+                }
+        else:
+            replyMarkup = {}
+        data = {
+            'chat_id': chat_id,
+            'audio': url_id,
+            'reply_markup': json.dumps(replyMarkup),
+        }
+        resp = requests.post(key.TELEGRAM_API_URL + 'sendAudio', data)
+        check_telegram_response(resp)
+    except:
+        report_exception()
+
+
+# ================================
+# Callback Query
+# ================================
 
 def answerCallbackQuery(callback_query_id, text):
     try:
@@ -183,6 +217,7 @@ def answerCallbackQuery(callback_query_id, text):
         check_telegram_response(resp)
     except:
         report_exception()
+
 
 def deleteMessage(chat_id, message_id):
     try:

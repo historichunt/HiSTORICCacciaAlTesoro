@@ -14,22 +14,22 @@ import params
 INDOVINELLI_TABLE = Airtable(key.AIRTABLE_TABLE_MISSIONI_ID, 'Indovinelli', api_key=key.AIRTABLE_API_KEY)
 
 def get_random_indovinelli():
-    INDOVINELLI = [row['fields'] for row in utility.utify(INDOVINELLI_TABLE.get_all())]
+    INDOVINELLI = [row['fields'] for row in utility.utify(INDOVINELLI_TABLE.get_all()) if row['fields'].get('ACTIVE',False)]
     # NOME, FINALE, INDOVINELLO, INDIZIO_1, INDIZIO_2, SOLUZIONI, INDIRIZZO, GPS
 
     INDOVINELLI_NOT_FINAL = [row for row in INDOVINELLI if not row.get('FINALE', False)]
     INDOVINELLI_FINAL = [row for row in INDOVINELLI if row.get('FINALE', False)]
 
-    indovinello_random = list(INDOVINELLI_NOT_FINAL)
-    shuffle(indovinello_random)    
-    # random_indexes = [INDOVINELLI_NOT_FINAL.index(x) for x in indovinello_random]        
-    indovinello_random.extend(INDOVINELLI_FINAL)    
+    indovinelli_random = list(INDOVINELLI_NOT_FINAL)
+    shuffle(indovinelli_random)    
+    # random_indexes = [INDOVINELLI_NOT_FINAL.index(x) for x in indovinelli_random]        
+    indovinelli_random.extend(INDOVINELLI_FINAL)    
     # if True:
     #     from main import tell_admin   
-    #     random_indovinelli_names = [x['NOME'] for x in indovinello_random]     
+    #     random_indovinelli_names = [x['NOME'] for x in indovinelli_random]     
     #     tell_admin("Random indexes: {}".format(random_indexes))
     #     tell_admin("Random indovinelli: {}".format(random_indovinelli_names))
-    return indovinello_random
+    return indovinelli_random
 
 #################
 # GIOCHI
@@ -37,9 +37,9 @@ def get_random_indovinelli():
 
 def get_random_giochi():
     GIOCHI_TABLE = Airtable(key.AIRTABLE_TABLE_MISSIONI_ID, 'Giochi', api_key=key.AIRTABLE_API_KEY)
-    GIOCHI = [row['fields'] for row in utility.utify(GIOCHI_TABLE.get_all())]
-    # NOME, ISTRUZIONI, IMG, SOLUZIONI
-    # IMG['url'] -> url of image
+    GIOCHI = [row['fields'] for row in utility.utify(GIOCHI_TABLE.get_all()) if row['fields'].get('ACTIVE',False)]
+    # NOME, ISTRUZIONI, ATTACHMENT, SOLUZIONI
+    # ATTACHMENT['url'] -> url of attachment
 
     giochi_random = list(GIOCHI)
     shuffle(giochi_random)
