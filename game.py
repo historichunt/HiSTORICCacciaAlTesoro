@@ -15,7 +15,7 @@ INDOVINELLI_TABLE = Airtable(key.AIRTABLE_TABLE_MISSIONI_ID, 'Indovinelli', api_
 
 def get_random_indovinelli():
     INDOVINELLI = [row['fields'] for row in utility.utify(INDOVINELLI_TABLE.get_all()) if row['fields'].get('ACTIVE',False)]
-    # NOME, FINALE, INDOVINELLO, INDIZIO_1, INDIZIO_2, SOLUZIONI, INDIRIZZO, GPS
+    # NOME, FINALE, INDOVINELLO, INDIZIO_1, INDIZIO_2, SOLUZIONI, GPS, NOTE OPZIONALI
 
     INDOVINELLI_NOT_FINAL = [row for row in INDOVINELLI if not row.get('FINALE', False)]
     INDOVINELLI_FINAL = [row for row in INDOVINELLI if row.get('FINALE', False)]

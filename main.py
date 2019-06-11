@@ -499,8 +499,8 @@ def state_INDOVINELLO(p, **kwargs):
                 current_indovinello['end_time'] = dtu.nowUtcIsoFormat()
                 send_message(p, ux.MSG_ANSWER_OK)
                 redirectToState(p, SELFIE_INDOVINELLO_STATE)
-            elif utility.answer_is_almost_correct(text_input.upper(), correct_answers_upper_word_set):
-                send_message(p, ux.MSG_ANSWER_ALMOST)
+            # elif utility.answer_is_almost_correct(text_input.upper(), correct_answers_upper_word_set):
+            #     send_message(p, ux.MSG_ANSWER_ALMOST)
             else:
                 game.increase_wrong_answers_current_indovinello(p)
                 wrong_answers, penalty_sec = game.get_total_penalty(p)
@@ -594,12 +594,13 @@ def state_GIOCO(p, **kwargs):
         game_number = game.completedGamesNumber(p) + 1
         total_games = game.getTotalGames(p)        
         url_attachment = current_game['ATTACHMENT'][0]['url']
-        attach_type = url_attachment[-3:].lower()
-        if attach_type in ['jpg','png']:
+        attach_type = url_attachment.split('.')[-1].lower()
+        if attach_type in ['jpg','png','jpeg']:
             send_photo_url(p, url=url_attachment)
         elif attach_type in ['mp3']:
             send_audio_mp3_url(p, url=url_attachment)        
-        else:
+        else:            
+            logging.error("Found attach_type: {}".format(attach_type))
             assert False
         msg = '*Gioco {}/{}*: {}'.format(game_number, total_games, current_game['ISTRUZIONI'])
         send_message(p, msg)
@@ -698,7 +699,7 @@ def state_END(p, **kwargs):
         penalty_hms, total_hms_game, ellapsed_hms_game, \
         total_hms_missions, ellapsed_hms_missions = game.set_elapsed_and_penalty_and_compute_total(p)
         msg = ux.MSG_END.format(penalty_hms, total_hms_game, ellapsed_hms_game, \
-            ellapsed_hms_missions, total_hms_missions)
+            total_hms_missions, ellapsed_hms_missions)
         send_message(p, msg, remove_keyboard=True)
         if SEND_NOTIFICATIONS_TO_GROUP:
             msg_group = ux.MSG_END_NOTIFICATION.format(game.getGroupName(p), penalty_hms, \
@@ -815,6 +816,13 @@ def deal_with_universal_command(p, text):
     if text.startswith('/start'):
         state_INITIAL(p, text_input=text)
         return True
+    # if text.startswith('/test'):
+    #     import time
+    #     repetitions = int(text.split()[1])
+    #     for i in range(repetitions):
+    #         send_message(p, "Test {}".format(i+1))
+    #         time.sleep(1)
+    #     return True
     if text == '/state':
         state = p.getState()
         msg = "You are in state {}: {}".format(state, STATES.get(state, '(unknown)'))
