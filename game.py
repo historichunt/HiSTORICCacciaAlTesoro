@@ -11,9 +11,8 @@ import params
 # INDOVINELLI
 #################
 
-INDOVINELLI_TABLE = Airtable(key.AIRTABLE_TABLE_MISSIONI_ID, 'Indovinelli', api_key=key.AIRTABLE_API_KEY)
-
-def get_random_indovinelli():
+def get_random_indovinelli(airtable_missioni_id):
+    INDOVINELLI_TABLE = Airtable(airtable_missioni_id, 'Indovinelli', api_key=key.AIRTABLE_API_KEY)
     INDOVINELLI = [row['fields'] for row in utility.utify(INDOVINELLI_TABLE.get_all()) if row['fields'].get('ACTIVE',False)]
     # NOME, FINALE, INDOVINELLO, INDIZIO_1, INDIZIO_2, SOLUZIONI, GPS, NOTE OPZIONALI
 
@@ -35,8 +34,8 @@ def get_random_indovinelli():
 # GIOCHI
 #################
 
-def get_random_giochi():
-    GIOCHI_TABLE = Airtable(key.AIRTABLE_TABLE_MISSIONI_ID, 'Giochi', api_key=key.AIRTABLE_API_KEY)
+def get_random_giochi(airtable_missioni_id):
+    GIOCHI_TABLE = Airtable(airtable_missioni_id, 'Giochi', api_key=key.AIRTABLE_API_KEY)
     GIOCHI = [row['fields'] for row in utility.utify(GIOCHI_TABLE.get_all()) if row['fields'].get('ACTIVE',False)]
     # NOME, ISTRUZIONI, ATTACHMENT, SOLUZIONI
     # ATTACHMENT['url'] -> url of attachment
@@ -62,9 +61,6 @@ def get_survey_data():
 # RESULT GAME TABLE
 #################
 
-RESULTS_GAME_TABLE = Airtable(key.AIRTABLE_TABLE_RISULTATI_ID, 'Games', api_key=key.AIRTABLE_API_KEY)
-RESULTS_SURVEY_TABLE = Airtable(key.AIRTABLE_TABLE_RISULTATI_ID, 'Survey', api_key=key.AIRTABLE_API_KEY)
-
 RESULTS_GAME_TABLE_HEADERS = \
     ['ID', 'GROUP_NAME', 'NOME', 'COGNOME', 'USERNAME', 'EMAIL', \
     'START_TIME', 'END_TIME', 'ELAPSED GAME', 'ELAPSED MISSIONS', \
@@ -74,6 +70,11 @@ def save_game_data_in_airtable(p):
     import photos
     import json
     game_data = p.tmp_variables
+    airtable_risultati_id = game_data['HUNT_INFO']['Airtable_Risultati_ID']
+
+    RESULTS_GAME_TABLE = Airtable(airtable_risultati_id, 'Games', api_key=key.AIRTABLE_API_KEY)
+    RESULTS_SURVEY_TABLE = Airtable(airtable_risultati_id, 'Survey', api_key=key.AIRTABLE_API_KEY)
+
     games_row = {}
     for h in RESULTS_GAME_TABLE_HEADERS:
         games_row[h] = game_data[h]
@@ -102,11 +103,14 @@ VALIDATOR = person.getPersonById(key.VALIDATOR_ID)
 # GAME MANAGEMENT FUNCTIONS
 ################################
 
-def resetGame(p):
-    indovinelli = get_random_indovinelli()
-    games = get_random_giochi()
+def resetGame(p, hunt_password):
+    hunt_info = key.HUNTS[hunt_password]
+    airtable_missioni_id = hunt_info['Airtable_Missioni_ID']    
+    indovinelli = get_random_indovinelli(airtable_missioni_id)
+    games = get_random_giochi(airtable_missioni_id)
     survey = get_survey_data()
     p.tmp_variables = {}
+    p.tmp_variables['HUNT_INFO'] = hunt_info
     p.tmp_variables['ID'] = p.getId()
     p.tmp_variables['NOME'] = p.getFirstName(escapeMarkdown=False)
     p.tmp_variables['COGNOME'] = p.getLastName(escapeMarkdown=False)
@@ -238,12 +242,19 @@ def completedGamesNumber(p):
     game_info = p.tmp_variables['GIOCHI_INFO']
     return len(game_info['COMPLETED'])
 
+def hasNextGame(p):
+    game_info = p.tmp_variables['GIOCHI_INFO']
+    todo_game = game_info['TODO']
+    return len(todo_game)>0
+
 def setNextGame(p):
     game_info = p.tmp_variables['GIOCHI_INFO']
     todo_game = game_info['TODO']
-    current_game = todo_game.pop(0)
-    game_info['CURRENT'] = current_game
-    return current_game
+    if todo_game:
+        current_game = todo_game.pop(0)
+        game_info['CURRENT'] = current_game
+        return current_game
+    return None
 
 def getCurrentGame(p):
     game_info = p.tmp_variables['GIOCHI_INFO']

@@ -32,7 +32,6 @@ import re
 import photos
 
 ########################
-ACTIVE_HUNT = True
 WORK_IN_PROGRESS = True
 SEND_NOTIFICATIONS_TO_GROUP = False
 MANUAL_VALIDATION_SELFIE_INDOVINELLLI = False
@@ -264,13 +263,6 @@ def reset_player(p, message=None):
         send_message(p, message, remove_keyboard=True)
     redirectToState(p, INITIAL_STATE)
 
-# ================================
-# START GAME
-# ================================
-def start_game(p):
-    send_message(p, ux.MSG_WELCOME.format(key.CURRENT_GAME_NAME))
-    redirectToState(p, START_STATE)
-
 
 # ================================
 # REDIRECT TO STATE
@@ -337,14 +329,22 @@ def state_INITIAL(p, **kwargs):
     if text_input is None:
         pass #don't reply anything
     else: #text_input.lower().startswith('/start'):
-        if not ACTIVE_HUNT:
+        if not key.ACTIVE_HUNT:
             msg = "Ciao 😀\n" \
-                  "In questo momento la caccia al tesoro non è attiva.\n" \
+                  "In questo momento non c'è nessuna caccia al tesoro attiva.\n" \
                   "Vieni a trovarci su [historic](https://www.historictrento.it) " \
-                  "o contattaci via email a historic.trento@gmail.com."
+                  "o mandaci una email a historic.trento@gmail.com."
             send_message(p, msg)
-        elif text_input.lower() == '/start {}'.format(key.CURRENT_GAME_SECRET_START_MSG.lower()):
-            start_game(p)
+        elif text_input.lower().startswith('/start '):
+            hunt_password = text_input.lower().split()[1]
+            if hunt_password in key.HUNTS:
+                game.resetGame(p, hunt_password)
+                game_name = key.HUNTS[hunt_password]['Name']
+                send_message(p, ux.MSG_WELCOME.format(game_name))
+                redirectToState(p, START_STATE)
+            else:
+                msg = '🙈 Non hai inserito la parola magica giusta per iniziare la caccia al tesoro.'
+                send_message(p, msg)
         else:
             msg = "Ciao 😀\n" \
                   "C'è una caccia al tesoro in corso ma devi utilizzare il QR code per accedere.\n" \
@@ -363,8 +363,7 @@ def state_START(p, **kwargs):
         if text_input in utility.flatten(kb):
             if text_input == ux.BUTTON_START_GAME:
                 send_message(p, ux.MSG_GO, remove_keyboard=True)
-                sendWaitingAction(p, sleep_time=1)
-                game.resetGame(p)
+                sendWaitingAction(p, sleep_time=1)                
                 redirectToState(p, NOME_GRUPPO_STATE)
         else:
             send_message(p, ux.MSG_WRONG_INPUT_USE_BUTTONS, kb)
@@ -568,15 +567,21 @@ def approve_selfie_indovinello(p, approved, signature):
         sendWaitingAction(p, sleep_time=1)
         jump_to_survey = JUMP_TO_SURVEY_AFTER and game.completedIndovinelloNumber(p) == JUMP_TO_SURVEY_AFTER
         if jump_to_survey or game.remainingIndovinelloNumber(p) == 0:
-            mission_ellapsed = game.set_mission_end_time(p)
+            game.set_mission_end_time(p)
             game.setEndTime(p)
             send_message(p, ux.MSG_TIME_STOP, sleepDelay=True)
             send_message(p, ux.MSG_CONGRATS_PRE_SURVEY, sleepDelay=True)
             send_message(p, ux.MSG_SURVEY_INTRO, sleepDelay=True)
             redirectToState(p, SURVEY_STATE)
-        else:
+        elif game.hasNextGame(p):
             send_message(p, ux.MSG_NEXT_GIOCO)
             redirectToState(p, GIOCO_STATE)
+        else:
+            # no game
+            game.set_mission_end_time(p)
+            send_message(p, ux.MSG_NEXT_MISSION)
+            sendWaitingAction(p, sleep_time=1)
+            redirectToState(p, GPS_STATE)
     else:
         send_message(p, ux.MSG_SELFIE_INDOVINELLO_WRONG)
     return True
@@ -589,7 +594,7 @@ def state_GIOCO(p, **kwargs):
     text_input = kwargs['text_input'] if 'text_input' in kwargs.keys() else None
     giveInstruction = text_input is None
     if giveInstruction:
-        current_game = game.setNextGame(p)        
+        current_game = game.setNextGame(p)      
         current_game['wrong_answers'] = 0
         game_number = game.completedGamesNumber(p) + 1
         total_games = game.getTotalGames(p)        
@@ -612,7 +617,7 @@ def state_GIOCO(p, **kwargs):
             correct_answers_upper = [x.strip() for x in current_game['SOLUZIONI'].upper().split(',')]
             if text_input.upper() in correct_answers_upper:
                 current_game['end_time'] = dtu.nowUtcIsoFormat()
-                mission_ellapsed = game.set_mission_end_time(p)
+                game.set_mission_end_time(p)
                 send_message(p, ux.MSG_ANSWER_OK)                
                 game.setCurrentGameAsCompleted(p)
                 send_message(p, ux.MSG_NEXT_MISSION)

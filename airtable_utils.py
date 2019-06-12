@@ -3,10 +3,10 @@
 import key
 from airtable import Airtable
 
-def downloadSelfies(table_name, output_dir):
+def downloadSelfies(hunt_password, output_dir):
     import requests
     import os
-    table_id = key.GAMES_ID[table_name]['Airtable_Risultati_ID']
+    table_id = key.HUNTS[hunt_password]['Airtable_Risultati_ID']
     GAME_TABLE = Airtable(table_id, 'Games', api_key=key.AIRTABLE_API_KEY)
     table_entries = GAME_TABLE.get_all()
     for entry in table_entries:
