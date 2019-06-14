@@ -16,17 +16,28 @@ def get_random_indovinelli(airtable_missioni_id):
     INDOVINELLI = [row['fields'] for row in utility.utify(INDOVINELLI_TABLE.get_all()) if row['fields'].get('ACTIVE',False)]
     # NOME, FINALE, INDOVINELLO, INDIZIO_1, INDIZIO_2, SOLUZIONI, GPS, NOTE OPZIONALI
 
-    INDOVINELLI_NOT_FINAL = [row for row in INDOVINELLI if not row.get('FINALE', False)]
-    INDOVINELLI_FINAL = [row for row in INDOVINELLI if row.get('FINALE', False)]
-
-    indovinelli_random = list(INDOVINELLI_NOT_FINAL)
-    shuffle(indovinelli_random)    
-    # random_indexes = [INDOVINELLI_NOT_FINAL.index(x) for x in indovinelli_random]        
-    indovinelli_random.extend(INDOVINELLI_FINAL)    
+    indovinelli_final = [row for row in INDOVINELLI if row.get('FINALE', False)]
+    shuffle(indovinelli_final)
+    indovinelli_not_final = [row for row in INDOVINELLI if not row.get('FINALE', False)]
+    indovinelli_not_final_categories = list(set(row.get('CATEGORIA', '') for row in indovinelli_not_final))
+    shuffle(indovinelli_not_final_categories)
+    indovinelli_not_final_CAT_BUCKET = {
+        cat:[row for row in indovinelli_not_final if row.get('CATEGORIA', '')==cat] 
+        for cat in indovinelli_not_final_categories
+    }
+    for indovinelli_list_cat in indovinelli_not_final_CAT_BUCKET.values():
+        shuffle(indovinelli_list_cat)        
+    indovinelli_random = []
+    for _ in range(len(indovinelli_not_final)):
+        for cat in indovinelli_not_final_categories:
+            if len(indovinelli_not_final_CAT_BUCKET[cat])>0:
+                indovinelli_random.append(indovinelli_not_final_CAT_BUCKET[cat].pop())
+    # random_indexes = [indovinelli_not_final.index(x) for x in indovinelli_random]        
+    indovinelli_random.extend(indovinelli_final)    
     # if True:
     #     from main import tell_admin   
     #     random_indovinelli_names = [x['NOME'] for x in indovinelli_random]     
-    #     tell_admin("Random indexes: {}".format(random_indexes))
+    #     # tell_admin("Random indexes: {}".format(random_indexes))
     #     tell_admin("Random indovinelli: {}".format(random_indovinelli_names))
     return indovinelli_random
 
