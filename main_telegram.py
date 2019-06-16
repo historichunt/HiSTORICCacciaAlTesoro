@@ -64,12 +64,14 @@ def send_message(p, msg, kb=None, markdown=True, inline_keyboard=False, one_time
             'inline_keyboard': kb
         }
     elif kb:
+        p.setLastKeyboard(kb, put=True)
         replyMarkup = {  # ReplyKeyboardMarkup
             'keyboard': kb,
             'resize_keyboard': True,
             'one_time_keyboard': one_time_keyboard,
         }
     elif remove_keyboard:
+        p.setLastKeyboard([], put=True)
         replyMarkup = {
             'remove_keyboard': remove_keyboard
         }

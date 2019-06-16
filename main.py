@@ -356,7 +356,6 @@ def state_START(p, **kwargs):
     giveInstruction = text_input is None
     if giveInstruction:
         kb = [[ux.BUTTON_START_GAME]]
-        p.setLastKeyboard(kb)
         send_message(p, ux.MSG_PRESS_TO_START, kb)
     else:
         kb = p.getLastKeyboard()
@@ -463,8 +462,11 @@ def state_INDOVINELLO(p, **kwargs):
         indovinello_number = game.completedIndovinelloNumber(p) + 1
         total_indovinelli = game.getTotalIndovinelli(p)
         msg = '*Indovinello {}/{}*: {}'.format(indovinello_number, total_indovinelli, current_indovinello['INDOVINELLO'])
-        kb = [['💡 PRIMO INDIZIO']]
-        send_message(p, msg, kb)
+        if current_indovinello.get('INDIZIO_1',False):
+            kb = [['💡 PRIMO INDIZIO']]
+            send_message(p, msg, kb)
+        else:
+            send_message(p, msg, remove_keyboard=True)
         p.put()
     else:
         if text_input != '':
@@ -475,23 +477,21 @@ def state_INDOVINELLO(p, **kwargs):
             if text_input == '💡 PRIMO INDIZIO':
                 before_string = current_indovinello['start_time']
                 ellapsed = dtu.delta_seconds_iso(before_string, now_string)
-                if ellapsed > params.MIN_SEC_INDIZIO_1:
+                if ellapsed > params.MIN_SEC_INDIZIO_1 and current_indovinello.get('INDIZIO_1',False):
                     msg = '💡 *Indizio 1*: {}'.format(current_indovinello['INDIZIO_1'])
-                    kb = [['💡 SECONDO INDIZIO']]
-                    current_indovinello['indizio1_time'] = now_string
-                    p.setLastKeyboard(kb, put=True)
-                    send_message(p, msg, kb)
+                    if current_indovinello.get('INDIZIO_2',False):
+                        kb = [['💡 SECONDO INDIZIO']]
+                        current_indovinello['indizio1_time'] = now_string
+                        send_message(p, msg, kb)
                 else:
                     send_message(p, ux.MSG_TOO_EARLY)
-            elif text_input == '💡 SECONDO INDIZIO':
+            elif text_input == '💡 SECONDO INDIZIO' and current_indovinello.get('INDIZIO_2',False):
                 before_string = current_indovinello['indizio1_time']
                 ellapsed = dtu.delta_seconds_iso(before_string, now_string)
-                if ellapsed > params.MIN_SEC_INDIZIO_2:
-                    msg = '💡 *Indizio 2*: {}'.format(current_indovinello['INDIZIO_2'])
-                    kb = []
+                if ellapsed > params.MIN_SEC_INDIZIO_2 and current_indovinello.get('INDIZIO_2',False):
+                    msg = '💡 *Indizio 2*: {}'.format(current_indovinello['INDIZIO_2'])                    
                     current_indovinello['indizio2_time'] = now_string
-                    p.setLastKeyboard(kb, put=True)
-                    send_message(p, msg, kb) #remove_keyboard=True)
+                    send_message(p, msg, remove_keyboard=True)
                 else:
                     send_message(p, ux.MSG_TOO_EARLY)
             elif text_input.upper() in correct_answers_upper:
@@ -645,7 +645,6 @@ def state_SURVEY(p, **kwargs):
         msg = '*Domanda {}/{}*: {}'.format(questions_number, total_questions, current_question['DOMANDA'])
         risposte = [x.strip() for x in current_question['RISPOSTE'].split(',')]
         kb = [risposte]
-        p.setLastKeyboard(kb, put=True)
         send_message(p, msg, kb)
     else:
         kb = p.getLastKeyboard()
@@ -746,14 +745,18 @@ def dealWithCallbackQuery(callback_query_dict):
 def deal_with_admin_commands(p, text_input):
     from main_exception import deferredSafeHandleException
     if p.isAdmin():
+        if text_input == '/update':
+            key.reload_config()
+            send_message(p, "Reloaded config table")
+            return True
         if text_input == '/debug':
             #send_message(p, game.debugTmpVariables(p), markdown=False)
             sendTextDocument(p, game.debugTmpVariables(p), filename='tmp_vars.json')
             return True
-        elif text_input == '/testInlineKb':
+        if text_input == '/testInlineKb':
             send_message(p, "Test inline keypboard", kb=[[ux.BUTTON_SI_CALLBACK('test'), ux.BUTTON_NO_CALLBACK('test')]], inline_keyboard=True)
             return True
-        elif text_input == '/random':
+        if text_input == '/random':
             from random import shuffle
             numbers = ['1','2','3','4','5']
             shuffle(numbers)
@@ -762,37 +765,33 @@ def deal_with_admin_commands(p, text_input):
             return True
         if text_input.startswith('/testText '):
             text = text_input.split(' ', 1)[1]
-            if text:
-                msg = '🔔 *Messaggio da hiSTORIC* 🔔\n\n' + text
-                logging.debug("Test broadcast " + msg)
-                send_message(p, msg)
-                return True
+            msg = '🔔 *Messaggio da hiSTORIC* 🔔\n\n' + text
+            logging.debug("Test broadcast " + msg)
+            send_message(p, msg)
+            return True
         if text_input.startswith('/broadcast '):
             text = text_input.split(' ', 1)[1]
-            if text:
-                msg = '🔔 *Messaggio da hiSTORIC* 🔔\n\n' + text
-                logging.debug("Starting to broadcast " + msg)
-                deferredSafeHandleException(broadcast, p, msg)
-                return True
-        elif text_input.startswith('/resetBroadcast '):
+            msg = '🔔 *Messaggio da hiSTORIC* 🔔\n\n' + text
+            logging.debug("Starting to broadcast " + msg)
+            deferredSafeHandleException(broadcast, p, msg)
+            return True
+        if text_input.startswith('/resetBroadcast '):
             text = text_input.split(' ', 1)[1]
-            if text:
-                msg = '🔔 *Messaggio da hiSTORIC* 🔔\n\n' + text
-                logging.debug("Starting to broadcast and reset players" + msg)
-                deferredSafeHandleException(broadcast, p, msg, reset_player=True)
-                return True
-        elif text_input.startswith('/textUser '):
+            msg = '🔔 *Messaggio da hiSTORIC* 🔔\n\n' + text
+            logging.debug("Starting to broadcast and reset players" + msg)
+            deferredSafeHandleException(broadcast, p, msg, reset_player=True)
+            return True
+        if text_input.startswith('/textUser '):
             p_id, text = text_input.split(' ', 2)[1]
-            if text:
-                p = Person.get_by_id(p_id)
-                if send_message(p, text, kb=p.getLastKeyboard()):
-                    msg_admin = 'Message sent successfully to {}'.format(p.getFirstNameLastNameUserName())
-                    tell_admin(msg_admin)
-                else:
-                    msg_admin = 'Problems sending message to {}'.format(p.getFirstNameLastNameUserName())
-                    tell_admin(msg_admin)
-                return True
-        elif text_input.startswith('/resetUser '):
+            p = Person.get_by_id(p_id)
+            if send_message(p, text, kb=p.getLastKeyboard()):
+                msg_admin = 'Message sent successfully to {}'.format(p.getFirstNameLastNameUserName())
+                tell_admin(msg_admin)
+            else:
+                msg_admin = 'Problems sending message to {}'.format(p.getFirstNameLastNameUserName())
+                tell_admin(msg_admin)
+            return True
+        if text_input.startswith('/resetUser '):
             p_id = ' '.join(text_input.split(' ')[1:])
             p = Person.get_by_id(p_id)
             if p:
@@ -803,17 +802,8 @@ def deal_with_admin_commands(p, text_input):
                 msg_admin = 'No user found: {}'.format(p_id)
                 tell_admin(msg_admin)
             return True
-        elif text_input == '/resetAll':
+        if text_input == '/resetAll':
             deferredSafeHandleException(resetAll)
-            return True
-        elif text_input == '/testlist':
-            pass
-            #p_id = key.FEDE_FB_ID
-            #p = Person.get_by_id(p_id)
-            #main_fb.sendMessageWithList(p, 'Prova lista template', ['one','twp','three','four'])
-            #return True
-        elif text_input == '/testSpeech':
-            redirectToState(p, 8)
             return True
     return False
 
