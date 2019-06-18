@@ -484,7 +484,8 @@ def state_INDOVINELLO(p, **kwargs):
                         current_indovinello['indizio1_time'] = now_string
                         send_message(p, msg, kb)
                 else:
-                    send_message(p, ux.MSG_TOO_EARLY)
+                    remaining = params.MIN_SEC_INDIZIO_1 - ellapsed
+                    send_message(p, ux.MSG_TOO_EARLY.format(remaining))
             elif text_input == '💡 SECONDO INDIZIO' and current_indovinello.get('INDIZIO_2',False):
                 before_string = current_indovinello['indizio1_time']
                 ellapsed = dtu.delta_seconds_iso(before_string, now_string)
@@ -493,7 +494,8 @@ def state_INDOVINELLO(p, **kwargs):
                     current_indovinello['indizio2_time'] = now_string
                     send_message(p, msg, remove_keyboard=True)
                 else:
-                    send_message(p, ux.MSG_TOO_EARLY)
+                    remaining = params.MIN_SEC_INDIZIO_1 - ellapsed
+                    send_message(p, ux.MSG_TOO_EARLY.format(remaining))
             elif text_input.upper() in correct_answers_upper:
                 current_indovinello['end_time'] = dtu.nowUtcIsoFormat()
                 send_message(p, ux.MSG_ANSWER_OK)
@@ -703,13 +705,14 @@ def state_END(p, **kwargs):
         penalty_hms, total_hms_game, ellapsed_hms_game, \
         total_hms_missions, ellapsed_hms_missions = game.set_elapsed_and_penalty_and_compute_total(p)
         msg = ux.MSG_END.format(penalty_hms, total_hms_game, ellapsed_hms_game, \
-            total_hms_missions, ellapsed_hms_missions)
+            total_hms_missions, ellapsed_hms_missions)        
         send_message(p, msg, remove_keyboard=True)
         if SEND_NOTIFICATIONS_TO_GROUP:
             msg_group = ux.MSG_END_NOTIFICATION.format(game.getGroupName(p), penalty_hms, \
                 ellapsed_hms_game, total_hms_game, total_hms_missions, ellapsed_hms_missions)
             send_message(game.HISTORIC_GROUP, msg_group)        
         game.save_game_data_in_airtable(p)
+        send_message(p, ux.MSG_GO_BACK_TO_START)        
     else:
         pass
 

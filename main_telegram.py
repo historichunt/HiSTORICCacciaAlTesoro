@@ -335,6 +335,7 @@ class WebhookHandler(SafeRequestHandler):
 
     def post(self):
         from main import dealWithUserInteraction, dealWithCallbackQuery
+        from main_exception import deferredSafeHandleException
         # urlfetch.set_default_fetch_deadline(60)
         body = jsonUtil.json_loads_byteified(self.request.body)
         logging.info('request body: {}'.format(body))
@@ -365,12 +366,19 @@ class WebhookHandler(SafeRequestHandler):
         document = message.get('document') if 'document' in message else None
         voice = message.get('voice') if 'voice' in message else None
 
-        dealWithUserInteraction(
+        deferredSafeHandleException(dealWithUserInteraction,
             chat_id, name, last_name, username,
             application='telegram', text=text,
             location=location, contact=contact,
             photo=photo, document=document, voice=voice
         )
+
+        # dealWithUserInteraction(
+        #     chat_id, name, last_name, username,
+        #     application='telegram', text=text,
+        #     location=location, contact=contact,
+        #     photo=photo, document=document, voice=voice
+        # )
 
 def check_telegram_response(resp):
     from main import tell_admin
