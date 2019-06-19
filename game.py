@@ -66,20 +66,6 @@ def get_random_indovinelli(airtable_missioni_id):
     return indovinelli_random
 
 #################
-# GIOCHI
-#################
-
-def get_random_giochi(airtable_missioni_id):
-    GIOCHI_TABLE = Airtable(airtable_missioni_id, 'Giochi', api_key=key.AIRTABLE_API_KEY)
-    GIOCHI = [row['fields'] for row in utility.utify(GIOCHI_TABLE.get_all()) if row['fields'].get('ACTIVE',False)]
-    # NOME, ISTRUZIONI, ATTACHMENT, SOLUZIONI
-    # ATTACHMENT['url'] -> url of attachment
-
-    giochi_random = list(GIOCHI)
-    shuffle(giochi_random)
-    return giochi_random
-
-#################
 # SURVEY
 #################
 
@@ -142,7 +128,6 @@ def resetGame(p, hunt_password):
     hunt_info = key.HUNTS[hunt_password]
     airtable_missioni_id = hunt_info['Airtable_Missioni_ID']    
     indovinelli = get_random_indovinelli(airtable_missioni_id)
-    games = get_random_giochi(airtable_missioni_id)
     survey = get_survey_data()
     p.tmp_variables = {}
     p.tmp_variables['HUNT_INFO'] = hunt_info
@@ -153,7 +138,6 @@ def resetGame(p, hunt_password):
     p.tmp_variables['EMAIL'] = ''
     p.tmp_variables['MISSION_TIMES'] = []
     p.tmp_variables['INDOVINELLI_INFO'] = {'TODO': indovinelli, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(indovinelli)}
-    p.tmp_variables['GIOCHI_INFO'] = {'TODO': games, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(games)}
     p.tmp_variables['SURVEY_INFO'] = {'TODO': survey, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(survey)}
     # question -> 'ANSWER'
     p.tmp_variables['GROUP_NAME'] = ''
