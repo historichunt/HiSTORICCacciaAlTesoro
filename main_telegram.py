@@ -163,6 +163,65 @@ def sendPhotoViaUrlOrId(chat_id, url_id, kb=None, caption=None, inline_keyboard=
     except:
         report_exception()
 
+# ================================
+# SEND PHOTO
+# ================================
+
+def sendAnimationViaUrlOrId(chat_id, url_id, kb=None, caption=None, inline_keyboard=False):
+    try:
+        if kb:
+            if inline_keyboard:
+                replyMarkup = {  # InlineKeyboardMarkup
+                    'inline_keyboard': kb
+                }
+            else:
+                replyMarkup = {  # ReplyKeyboardMarkup
+                    'keyboard': kb,
+                    'resize_keyboard': True,
+                }
+        else:
+            replyMarkup = {}
+        data = {
+            'chat_id': chat_id,
+            'animation': url_id,
+            'reply_markup': json.dumps(replyMarkup),
+        }
+        if caption:
+            data['caption'] = caption
+        resp = requests.post(key.TELEGRAM_API_URL + 'sendAnimation', data)
+        check_telegram_response(resp)
+    except:
+        report_exception()
+
+# ================================
+# SEND PHOTO
+# ================================
+
+def sendVideoViaUrlOrId(chat_id, url_id, kb=None, caption=None, inline_keyboard=False):
+    try:
+        if kb:
+            if inline_keyboard:
+                replyMarkup = {  # InlineKeyboardMarkup
+                    'inline_keyboard': kb
+                }
+            else:
+                replyMarkup = {  # ReplyKeyboardMarkup
+                    'keyboard': kb,
+                    'resize_keyboard': True,
+                }
+        else:
+            replyMarkup = {}
+        data = {
+            'chat_id': chat_id,
+            'video': url_id,
+            'reply_markup': json.dumps(replyMarkup),
+        }
+        if caption:
+            data['caption'] = caption
+        resp = requests.post(key.TELEGRAM_API_URL + 'sendVideo', data)
+        check_telegram_response(resp)
+    except:
+        report_exception()
 
 def sendPhotoFromPngImage(chat_id, img_data, filename='image.png'):
     try:
@@ -179,7 +238,7 @@ def sendPhotoFromPngImage(chat_id, img_data, filename='image.png'):
 # SEND AUDIO
 # ================================
 
-def sendAudioViaUrlOrId(chat_id, url_id, kb=None, inline_keyboard=False):
+def sendAudioViaUrlOrId(chat_id, url_id, kb=None, caption=None, inline_keyboard=False):
     try:
         if kb:
             if inline_keyboard:
@@ -198,6 +257,8 @@ def sendAudioViaUrlOrId(chat_id, url_id, kb=None, inline_keyboard=False):
             'audio': url_id,
             'reply_markup': json.dumps(replyMarkup),
         }
+        if caption:
+            data['caption'] = caption
         resp = requests.post(key.TELEGRAM_API_URL + 'sendAudio', data)
         check_telegram_response(resp)
     except:

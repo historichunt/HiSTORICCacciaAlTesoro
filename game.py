@@ -3,42 +3,66 @@
 import utility
 import key
 from airtable import Airtable
-from random import shuffle
+from random import shuffle, choice
 import person
 import params
 
 #################
-# INDOVINELLI
+# INDOVINELLI TABLE
 #################
+'''
+NOME, ACTIVE, FINALE, CATEGORIA, 
+INTRO_MEDIA, INTRO_MEDIA_CAPTION, 
+INTRODUZIONE_LOCATION,
+INDOVINELLO, SOLUZIONI,
+INDIZIO_1, INDIZIO_2, 
+GPS, SKIP_SELFIE,
+POST_MEDIA, POST_MEDIA_CAPTION,
+POST_MESSAGE
+'''
 
 def get_random_indovinelli(airtable_missioni_id):
+    import itertools
     INDOVINELLI_TABLE = Airtable(airtable_missioni_id, 'Indovinelli', api_key=key.AIRTABLE_API_KEY)
-    INDOVINELLI = [row['fields'] for row in utility.utify(INDOVINELLI_TABLE.get_all()) if row['fields'].get('ACTIVE',False)]
-    # NOME, FINALE, INDOVINELLO, INDIZIO_1, INDIZIO_2, SOLUZIONI, GPS, NOTE OPZIONALI
-
-    indovinelli_final = [row for row in INDOVINELLI if row.get('FINALE', False)]
-    shuffle(indovinelli_final)
-    indovinelli_not_final = [row for row in INDOVINELLI if not row.get('FINALE', False)]
-    indovinelli_not_final_categories = list(set(row.get('CATEGORIA', '') for row in indovinelli_not_final))
-    shuffle(indovinelli_not_final_categories)
-    indovinelli_not_final_CAT_BUCKET = {
-        cat:[row for row in indovinelli_not_final if row.get('CATEGORIA', '')==cat] 
-        for cat in indovinelli_not_final_categories
+    INDOVINELLI_ALL = [row['fields'] for row in utility.utify(INDOVINELLI_TABLE.get_all()) if row['fields'].get('ACTIVE',False)]    
+    for row in INDOVINELLI_ALL:
+        if 'FINALE' not in row:
+            row['FINALE'] = False
+        if 'CATEGORIA' not in row:
+            row['CATEGORIA'] = ''
+    indovinelli_categories = list(set(row['CATEGORIA'] for row in INDOVINELLI_ALL))
+    indovinelli = [row for row in INDOVINELLI_ALL if not row['FINALE']]
+    indovinelli_final = [row for row in INDOVINELLI_ALL if row['FINALE']]    
+    indovinallo_final = choice(indovinelli_final) if indovinelli_final else None
+    if indovinallo_final:
+        indovinelli_final.remove(indovinallo_final)
+        indovinelli.extend(indovinelli_final)
+    indovinelli_cat_bucket = {
+        cat:[row for row in indovinelli if row['CATEGORIA']==cat]
+        for cat in indovinelli_categories
     }
-    for indovinelli_list_cat in indovinelli_not_final_CAT_BUCKET.values():
+    for indovinelli_list_cat in indovinelli_cat_bucket.values():
         shuffle(indovinelli_list_cat)        
+    if indovinallo_final:
+        indovinallo_final_cat = indovinallo_final['CATEGORIA']
+        indovinelli_categories.remove(indovinallo_final_cat)
+        shuffle(indovinelli_categories)
+        indovinelli_categories.append(indovinallo_final_cat)
+    else:
+        shuffle(indovinelli_categories)
     indovinelli_random = []
-    for _ in range(len(indovinelli_not_final)):
-        for cat in indovinelli_not_final_categories:
-            if len(indovinelli_not_final_CAT_BUCKET[cat])>0:
-                indovinelli_random.append(indovinelli_not_final_CAT_BUCKET[cat].pop())
-    # random_indexes = [indovinelli_not_final.index(x) for x in indovinelli_random]        
-    indovinelli_random.extend(indovinelli_final)    
-    # if True:
+    round_robin_cot = itertools.cycle(indovinelli_categories)
+    while len(indovinelli_random) < len(indovinelli):
+        cat = round_robin_cot.next()
+        if len(indovinelli_cat_bucket[cat])>0:
+            indovinelli_random.append(indovinelli_cat_bucket[cat].pop())
+    if indovinallo_final:
+        indovinelli_random.append(indovinallo_final)
+    # debug
+    # if True: 
     #     from main import tell_admin   
-    #     random_indovinelli_names = [x['NOME'] for x in indovinelli_random]     
-    #     # tell_admin("Random indexes: {}".format(random_indexes))
-    #     tell_admin("Random indovinelli: {}".format(random_indovinelli_names))
+    #     random_indovinelli_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(indovinelli_random,1)])
+    #     tell_admin("Random indovinelli:\n{}".format(random_indovinelli_names))
     return indovinelli_random
 
 #################
@@ -129,7 +153,6 @@ def resetGame(p, hunt_password):
     p.tmp_variables['EMAIL'] = ''
     p.tmp_variables['MISSION_TIMES'] = []
     p.tmp_variables['INDOVINELLI_INFO'] = {'TODO': indovinelli, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(indovinelli)}
-    # indovinello -> 'PHOTO_FILE_ID'
     p.tmp_variables['GIOCHI_INFO'] = {'TODO': games, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(games)}
     p.tmp_variables['SURVEY_INFO'] = {'TODO': survey, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(survey)}
     # question -> 'ANSWER'
@@ -150,9 +173,6 @@ def getGroupName(p, escapeMarkdown=True):
     if escapeMarkdown:
         name = utility.escapeMarkdown(name)
     return name
-
-def appendGroupSelfieFileId(p, file_id):
-    p.tmp_variables['GROUP_SELFIES'].append(file_id)
 
 def setStartTime(p):
     import date_time_util as dtu
@@ -235,50 +255,14 @@ def getCompletedIndovinello(p):
     game_info = p.tmp_variables['INDOVINELLI_INFO']
     return game_info['COMPLETED']
 
-def setCurrentIndovinelloAsCompleted(p, photo_file_id):
+def appendGroupSelfieFileId(p, file_id):
+    p.tmp_variables['GROUP_SELFIES'].append(file_id)
+
+def setCurrentIndovinelloAsCompleted(p):
     indovinello_info = p.tmp_variables['INDOVINELLI_INFO']
     current_indovinello = indovinello_info['CURRENT']
-    current_indovinello['PHOTO_FILE_ID'] = photo_file_id
     indovinello_info['COMPLETED'].append(current_indovinello)
     indovinello_info['CURRENT'] = None
-
-def getTotalGames(p):
-    return p.tmp_variables['GIOCHI_INFO']['TOTAL']
-
-def remainingGamesNumber(p):
-    game_info = p.tmp_variables['GIOCHI_INFO']
-    return len(game_info['TODO'])
-
-def completedGamesNumber(p):
-    game_info = p.tmp_variables['GIOCHI_INFO']
-    return len(game_info['COMPLETED'])
-
-def hasNextGame(p):
-    game_info = p.tmp_variables['GIOCHI_INFO']
-    todo_game = game_info['TODO']
-    return len(todo_game)>0
-
-def setNextGame(p):
-    game_info = p.tmp_variables['GIOCHI_INFO']
-    todo_game = game_info['TODO']
-    if todo_game:
-        current_game = todo_game.pop(0)
-        game_info['CURRENT'] = current_game
-        return current_game
-    return None
-
-def getCurrentGame(p):
-    game_info = p.tmp_variables['GIOCHI_INFO']
-    return game_info['CURRENT']
-
-def getCompletedGames(p):
-    game_info = p.tmp_variables['GIOCHI_INFO']
-    return game_info['COMPLETED']
-
-def setCurrentGameAsCompleted(p):
-    game_info = p.tmp_variables['GIOCHI_INFO']
-    game_info['COMPLETED'].append(game_info['CURRENT'])
-    game_info['CURRENT'] = None
 
 def increase_wrong_answers_current_indovinello(p, put=True):
     indovinello_info = p.tmp_variables['INDOVINELLI_INFO']
@@ -287,22 +271,6 @@ def increase_wrong_answers_current_indovinello(p, put=True):
     p.tmp_variables['WRONG ANSWERS'] += 1
     if put:
         p.put()                
-
-def increase_wrong_answers_current_game(p, put=True):
-    game_info = p.tmp_variables['GIOCHI_INFO']
-    current_game = game_info['CURRENT']
-    current_game['wrong_answers'] += 1
-    p.tmp_variables['WRONG ANSWERS'] += 1
-    if put:
-        p.put()                
-
-def get_penalty_current_game(p):
-    wrong_answers = 0
-    current_game = getCurrentGame(p)
-    if current_game:
-        wrong_answers += current_game.get('wrong_answers',0)
-    penalty_time_sec = wrong_answers * params.SEC_PENALITY_WRONG_ANSWER
-    return wrong_answers, penalty_time_sec
 
 def get_penalty_current_indovinello(p):
     wrong_answers = 0
