@@ -427,19 +427,19 @@ class WebhookHandler(SafeRequestHandler):
         document = message.get('document') if 'document' in message else None
         voice = message.get('voice') if 'voice' in message else None
 
-        deferredSafeHandleException(dealWithUserInteraction,
-            chat_id, name, last_name, username,
-            application='telegram', text=text,
-            location=location, contact=contact,
-            photo=photo, document=document, voice=voice
-        )
-
-        # dealWithUserInteraction(
+        # deferredSafeHandleException(dealWithUserInteraction,
         #     chat_id, name, last_name, username,
         #     application='telegram', text=text,
         #     location=location, contact=contact,
         #     photo=photo, document=document, voice=voice
         # )
+
+        dealWithUserInteraction(
+            chat_id, name, last_name, username,
+            application='telegram', text=text,
+            location=location, contact=contact,
+            photo=photo, document=document, voice=voice
+        )
 
 def check_telegram_response(resp):
     from main import tell_admin

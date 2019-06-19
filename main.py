@@ -893,34 +893,31 @@ def deal_with_universal_command(p, text):
 def dealWithUserInteraction(chat_id, name, last_name, username, application, text,
                             location, contact, photo, document, voice):
 
-        try:
-            p = person.getPersonByChatIdAndApplication(chat_id, application)
+        p = person.getPersonByChatIdAndApplication(chat_id, application)
 
-            if p is None:
-                p = person.addPerson(chat_id, name, last_name, username, application)
-                tellMaster("New {} user: {}".format(application, p.getFirstNameLastNameUserName()))
-            else:
-                _, was_disabled = p.updateUserInfo(name, last_name, username)
-                if was_disabled:
-                    msg = "Bot riattivato!"
-                    send_message(p, msg)
-            
-            if WORK_IN_PROGRESS and not p.isTester():
-                send_message(p, ux.MSG_WORK_IN_PROGRESS)    
+        if p is None:
+            p = person.addPerson(chat_id, name, last_name, username, application)
+            tellMaster("New {} user: {}".format(application, p.getFirstNameLastNameUserName()))
+        else:
+            _, was_disabled = p.updateUserInfo(name, last_name, username)
+            if was_disabled:
+                msg = "Bot riattivato!"
+                send_message(p, msg)
+        
+        if WORK_IN_PROGRESS and not p.isTester():
+            send_message(p, ux.MSG_WORK_IN_PROGRESS)    
+            return
+        
+        if text:
+            if deal_with_admin_commands(p, text):
                 return
-            
-            if text:
-                if deal_with_admin_commands(p, text):
-                    return
-                if deal_with_universal_command(p, text):
-                    return
+            if deal_with_universal_command(p, text):
+                return
 
-            state = p.getState()
-            logging.debug("Sending {} to state {} with text_input {}".format(p.getFirstName(), state, text))
-            repeatState(p, text_input=text, location=location, contact=contact, photo=photo, document=document, voice=voice)
-        except:
-            main_telegram.report_exception()
-            raise deferred.PermanentTaskFailure()
+        state = p.getState()
+        logging.debug("Sending {} to state {} with text_input {}".format(p.getFirstName(), state, text))
+        repeatState(p, text_input=text, location=location, contact=contact, photo=photo, document=document, voice=voice)
+
 
 app = webapp2.WSGIApplication([
     ('/telegram_me', main_telegram.MeHandler),
