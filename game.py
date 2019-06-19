@@ -118,7 +118,6 @@ def save_game_data_in_airtable(p):
 ################################
 
 HISTORIC_GROUP = person.getPersonById(key.HISTORIC_GROUP_ID) #key.FEDE_T_ID
-VALIDATOR = person.getPersonById(key.VALIDATOR_ID)
 
 ################################
 # GAME MANAGEMENT FUNCTIONS
@@ -128,9 +127,13 @@ def resetGame(p, hunt_password):
     hunt_info = key.HUNTS[hunt_password]
     airtable_missioni_id = hunt_info['Airtable_Missioni_ID']    
     indovinelli = get_random_indovinelli(airtable_missioni_id)
+    notify_group = hunt_info.get('Notify_Group', False)
+    validator_id = hunt_info.get('Validator_ID', None)
     survey = get_survey_data()
     p.tmp_variables = {}
     p.tmp_variables['HUNT_INFO'] = hunt_info
+    p.tmp_variables['Notify_Group'] = notify_group
+    p.tmp_variables['Validator_ID'] = validator_id
     p.tmp_variables['ID'] = p.getId()
     p.tmp_variables['NOME'] = p.getFirstName(escapeMarkdown=False)
     p.tmp_variables['COGNOME'] = p.getLastName(escapeMarkdown=False)
@@ -148,6 +151,18 @@ def resetGame(p, hunt_password):
     p.tmp_variables['WRONG ANSWERS'] = 0    
     p.tmp_variables['PENALTY TIME'] = 0 # seconds
     p.tmp_variables['TOTAL TIME'] = 0 # seconds
+
+def send_notification_to_group(p):
+    return p.tmp_variables['Notify_Group']
+
+def manual_validation(p):
+    return p.tmp_variables['Validator_ID'] != None
+
+def get_validator(p):
+    validator_id = p.tmp_variables['Validator_ID']
+    if validator_id:
+        return person.getPersonById(validator_id[0])
+    return None
 
 def setGroupName(p, name):
     p.tmp_variables['GROUP_NAME'] = name

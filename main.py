@@ -33,8 +33,6 @@ import photos
 
 ########################
 WORK_IN_PROGRESS = False
-SEND_NOTIFICATIONS_TO_GROUP = False
-MANUAL_VALIDATION_SELFIE_INDOVINELLLI = False
 JUMP_TO_SURVEY_AFTER = False  # 2
 ########################
 
@@ -84,7 +82,6 @@ def send_media_url(p, url_attachment, kb=None, caption=None):
         error_msg = "Found attach_type: {}".format(attach_type)
         logging.error(error_msg)
         raise ValueError('Wrong attach type: {}'.format(error_msg))
-
 
 def send_photo_url(p, url, kb=None, caption=None, inline_keyboard=False):
     if p.isTelegramUser():
@@ -403,7 +400,7 @@ def state_NOME_GRUPPO(p, **kwargs):
                 return
             game.setGroupName(p, text_input)
             send_message(p, ux.MSG_GROUP_NAME_OK.format(text_input))
-            if SEND_NOTIFICATIONS_TO_GROUP:
+            if game.send_notification_to_group(p):
                 send_message(game.HISTORIC_GROUP, "Nuova squadra registrata: {}".format(text_input))
             redirectToState(p, SELFIE_INIZIALE_STATE)
         else:
@@ -426,7 +423,7 @@ def state_SELFIE_INIZIALE(p, **kwargs):
             game.appendGroupSelfieFileId(p, photo_file_id)
             sendWaitingAction(p, sleep_time=1)
             send_message(p, ux.MSG_SELFIE_INIZIALE_OK)            
-            if SEND_NOTIFICATIONS_TO_GROUP:
+            if game.send_notification_to_group(p):
                 send_photo_url(game.HISTORIC_GROUP, photo_file_id, caption='Selfie iniziale {}'.format(game.getGroupName(p)))
             send_message(p, ux.MSG_START_TIME, sleepDelay=True, remove_keyboard=True)
             game.setStartTime(p)
@@ -555,7 +552,7 @@ def state_INDOVINELLO(p, **kwargs):
                 correct_answers_upper_word_set = set(utility.flatten([x.split() for x in correct_answers_upper]))
                 if text_input.upper() in correct_answers_upper:
                     current_indovinello['end_time'] = dtu.nowUtcIsoFormat()
-                    send_message(p, ux.MSG_ANSWER_OK)
+                    send_message(p, ux.MSG_ANSWER_OK, remove_keyboard=True)
                     if 'POST_MESSAGE' in current_indovinello:
                         redirectToState(p, POST_INDOVINELLO_STATE)
                     elif 'GPS' in current_indovinello and not current_indovinello.get('SKIP_SELFIE', False):
@@ -613,7 +610,8 @@ def state_SELFIE_INDOVINELLO(p, **kwargs):
             photo_file_id = photo[-1]['file_id']
             current_indovinello = game.getCurrentIndovinello(p)
             current_indovinello['SELFIE'] = photo_file_id
-            if MANUAL_VALIDATION_SELFIE_INDOVINELLLI:
+            MANUAL_VALIDATION = game.manual_validation(p)
+            if MANUAL_VALIDATION:
                 squadra_name = game.getGroupName(p)
                 indovinello_number = game.completedIndovinelloNumber(p) + 1
                 indovinello_name = current_indovinello['NOME']
@@ -630,7 +628,9 @@ def state_SELFIE_INDOVINELLO(p, **kwargs):
                 ]
                 caption = 'Selfie indovinello {} squadra {} per indovinello {}'.format(indovinello_number, squadra_name, indovinello_name)
                 logging.debug('Sending photo to validator')
-                send_photo_url(game.VALIDATOR, photo_file_id, inline_kb_validation, caption=caption, inline_keyboard=True)
+                validator = game.get_validator(p)
+                logging.debug("Validtor: {}".format(validator))
+                send_photo_url(validator, photo_file_id, inline_kb_validation, caption=caption, inline_keyboard=True)
             else:
                 approve_selfie_indovinello(p, approved=True, signature=None)
             p.put()
@@ -641,12 +641,13 @@ def approve_selfie_indovinello(p, approved, signature):
     # need to double check if team is still waiting for approval
     # (e.g., could have restarted the game, or validator pressed approve twice in a row)
     current_indovinello = game.getCurrentIndovinello(p)
-    if current_indovinello is None or (MANUAL_VALIDATION_SELFIE_INDOVINELLLI and signature != current_indovinello['sign']):
+    MANUAL_VALIDATION = game.manual_validation(p)
+    if current_indovinello is None or (MANUAL_VALIDATION and signature != current_indovinello['sign']):
         return False
     if approved:
         send_message(p, ux.MSG_SELFIE_INDOVINELLO_OK)
         photo_file_id = current_indovinello['SELFIE']
-        if SEND_NOTIFICATIONS_TO_GROUP:
+        if game.send_notification_to_group(p):
             squadra_name = game.getGroupName(p)
             indovinello_number = game.completedIndovinelloNumber(p) + 1
             indovinello_name = current_indovinello['NOME']
@@ -751,7 +752,7 @@ def state_END(p, **kwargs):
         msg = ux.MSG_END.format(penalty_hms, total_hms_game, ellapsed_hms_game, \
             total_hms_missions, ellapsed_hms_missions)        
         send_message(p, msg, remove_keyboard=True)
-        if SEND_NOTIFICATIONS_TO_GROUP:
+        if game.send_notification_to_group(p):
             msg_group = ux.MSG_END_NOTIFICATION.format(game.getGroupName(p), penalty_hms, \
                 ellapsed_hms_game, total_hms_game, total_hms_missions, ellapsed_hms_missions)
             send_message(game.HISTORIC_GROUP, msg_group)        
@@ -809,6 +810,9 @@ def deal_with_admin_commands(p, text_input):
             shuffle(numbers)
             numbers_str = ', '.join(numbers)
             send_message(p, numbers_str)
+            return True
+        if text_input == '/exception':
+            1/0
             return True
         if text_input.startswith('/testText '):
             text = text_input.split(' ', 1)[1]
@@ -889,31 +893,34 @@ def deal_with_universal_command(p, text):
 def dealWithUserInteraction(chat_id, name, last_name, username, application, text,
                             location, contact, photo, document, voice):
 
-    p = person.getPersonByChatIdAndApplication(chat_id, application)
+        try:
+            p = person.getPersonByChatIdAndApplication(chat_id, application)
 
-    if p is None:
-        p = person.addPerson(chat_id, name, last_name, username, application)
-        tellMaster("New {} user: {}".format(application, p.getFirstNameLastNameUserName()))
-    else:
-        _, was_disabled = p.updateUserInfo(name, last_name, username)
-        if was_disabled:
-            msg = "Bot riattivato!"
-            send_message(p, msg)
-    
-    if WORK_IN_PROGRESS and not p.isTester():
-        send_message(p, ux.MSG_WORK_IN_PROGRESS)    
-        return
-    
-    if text:
-        if deal_with_admin_commands(p, text):
-            return
-        if deal_with_universal_command(p, text):
-            return
+            if p is None:
+                p = person.addPerson(chat_id, name, last_name, username, application)
+                tellMaster("New {} user: {}".format(application, p.getFirstNameLastNameUserName()))
+            else:
+                _, was_disabled = p.updateUserInfo(name, last_name, username)
+                if was_disabled:
+                    msg = "Bot riattivato!"
+                    send_message(p, msg)
+            
+            if WORK_IN_PROGRESS and not p.isTester():
+                send_message(p, ux.MSG_WORK_IN_PROGRESS)    
+                return
+            
+            if text:
+                if deal_with_admin_commands(p, text):
+                    return
+                if deal_with_universal_command(p, text):
+                    return
 
-    state = p.getState()
-    logging.debug("Sending {} to state {} with text_input {}".format(p.getFirstName(), state, text))
-    repeatState(p, text_input=text, location=location, contact=contact, photo=photo, document=document, voice=voice)
-
+            state = p.getState()
+            logging.debug("Sending {} to state {} with text_input {}".format(p.getFirstName(), state, text))
+            repeatState(p, text_input=text, location=location, contact=contact, photo=photo, document=document, voice=voice)
+        except:
+            main_telegram.report_exception()
+            raise deferred.PermanentTaskFailure()
 
 app = webapp2.WSGIApplication([
     ('/telegram_me', main_telegram.MeHandler),
