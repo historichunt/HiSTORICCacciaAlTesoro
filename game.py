@@ -130,6 +130,7 @@ def resetGame(p, hunt_password):
     notify_group = hunt_info.get('Notify_Group', False)
     validator_id = hunt_info.get('Validator_ID', None)
     survey = get_survey_data()
+    p.current_hunt = hunt_password
     p.tmp_variables = {}
     p.tmp_variables['HUNT_INFO'] = hunt_info
     p.tmp_variables['Notify_Group'] = notify_group
@@ -151,6 +152,16 @@ def resetGame(p, hunt_password):
     p.tmp_variables['WRONG ANSWERS'] = 0    
     p.tmp_variables['PENALTY TIME'] = 0 # seconds
     p.tmp_variables['TOTAL TIME'] = 0 # seconds
+
+def exitGame(p):
+    p.current_hunt = None
+    p.tmp_variables = {}
+
+def get_game_stats(p):
+    group_name = p.tmp_variables['GROUP_NAME']
+    completed = len(p.tmp_variables['INDOVINELLI_INFO']['COMPLETED'])
+    total = p.tmp_variables['INDOVINELLI_INFO']['TOTAL']
+    return '{} {}/{}'.format(group_name, completed, total)
 
 def send_notification_to_group(p):
     return p.tmp_variables['Notify_Group']
@@ -244,6 +255,7 @@ def setNextIndovinello(p):
     todo_indovinelli = indovinello_info['TODO']
     current_indovinello = todo_indovinelli.pop(0)
     indovinello_info['CURRENT'] = current_indovinello
+    current_indovinello['wrong_answers'] = []    
     return current_indovinello
 
 def getCurrentIndovinello(p):
@@ -263,31 +275,18 @@ def setCurrentIndovinelloAsCompleted(p):
     indovinello_info['COMPLETED'].append(current_indovinello)
     indovinello_info['CURRENT'] = None
 
-def increase_wrong_answers_current_indovinello(p, put=True):
+def increase_wrong_answers_current_indovinello(p, answer, put=True):
     indovinello_info = p.tmp_variables['INDOVINELLI_INFO']
     current_indovinello = indovinello_info['CURRENT']
-    current_indovinello['wrong_answers'] += 1
+    current_indovinello['wrong_answers'].append(answer)
     p.tmp_variables['WRONG ANSWERS'] += 1
     if put:
         p.put()                
 
-def get_penalty_current_indovinello(p):
-    wrong_answers = 0
-    current_indovinello = getCurrentIndovinello(p)
-    if current_indovinello:
-        wrong_answers += current_indovinello.get('wrong_answers',0)
-    penalty_time_sec = wrong_answers * params.SEC_PENALITY_WRONG_ANSWER
-    return wrong_answers, penalty_time_sec
-
 def get_total_penalty(p):    
-    wrong_answers = p.tmp_variables['WRONG ANSWERS']
-    # wrong_answers = 0
-    # for var in (p.tmp_variables['INDOVINELLI_INFO'], p.tmp_variables['GIOCHI_INFO']):
-    #     wrong_answers += sum(g.get('wrong_answers',0) for g in var['COMPLETED'])
-    #     if var['CURRENT']:
-    #         wrong_answers += var['CURRENT'].get('wrong_answers',0)
-    penalty_time_sec = wrong_answers * params.SEC_PENALITY_WRONG_ANSWER
-    return wrong_answers, penalty_time_sec
+    WRONG_ANSWERS = p.tmp_variables['WRONG ANSWERS']
+    penalty_time_sec = WRONG_ANSWERS * params.SEC_PENALITY_WRONG_ANSWER
+    return WRONG_ANSWERS, penalty_time_sec
 
 def getTotalQuestions(p):
     return p.tmp_variables['SURVEY_INFO']['TOTAL']

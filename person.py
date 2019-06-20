@@ -22,6 +22,7 @@ class Person(geomodel.GeoModel, ndb.Model): #ndb.Expando
     last_mod = ndb.DateTimeProperty(auto_now=True)
     state = ndb.StringProperty()
     enabled = ndb.BooleanProperty(default=True)
+    current_hunt = ndb.StringProperty()
 
     # location = ndb.GeoPtProperty() # inherited from geomodel.GeoModel
     latitude = ndb.ComputedProperty(lambda self: self.location.lat if self.location else None)
@@ -161,6 +162,13 @@ def getPersonById(id):
 def getPersonByChatIdAndApplication(chat_id, application):
     id = getId(chat_id, application)
     return Person.get_by_id(id)
+
+def getPeopleOnHuntStats(hunt):
+    import game
+    people_on_hunt = Person.query(Person.current_hunt==hunt).fetch()    
+    stats = '\n'.join([game.get_game_stats(p) for p in people_on_hunt])    
+    return stats
+
 
 def addPerson(chat_id, name, last_name, username, application):
     p = Person(

@@ -424,11 +424,11 @@ class WebhookHandler(SafeRequestHandler):
         name = chat['first_name']
         last_name = chat['last_name'] if 'last_name' in chat else None
         username = chat['username'] if 'username' in chat else None
-        location = message['location'] if 'location' in message else None
-        contact = message['contact'] if 'contact' in message else None
-        photo = message.get('photo') if 'photo' in message else None
-        document = message.get('document') if 'document' in message else None
-        voice = message.get('voice') if 'voice' in message else None
+        location = message['location'] if 'location' in message else ''
+        contact = message['contact'] if 'contact' in message else ''
+        photo = message.get('photo') if 'photo' in message else ''
+        document = message.get('document') if 'document' in message else ''
+        voice = message.get('voice') if 'voice' in message else ''
 
         deferredSafeHandleException(dealWithUserInteraction,
             chat_id, name, last_name, username,

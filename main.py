@@ -167,7 +167,7 @@ BROADCAST_COUNT_REPORT = utility.unindent(
     """
 )
 
-def broadcast(sender, msg, qry = None, reset_player=False,
+def broadcast(sender, msg, qry = None, exit_game=False,
               blackList_sender=False, sendNotification=True):
 
     from google.appengine.ext.db import datastore_errors
@@ -192,8 +192,8 @@ def broadcast(sender, msg, qry = None, reset_player=False,
                 total += 1
                 if send_message(p, msg, sleepDelay=True): #p.enabled
                     enabledCount += 1
-                    if reset_player:
-                        reset_player(p)
+                    if exit_game:
+                        exit_game(p)
             except datastore_errors.Timeout:
                 msg = '❗ datastore_errors. Timeout in broadcast :('
                 tell_admin(msg)
@@ -244,7 +244,7 @@ def resetAll(qry = None, message=None):
                     #    continue
                     #logging.debug('Restarting {}'.format(p.chat_id))
                     total += 1
-                    reset_player(p, message)
+                    exit_game(p, message)
                 sleep(0.1)
         except datastore_errors.Timeout:
             msg = '❗ datastore_errors. Timeout in broadcast :('
@@ -282,8 +282,8 @@ def send_message_to_person(id, msg, markdown=False):
 # ================================
 # RESET PLAYER
 # ================================
-def reset_player(p, message=None):
-    game.resetGame(p)
+def exit_game(p, message=None):
+    game.exitGame(p)
     if message:
         send_message(p, message, remove_keyboard=True)
     redirectToState(p, INITIAL_STATE)
@@ -509,8 +509,7 @@ def state_INDOVINELLO(p, **kwargs):
     current_indovinello = game.getCurrentIndovinello(p)
     if giveInstruction:
         game.set_mission_start_time(p)
-        current_indovinello['start_time'] = dtu.nowUtcIsoFormat()
-        current_indovinello['wrong_answers'] = 0        
+        current_indovinello['start_time'] = dtu.nowUtcIsoFormat()        
         msg = current_indovinello['INDOVINELLO'] 
         if current_indovinello.get('INDIZIO_1',False):
             kb = [['💡 PRIMO INDIZIO']]
@@ -563,7 +562,7 @@ def state_INDOVINELLO(p, **kwargs):
                 # elif utility.answer_is_almost_correct(text_input.upper(), correct_answers_upper_word_set):
                 #     send_message(p, ux.MSG_ANSWER_ALMOST)
                 else:
-                    game.increase_wrong_answers_current_indovinello(p)
+                    game.increase_wrong_answers_current_indovinello(p, text_input)
                     wrong_answers, penalty_sec = game.get_total_penalty(p)
                     msg = ux.MSG_ANSWER_WRONG_SG if wrong_answers==1 else ux.MSG_ANSWER_WRONG_PL
                     send_message(p, msg.format(wrong_answers, penalty_sec))
@@ -801,6 +800,10 @@ def deal_with_admin_commands(p, text_input):
             #send_message(p, game.debugTmpVariables(p), markdown=False)
             sendTextDocument(p, game.debugTmpVariables(p), filename='tmp_vars.json')
             return True
+        if text_input == '/stats':
+            msg = 'Stats:\n\n{}'.format(person.getPeopleOnHuntStats(key.last_hunt_pw))
+            send_message(p, msg, markdown=False)
+            return True
         if text_input == '/testInlineKb':
             send_message(p, "Test inline keypboard", kb=[[ux.BUTTON_SI_CALLBACK('test'), ux.BUTTON_NO_CALLBACK('test')]], inline_keyboard=True)
             return True
@@ -837,7 +840,7 @@ def deal_with_admin_commands(p, text_input):
             text = text_input.split(' ', 1)[1]
             msg = '🔔 *Messaggio da hiSTORIC* 🔔\n\n' + text
             logging.debug("Starting to broadcast and reset players" + msg)
-            deferredSafeHandleException(broadcast, p, msg, reset_player=True)
+            deferredSafeHandleException(broadcast, p, msg, exit_game=True)
             return True
         if text_input.startswith('/textUser '):
             p_id, text = text_input.split(' ', 2)[1]
@@ -853,7 +856,7 @@ def deal_with_admin_commands(p, text_input):
             p_id = ' '.join(text_input.split(' ')[1:])
             p = Person.get_by_id(p_id)
             if p:
-                reset_player(p, message='Reset')
+                exit_game(p, message='Reset')
                 msg_admin = 'User resetted: {}'.format(p.getFirstNameLastNameUserName())
                 tell_admin(msg_admin)                
             else:
@@ -869,13 +872,9 @@ def deal_with_universal_command(p, text):
     if text.startswith('/start'):
         state_INITIAL(p, text_input=text)
         return True
-    # if text.startswith('/test'):
-    #     import time
-    #     repetitions = int(text.split()[1])
-    #     for i in range(repetitions):
-    #         send_message(p, "Test {}".format(i+1))
-    #         time.sleep(1)
-    #     return True
+    if text == '/exit':
+        exit_game(p, "🚪 Sei uscito/a dal gioco!")
+        return True
     if text == '/state':
         state = p.getState()
         msg = "You are in state {}".format(state)
@@ -904,7 +903,7 @@ def dealWithUserInteraction(chat_id, name, last_name, username, application, tex
 
         if p is None:
             p = person.addPerson(chat_id, name, last_name, username, application)
-            tellMaster("New {} user: {}".format(application, p.getFirstNameLastNameUserName()))
+            tellMaster("New {} user: {}".format(application, p.getFirstNameLastNameUserName(escapeMarkdown=False)))
         else:
             _, was_disabled = p.updateUserInfo(name, last_name, username)
             if was_disabled:
