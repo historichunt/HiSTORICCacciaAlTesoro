@@ -267,7 +267,7 @@ def tellMaster(msg, markdown=False, one_time_keyboard=False):
         )
 
 def tell_admin(msg):
-    logging.debug(msg)
+    logging.debug("Tellling admin: " + msg)
     for id in key.ADMIN_IDS:
         p = person.getPersonById(id)
         send_message(p, msg, markdown=False)
@@ -813,6 +813,13 @@ def deal_with_admin_commands(p, text_input):
             return True
         if text_input == '/exception':
             1/0
+            return True
+        if text_input == '/wait':
+            import time
+            for i in range(5):
+                send_message(p, str(i+1))
+                time.sleep(i+1)
+            send_message(p, "end")
             return True
         if text_input.startswith('/testText '):
             text = text_input.split(' ', 1)[1]

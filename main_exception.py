@@ -9,10 +9,14 @@ class SafeRequestHandler(webapp2.RequestHandler):
         report_exception()
 
 def deferredSafeHandleException(obj, *args, **kwargs):
+    deferred.defer(safeHandleException, obj, *args, **kwargs)
+
+def safeHandleException(obj, *args, **kwargs):
     try:
-        deferred.defer(obj, *args, **kwargs)
+        obj(*args, **kwargs)
     except:  # catch *all* exceptions
         report_exception()
+        # raise deferred.PermanentTaskFailure
 
 def report_exception():
     from main import tell_admin

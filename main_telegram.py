@@ -11,6 +11,7 @@ import key
 from person import Person
 
 import requests
+from main_exception import report_exception
 
 
 # ================================
@@ -397,7 +398,9 @@ class WebhookHandler(SafeRequestHandler):
     def post(self):
         from main import dealWithUserInteraction, dealWithCallbackQuery
         from main_exception import deferredSafeHandleException
-        # urlfetch.set_default_fetch_deadline(60)
+        from google.appengine.ext import deferred
+        from google.appengine.api import urlfetch
+        urlfetch.set_default_fetch_deadline(20)
         body = jsonUtil.json_loads_byteified(self.request.body)
         logging.info('request body: {}'.format(body))
         # self.response.write(json.dumps(body))
@@ -427,19 +430,19 @@ class WebhookHandler(SafeRequestHandler):
         document = message.get('document') if 'document' in message else None
         voice = message.get('voice') if 'voice' in message else None
 
-        # deferredSafeHandleException(dealWithUserInteraction,
-        #     chat_id, name, last_name, username,
-        #     application='telegram', text=text,
-        #     location=location, contact=contact,
-        #     photo=photo, document=document, voice=voice
-        # )
-
-        dealWithUserInteraction(
+        deferredSafeHandleException(dealWithUserInteraction,
             chat_id, name, last_name, username,
             application='telegram', text=text,
             location=location, contact=contact,
             photo=photo, document=document, voice=voice
         )
+
+        # dealWithUserInteraction(
+        #     chat_id, name, last_name, username,
+        #     application='telegram', text=text,
+        #     location=location, contact=contact,
+        #     photo=photo, document=document, voice=voice
+        # )
 
 def check_telegram_response(resp):
     from main import tell_admin
@@ -452,11 +455,3 @@ def check_telegram_response(resp):
     if not success:
         msg = "❗ Response problem from {}: {}".format(previous_method, response)
         tell_admin(msg)
-
-def report_exception():
-    from main import tell_admin
-    import traceback
-    msg = "❗ Detected Exception: " + traceback.format_exc()
-    tell_admin(msg)
-    logging.error(msg)
-
