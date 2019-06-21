@@ -168,7 +168,7 @@ BROADCAST_COUNT_REPORT = utility.unindent(
 )
 
 def broadcast(sender, msg, qry = None, exit_game=False,
-              blackList_sender=False, sendNotification=True):
+              blackList_sender=False, sendNotification=True, test=False):
 
     from google.appengine.ext.db import datastore_errors
     from google.appengine.api.urlfetch_errors import InternalTransientError
@@ -187,13 +187,15 @@ def broadcast(sender, msg, qry = None, exit_game=False,
             try:
                 if not p.enabled:
                     continue
+                if test and not p.isTester():
+                    continue
                 if blackList_sender and sender and p.getId() == sender.getId():
                     continue
                 total += 1
                 if send_message(p, msg, sleepDelay=True): #p.enabled
                     enabledCount += 1
                     if exit_game:
-                        exit_game(p)
+                        make_payer_exit_game(p)
             except datastore_errors.Timeout:
                 msg = '❗ datastore_errors. Timeout in broadcast :('
                 tell_admin(msg)
@@ -211,15 +213,6 @@ def broadcast(sender, msg, qry = None, exit_game=False,
     if sendNotification:
         send_message(sender, msg_debug)
     #return total, enabledCount, disabled
-
-def broadcastUserIdList(sender, msg, userIdList, blackList_sender, markdown):
-    for id in userIdList:
-        p = person.getPersonById(id)
-        if not p.enabled:
-            continue
-        if blackList_sender and sender and p.getId() == sender.getId():
-            continue
-        send_message(p, msg, markdown=markdown, sleepDelay=True)
 
 # ---------
 # Restart All
@@ -244,7 +237,7 @@ def resetAll(qry = None, message=None):
                     #    continue
                     #logging.debug('Restarting {}'.format(p.chat_id))
                     total += 1
-                    exit_game(p, message)
+                    make_payer_exit_game(p, message)
                 sleep(0.1)
         except datastore_errors.Timeout:
             msg = '❗ datastore_errors. Timeout in broadcast :('
@@ -282,7 +275,7 @@ def send_message_to_person(id, msg, markdown=False):
 # ================================
 # RESET PLAYER
 # ================================
-def exit_game(p, message=None):
+def make_payer_exit_game(p, message=None):
     game.exitGame(p)
     if message:
         send_message(p, message, remove_keyboard=True)
@@ -842,6 +835,11 @@ def deal_with_admin_commands(p, text_input):
             logging.debug("Starting to broadcast and reset players" + msg)
             deferredSafeHandleException(broadcast, p, msg, exit_game=True)
             return True
+        if text_input.startswith('/testBroadcast '):
+            text = text_input.split(' ', 1)[1]
+            msg = '🔔 *Messaggio da hiSTORIC* 🔔\n\n' + text            
+            deferredSafeHandleException(broadcast, p, msg, exit_game=True, test=True)
+            return True
         if text_input.startswith('/textUser '):
             p_id, text = text_input.split(' ', 2)[1]
             p = Person.get_by_id(p_id)
@@ -856,7 +854,7 @@ def deal_with_admin_commands(p, text_input):
             p_id = ' '.join(text_input.split(' ')[1:])
             p = Person.get_by_id(p_id)
             if p:
-                exit_game(p, message='Reset')
+                make_payer_exit_game(p, message=ux.MSG_EXITED_FROM_GAME)
                 msg_admin = 'User resetted: {}'.format(p.getFirstNameLastNameUserName())
                 tell_admin(msg_admin)                
             else:
@@ -873,7 +871,7 @@ def deal_with_universal_command(p, text):
         state_INITIAL(p, text_input=text)
         return True
     if text == '/exit':
-        exit_game(p, "🚪 Sei uscito/a dal gioco!")
+        make_payer_exit_game(p, ux.MSG_EXITED_FROM_GAME)
         return True
     if text == '/state':
         state = p.getState()

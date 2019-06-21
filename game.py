@@ -153,9 +153,11 @@ def resetGame(p, hunt_password):
     p.tmp_variables['PENALTY TIME'] = 0 # seconds
     p.tmp_variables['TOTAL TIME'] = 0 # seconds
 
-def exitGame(p):
+def exitGame(p, put=True):
     p.current_hunt = None
     p.tmp_variables = {}
+    if put:
+        p.put()
 
 def get_game_stats(p):
     group_name = p.tmp_variables['GROUP_NAME']
