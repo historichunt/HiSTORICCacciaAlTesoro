@@ -741,12 +741,12 @@ def state_END(p, **kwargs):
     if giveInstruction:        
         penalty_hms, total_hms_game, ellapsed_hms_game, \
         total_hms_missions, ellapsed_hms_missions = game.set_elapsed_and_penalty_and_compute_total(p)
-        msg = ux.MSG_END.format(penalty_hms, total_hms_game, ellapsed_hms_game, \
-            total_hms_missions, ellapsed_hms_missions)        
+        msg = ux.MSG_END.format(penalty_hms, \
+            total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)        
         send_message(p, msg, remove_keyboard=True)
         if game.send_notification_to_group(p):
             msg_group = ux.MSG_END_NOTIFICATION.format(game.getGroupName(p), penalty_hms, \
-                ellapsed_hms_game, total_hms_game, total_hms_missions, ellapsed_hms_missions)
+                total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)
             send_message(game.HISTORIC_GROUP, msg_group)        
         game.save_game_data_in_airtable(p)
         send_message(p, ux.MSG_GO_BACK_TO_START)        
@@ -792,10 +792,6 @@ def deal_with_admin_commands(p, text_input):
         if text_input == '/debug':
             #send_message(p, game.debugTmpVariables(p), markdown=False)
             sendTextDocument(p, game.debugTmpVariables(p), filename='tmp_vars.json')
-            return True
-        if text_input == '/stats':
-            msg = 'Stats:\n\n{}'.format(person.getPeopleOnHuntStats(key.last_hunt_pw))
-            send_message(p, msg, markdown=False)
             return True
         if text_input == '/testInlineKb':
             send_message(p, "Test inline keypboard", kb=[[ux.BUTTON_SI_CALLBACK('test'), ux.BUTTON_NO_CALLBACK('test')]], inline_keyboard=True)
@@ -866,6 +862,26 @@ def deal_with_admin_commands(p, text_input):
             return True
     return False
 
+def deal_with_tester_commands(p, text_input):
+    # logging.debug("In deal_with_tester_commands with user:{} istester:{}".format(p.getId(), p.isTester()))
+    if p.isTester():
+        if text_input == '/stats':
+            stats_list_str = '\n'.join(["/stats_{}".format(k) for k in key.HUNTS.keys()])
+            msg = "Available stats:\n{}".format(stats_list_str)
+            send_message(p, msg, markdown=False)
+            return True
+        if text_input.startswith('/stats_'):
+            hung_pw = text_input.split('_', 1)[1]
+            if hung_pw in key.HUNTS:
+                msg = 'Stats:\n\n{}'.format(person.getPeopleOnHuntStats(hung_pw))
+                send_message(p, msg, markdown=False)
+            else:
+                msg = 'Wrong stats command'
+                send_message(p, msg, markdown=False)
+            return True
+        return False
+
+
 def deal_with_universal_command(p, text):
     if text.startswith('/start'):
         state_INITIAL(p, text_input=text)
@@ -911,9 +927,11 @@ def dealWithUserInteraction(chat_id, name, last_name, username, application, tex
         if WORK_IN_PROGRESS and not p.isTester():
             send_message(p, ux.MSG_WORK_IN_PROGRESS)    
             return
-        
+                
         if text:
             if deal_with_admin_commands(p, text):
+                return
+            if deal_with_tester_commands(p, text):
                 return
             if deal_with_universal_command(p, text):
                 return

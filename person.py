@@ -166,7 +166,7 @@ def getPersonByChatIdAndApplication(chat_id, application):
 def getPeopleOnHuntStats(hunt):
     import game
     people_on_hunt = Person.query(Person.current_hunt==hunt).fetch()    
-    stats = '\n'.join([game.get_game_stats(p) for p in people_on_hunt])    
+    stats = '\n'.join([game.get_game_stats(p) for p in people_on_hunt if p.tmp_variables['GROUP_NAME']])    
     return stats
 
 

@@ -58,8 +58,8 @@ def get_random_indovinelli(airtable_missioni_id):
             indovinelli_random.append(indovinelli_cat_bucket[cat].pop())
     if indovinallo_final:
         indovinelli_random.append(indovinallo_final)
-    # debug
-    # if True: 
+    # debug = True
+    # if debug: 
     #     from main import tell_admin   
     #     random_indovinelli_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(indovinelli_random,1)])
     #     tell_admin("Random indovinelli:\n{}".format(random_indovinelli_names))
