@@ -83,7 +83,7 @@ def state_INITIAL(p, message_obj=None, **kwargs):
     if text_input is None:
         pass #don't reply anything
     else: #text_input.lower().startswith('/start'):
-        if not key.ACTIVE_HUNT:
+        if not key.ARE_THERE_ACTIVE_HUNTS:
             msg = "Ciao 😀\n" \
                   "In questo momento non c'è nessuna caccia al tesoro attiva.\n" \
                   "Vieni a trovarci su [historic](https://www.historictrento.it) " \
@@ -91,9 +91,9 @@ def state_INITIAL(p, message_obj=None, **kwargs):
             send_message(p, msg)
         elif text_input.lower().startswith('/start '):
             hunt_password = text_input.lower().split()[1]
-            if hunt_password in key.HUNTS:
+            if hunt_password in key.ACTIVE_HUNTS:
                 game.resetGame(p, hunt_password)
-                game_name = key.HUNTS[hunt_password]['Name']
+                game_name = key.ACTIVE_HUNTS[hunt_password]['Name']
                 send_message(p, ux.MSG_WELCOME.format(game_name))
                 redirect_to_state(p, state_START)
             else:
@@ -121,7 +121,6 @@ def state_START(p, message_obj=None, **kwargs):
         else:
             send_message(p, ux.MSG_WRONG_INPUT_USE_BUTTONS, kb)
             send_typing_action(p, sleep_time=1)
-            repeat_state(p)
 
 # ================================
 # Nome Gruppo State
@@ -148,7 +147,6 @@ def state_NOME_GRUPPO(p, message_obj=None, **kwargs):
         else:
             send_message(p, ux.MSG_WRONG_INPUT_INSERT_TEXT)
             send_typing_action(p, sleep_time=1)
-            repeat_state(p)
 
 # ================================
 # Selfie Iniziale State
@@ -173,7 +171,6 @@ def state_SELFIE_INIZIALE(p, message_obj=None, **kwargs):
         else:
             send_message(p, ux.MSG_WRONG_INPUT_SEND_PHOTO)
             send_typing_action(p, sleep_time=1)
-            repeat_state(p)
 
 # ================================
 # INTRO
@@ -617,13 +614,13 @@ def deal_with_tester_commands(p, message_obj):
     # logging.debug("In deal_with_tester_commands with user:{} istester:{}".format(p.get_id(), p.is_tester()))
     if p.is_tester():
         if text_input == '/stats':
-            stats_list_str = '\n'.join(["/stats_{}".format(k) for k in key.HUNTS.keys()])
+            stats_list_str = '\n'.join(["/stats_{}".format(k) for k in key.ACTIVE_HUNTS.keys()])
             msg = "Available stats:\n{}".format(stats_list_str)
             send_message(p, msg, markdown=False)
             return True
         if text_input.startswith('/stats_'):
             hung_pw = text_input.split('_', 1)[1]
-            if hung_pw in key.HUNTS:
+            if hung_pw in key.ACTIVE_HUNTS:
                 msg = 'Stats:\n\n{}'.format(ndb_person.get_people_on_hunt_stats(hung_pw))
                 send_message(p, msg, markdown=False)
             else:
@@ -688,6 +685,10 @@ def deal_with_request(request_json):
         if was_disabled:
             msg = "Bot riattivato!"
             send_message(p, msg)
+
+    if message_obj.forward_from and not p.is_tester():
+        send_message(p, ux.MSG_NO_FORWARDING_ALLOWED)
+        return
 
     text = message_obj.text
     if text:

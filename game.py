@@ -125,7 +125,7 @@ with client.context():
 ################################
 
 def resetGame(p, hunt_password):
-    hunt_info = key.HUNTS[hunt_password]
+    hunt_info = key.ACTIVE_HUNTS[hunt_password]
     airtable_missioni_id = hunt_info['Airtable_Missioni_ID']    
     indovinelli = get_random_indovinelli(airtable_missioni_id)
     notify_group = hunt_info.get('Notify_Group', False)

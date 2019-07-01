@@ -17,8 +17,11 @@ app = Flask(__name__)
 def root():
     logging.debug("in root function")
     """Return a friendly HTTP greeting."""
-    return "hiSTORIC!", 200
+    return "hiSTORIC!!", 200
 
+@app.route('/postest', methods=['POST'])
+def post_test():
+    return "post test!", 200
 
 @app.errorhandler(404)
 def page_not_found(e):

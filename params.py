@@ -1,6 +1,8 @@
 import utility
 import key
 
+USE_NGROK = True
+
 #PARAMETRI_ORIGINAL = utility.import_url_csv_to_dict_list(key.PARAMETRI_URL)
 # NOME, DESCRIZIONE, VALORE
 
