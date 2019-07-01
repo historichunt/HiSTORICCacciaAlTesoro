@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-
 import utility
 import key
 from airtable import Airtable
 from random import shuffle, choice
-import person
+import ndb_person
+from ndb_person import Person
 import params
 
 #################
@@ -24,7 +23,7 @@ POST_MESSAGE
 def get_random_indovinelli(airtable_missioni_id):
     import itertools
     INDOVINELLI_TABLE = Airtable(airtable_missioni_id, 'Indovinelli', api_key=key.AIRTABLE_API_KEY)
-    INDOVINELLI_ALL = [row['fields'] for row in utility.utify(INDOVINELLI_TABLE.get_all()) if row['fields'].get('ACTIVE',False)]    
+    INDOVINELLI_ALL = [row['fields'] for row in INDOVINELLI_TABLE.get_all() if row['fields'].get('ACTIVE',False)]    
     for row in INDOVINELLI_ALL:
         if 'FINALE' not in row:
             row['FINALE'] = False
@@ -53,13 +52,13 @@ def get_random_indovinelli(airtable_missioni_id):
     indovinelli_random = []
     round_robin_cot = itertools.cycle(indovinelli_categories)
     while len(indovinelli_random) < len(indovinelli):
-        cat = round_robin_cot.next()
+        cat = next(round_robin_cot)
         if len(indovinelli_cat_bucket[cat])>0:
             indovinelli_random.append(indovinelli_cat_bucket[cat].pop())
     if indovinallo_final:
         indovinelli_random.append(indovinallo_final)
-    # debug = True
-    # if debug: 
+    # debug
+    # if True: 
     #     from main import tell_admin   
     #     random_indovinelli_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(indovinelli_random,1)])
     #     tell_admin("Random indovinelli:\n{}".format(random_indovinelli_names))
@@ -70,7 +69,7 @@ def get_random_indovinelli(airtable_missioni_id):
 #################
 
 SURVEY_TABLE = Airtable(key.AIRTABLE_CONFIG_ID, 'Survey', api_key=key.AIRTABLE_API_KEY)
-SURVEY = [row['fields'] for row in utility.utify(SURVEY_TABLE.get_all())]
+SURVEY = [row['fields'] for row in SURVEY_TABLE.get_all()]
 
 # DOMANDA, RISPOSTE
 SURVEY_QUESTIONS = [s['DOMANDA'] for s in SURVEY]
@@ -88,7 +87,7 @@ RESULTS_GAME_TABLE_HEADERS = \
     'WRONG ANSWERS', 'PENALTY TIME', 'TOTAL TIME GAME', 'TOTAL TIME MISSIONS']
 
 def save_game_data_in_airtable(p):
-    import photos
+    from bot_telegram import get_photo_url_from_telegram
     import json
     game_data = p.tmp_variables
     airtable_risultati_id = game_data['HUNT_INFO']['Airtable_Risultati_ID']
@@ -101,7 +100,7 @@ def save_game_data_in_airtable(p):
         games_row[h] = game_data[h]
     games_row['GAME VARS'] = json.dumps(game_data,ensure_ascii=False)
     games_row['GROUP_SELFIES'] = [
-        {'url': photos.prepareAndGetPhotoTelegramUrl(file_id)} 
+        {'url': get_photo_url_from_telegram(file_id)} 
         for file_id in game_data['GROUP_SELFIES']
     ]
     RESULTS_GAME_TABLE.insert(games_row)
@@ -117,7 +116,9 @@ def save_game_data_in_airtable(p):
 # PEOPLE FOR GAME
 ################################
 
-HISTORIC_GROUP = person.getPersonById(key.HISTORIC_GROUP_ID) #key.FEDE_T_ID
+from ndb_utils import client
+with client.context():
+    HISTORIC_GROUP = ndb_person.get_person_by_id(key.HISTORIC_GROUP_ID) #key.FEDE_T_ID
 
 ################################
 # GAME MANAGEMENT FUNCTIONS
@@ -135,10 +136,10 @@ def resetGame(p, hunt_password):
     p.tmp_variables['HUNT_INFO'] = hunt_info
     p.tmp_variables['Notify_Group'] = notify_group
     p.tmp_variables['Validator_ID'] = validator_id
-    p.tmp_variables['ID'] = p.getId()
-    p.tmp_variables['NOME'] = p.getFirstName(escapeMarkdown=False)
-    p.tmp_variables['COGNOME'] = p.getLastName(escapeMarkdown=False)
-    p.tmp_variables['USERNAME'] = p.getUsername(escapeMarkdown=False)
+    p.tmp_variables['ID'] = p.get_id()
+    p.tmp_variables['NOME'] = p.get_first_name(escape_markdown=False)
+    p.tmp_variables['COGNOME'] = p.get_last_name(escape_markdown=False)
+    p.tmp_variables['USERNAME'] = p.get_username(escape_markdown=False)
     p.tmp_variables['EMAIL'] = ''
     p.tmp_variables['MISSION_TIMES'] = []
     p.tmp_variables['INDOVINELLI_INFO'] = {'TODO': indovinelli, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(indovinelli)}
@@ -154,10 +155,13 @@ def resetGame(p, hunt_password):
     p.tmp_variables['TOTAL TIME'] = 0 # seconds
 
 def exitGame(p, put=True):
+    if p.current_hunt is None:
+        return False
     p.current_hunt = None
     p.tmp_variables = {}
     if put:
         p.put()
+    return True
 
 def get_game_stats(p):
     group_name = p.tmp_variables['GROUP_NAME']
@@ -171,19 +175,19 @@ def send_notification_to_group(p):
 def manual_validation(p):
     return p.tmp_variables['Validator_ID'] != None
 
-def get_validator(p):
+def get_validator_chat_id(p):
     validator_id = p.tmp_variables['Validator_ID']
     if validator_id:
-        return person.getPersonById(validator_id[0])
+        return validator_id[0].split('_')[1]
     return None
 
 def setGroupName(p, name):
     p.tmp_variables['GROUP_NAME'] = name
 
-def getGroupName(p, escapeMarkdown=True):
+def getGroupName(p, escape_markdown=True):
     name = p.tmp_variables['GROUP_NAME']
-    if escapeMarkdown:
-        name = utility.escapeMarkdown(name)
+    if escape_markdown:
+        name = utility.escape_markdown(name)
     return name
 
 def setStartTime(p):

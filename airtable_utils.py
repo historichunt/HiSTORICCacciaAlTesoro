@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import key
 from airtable import Airtable
 
@@ -29,4 +27,4 @@ def downloadSelfies(hunt_password, output_dir):
 
 if __name__ == "__main__":
     #downloadSelfies('Suffragio_1_July_2018', '/Users/fedja/Downloads/caccia')
-    downloadSelfies('historicmichelinvigiliane', '/Users/fedja/Downloads/Albere_B')
+    downloadSelfies('05_Aldeno_03_May_2019', '/Users/fedja/Downloads/05_Aldeno_03_May_2019')

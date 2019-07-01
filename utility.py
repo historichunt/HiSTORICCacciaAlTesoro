@@ -1,21 +1,7 @@
-# -*- coding: utf-8 -*-
 import re
 import textwrap
 from collections import OrderedDict
 
-def utify(data):
-    # if this is a unicode string, return its string representation
-    if isinstance(data, unicode):
-        return data.encode('utf-8')
-    # if this is a list of values, return list of byteified values
-    if isinstance(data, list):
-        return [ utify(item) for item in data ]
-    # if this is a dictionary, return dictionary of byteified keys and values
-    # but only if we haven't already byteified it
-    if isinstance(data, dict):
-        return {utify(key): utify(value) for key, value in data.iteritems()}
-    # if it's anything else, return it in its original form
-    return data
 
 def check_email(text_input):
     email_split = text_input.split()
@@ -52,7 +38,7 @@ def answer_is_almost_correct(guess, solution_set):
     if min(levenshtein(guess, s) for s in solution_set_word) <= 2:
         return True
 
-def import_url_csv_to_dict_list(url_csv, remove_new_line_escape=True): #escapeMarkdown=True
+def import_url_csv_to_dict_list(url_csv, remove_new_line_escape=True): #escape_markdown=True
     import csv
     import requests
     r = requests.get(url_csv)
@@ -71,7 +57,7 @@ def representsInt(s):
         return False
 
 re_letters_space = re.compile('^[a-zA-Z ]+$')
-re_digits = re.compile('^\d+$')
+re_digits = re.compile(r'^\d+$')
 
 def hasOnlyLettersAndSpaces(s):
     return re_letters_space.match(s) != None
@@ -170,12 +156,12 @@ def segmentArrayOnMaxChars(array, maxChar=20, ignoreString=None):
         result.append(currentLine)
     return result
 
-reSplitSpace = re.compile("\s")
+reSplitSpace = re.compile(r"\s")
 
 def splitTextOnSpaces(text):
     return reSplitSpace.split(text)
 
-def escapeMarkdown(text):
+def escape_markdown(text):
     for char in '*_`[':
         text = text.replace(char, '\\'+char)
     return text
@@ -208,26 +194,6 @@ def getTimeStringFormatHHMM(minutes, rjust=False):
 def unindent(s):
     return re.sub('[ ]+', ' ', textwrap.dedent(s))
 
-# sheet_tables is a dict mapping sheet names to 2array
-def convert_data_to_spreadsheet(sheet_tables):
-    import StringIO
-    from pyexcel_xls import save_data
-    xls_data = OrderedDict()
-    for name, array in sheet_tables.iteritems():
-        xls_data.update({name: array})
-        #xls_data.update({"Sheet 1": sheet_tables})
-    output = StringIO.StringIO()
-    save_data(output, xls_data, encoding="UTF-8")
-    return output.getvalue()
-
-def convert_arrayData_to_tsv(array):
-    import csv
-    import StringIO
-    output = StringIO.StringIO()
-    writer = csv.writer(output, dialect='excel-tab')
-    writer.writerows(array)
-    return output.getvalue()
-
 def roundup(x, upTo):
     import math
     return int(math.ceil(x / float(upTo))) * upTo
@@ -238,11 +204,6 @@ def emptyStringIfNone(x):
 def emptyStringIfZero(x):
     return '' if x==0 else x
 
-def convertToUtfIfNeeded(s):
-    if isinstance(s, unicode):
-        s = s.encode('utf-8')
-    return s
-
 def flatten(L):
     ret = []
     for i in L:
@@ -251,25 +212,6 @@ def flatten(L):
         else:
             ret.append(i)
     return ret
-
-def matchInputToChoices(input, choices):
-    perfectMatch = True
-    if input in choices:
-        return input, perfectMatch
-    perfectMatch = False
-    from fuzzywuzzy import process
-    threshold = 75
-    # choices = ["Atlanta Falcons", "New York Jets", "New York Giants", "Dallas Cowboys"]
-    # process.extract("new york jets", choices, limit=2)
-    # -> [('New York Jets', 100), ('New York Giants', 78)]
-    try:
-        results = process.extract(input, choices, limit=2)
-    except:
-        return None, False
-    if results and results[0][1]>threshold:
-        # and (len(results)==1 or results[0][1]>results[1][1]): # no more than one
-        return results[0][0], perfectMatch
-    return None, perfectMatch
 
 def format_distance(dst_km):
     if (dst_km>=10):

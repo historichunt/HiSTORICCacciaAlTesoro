@@ -16,34 +16,6 @@ def dateTimeFromUtcIsoFormat(str_dt):
 def nowUTC():
     return datetime.now()
 
-def convertUTCtoCET(dt_utc):
-    from pytz_zip.gae import pytz_zip
-    UTC_ZONE = pytz_zip.timezone('UTC')
-    CET_ZONE = pytz_zip.timezone('Europe/Amsterdam')  # pytz.timezone('CET')
-    return dt_utc.replace(tzinfo=UTC_ZONE).astimezone(CET_ZONE)
-
-def convertCETtoUTC(dt_utc):
-    from pytz_zip.gae import pytz_zip
-    UTC_ZONE = pytz_zip.timezone('UTC')
-    CET_ZONE = pytz_zip.timezone('Europe/Amsterdam')  # pytz.timezone('CET')
-    return dt_utc.replace(tzinfo=CET_ZONE).astimezone(UTC_ZONE)
-
-def nowCET(removeTimezone = True):
-    utc = nowUTC()
-    cet = convertUTCtoCET(utc)
-    if removeTimezone:
-        cet = cet.replace(tzinfo=None)
-    return cet
-
-#'%H:%M:%S.%f'
-#'%H:%M:%S'
-def datetimeStringCET(dt=None, format = '%d-%m-%Y %H:%M:%S'):
-    if dt == None:
-        dt = nowCET()
-    else:
-        dt = convertUTCtoCET(dt)
-    return dt.strftime(format)
-
 def delta_seconds_iso(old_str, new_str):
     new = dateTimeFromUtcIsoFormat(new_str)
     old = dateTimeFromUtcIsoFormat(old_str)
@@ -62,27 +34,6 @@ def formatDateTime(dt, format='%d-%m-%Y %H:%M'):
         return dt.strftime(format)
     return None
 
-def formatDate(dt=None, format ='%d-%m-%Y'):
-    if dt == None:
-        dt = nowCET()
-    return dt.strftime(format)
-
-def getCurrentYearCET():
-    dt_cet = convertUTCtoCET(nowUTC())
-    return int(dt_cet.strftime('%Y'))
-
-
-# Return the day of the week as an integer,
-# where Monday is 0 and Sunday is 6
-def getWeekday(dt=None):
-    if dt == None:
-        dt = nowCET()
-    return dt.weekday()
-
-def get_midnight(date = None):
-    if date == None:
-        date = nowCET()
-    return date.replace(hour=0, minute=0, second=0, microsecond=0)
 
 def delta_min(dt1, dt2):
     diff = dt2 - dt1
@@ -92,34 +43,6 @@ def delta_min(dt1, dt2):
 def delta_days(dt1, dt2):
     diff = dt2 - dt1
     return diff.days
-
-def ellapsed_min(dt):
-    return delta_min(dt, nowCET())
-
-def get_datetime_add_days(days, dt = None):
-    if dt == None:
-        dt = nowCET()
-    return dt + timedelta(days=days)
-
-def get_datetime_add_minutes(min, dt = None):
-    if dt == None:
-        dt = nowCET()
-    return dt + timedelta(minutes=min)
-
-def get_datetime_days_ago(days, dt = None):
-    if dt == None:
-        dt = nowCET()
-    return dt - timedelta(days=days)
-
-def tomorrow(dt = None):
-    if dt == None:
-        dt = nowCET()
-    return dt + timedelta(days=1)
-
-def get_datetime_hours_ago(hours, dt = None):
-    if dt == None:
-        dt = nowCET()
-    return dt - timedelta(hours=hours)
 
 def getTime(time_str, format='%H:%M'):
     try:
@@ -149,11 +72,6 @@ def getDatetime(date_string, format='%d%m%Y'):
 
 def removeTimezone(dt):
     return dt.replace(tzinfo=None)
-
-def getDateFromDateTime(dt = None):
-    if dt == None:
-        dt = nowCET()
-    return datetime.date(dt)
 
 def getMinutes(input):
     t1 = datetime.strptime(input, '%H:%M')

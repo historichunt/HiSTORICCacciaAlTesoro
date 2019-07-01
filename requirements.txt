@@ -1,0 +1,14 @@
+pylint
+Flask
+#google-cloud-ndb
+pip install git+https://github.com/googleapis/python-ndb.git@master
+google-cloud-logging
+google-cloud-datastore
+requests
+python-telegram-bot
+decorator
+grpcio
+gunicorn
+Pillow
+airtable-python-wrapper
+geopy

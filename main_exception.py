@@ -1,28 +1,48 @@
-# -*- coding: utf-8 -*-
-
-from google.appengine.ext import deferred
 import logging
-import webapp2
+import traceback
+from bot_telegram import report_master
+import telegram
+import time
 
-class SafeRequestHandler(webapp2.RequestHandler):
-    def handle_exception(self, exception, debug_mode):
-        report_exception()
+def exception_reporter(func, *args, **kwargs):    
+    def exception_reporter_wrapper(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except Exception:            
+            report_string = '❗️ Exception {}'.format(traceback.format_exc()) #.splitlines()
+            logging.error(report_string) 
+            try:  
+                report_master(report_string)
+            except Exception:
+                report_string = '❗️ Exception {}'.format(traceback.format_exc())
+                logging.error(report_string)          
+    return exception_reporter_wrapper
 
-def deferredSafeHandleException(obj, *args, **kwargs):
-    deferred.defer(safeHandleException, obj, *args, **kwargs)
+def run_new_thread_and_report_exception(func, *args, **kwargs):
+    import threading   
 
-def safeHandleException(obj, *args, **kwargs):
-    try:
-        obj(*args, **kwargs)
-    except:  # catch *all* exceptions
-        report_exception()
-        # raise deferred.PermanentTaskFailure
+    @exception_reporter
+    def report_exception_in_thread(func, *args, **kwargs):
+        func(*args,  **kwargs)
 
-def report_exception():
-    from main import tell_admin
-    import traceback
-    msg = "❗ Detected Exception: " + traceback.format_exc()
-    tell_admin(msg)
-    logging.error(msg)
+    args= list(args)
+    args.insert(0, func)
+    threading.Thread(target=report_exception_in_thread, args=args, kwargs=kwargs).start()
 
+# see https://github.com/python-telegram-bot/python-telegram-bot/wiki/Exception-Handling
 
+def retry_on_network_error(func):
+    def retry_on_network_error_wrapper(*args, **kwargs):
+        for retry_num in range(1, 5):
+            try:
+                return func(*args, **kwargs)
+            except telegram.error.NetworkError:
+                sleep_secs = pow(2,retry_num)
+                report_string = '⚠️️ Caught network error, on {} attemp. Retrying after {} secs...'.format(retry_num,sleep_secs)
+                logging.warning(report_string)                 
+                report_master(report_string)
+                time.sleep(sleep_secs)
+        report_string = '❗️ Exception: persistent network error'
+        logging.error(report_string)            
+        report_master(report_string)            
+    return retry_on_network_error_wrapper

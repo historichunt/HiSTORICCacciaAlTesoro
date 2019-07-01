@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
-
 import utility
 import key
+import telegram
 
 # ================================
 # BUTTONS
@@ -33,15 +32,16 @@ BUTTON_LOCATION = {
     'request_location': True,
 }
 
-BUTTON_SI_CALLBACK = lambda x: {
-    'text': '✅ SI',
-    'callback_data': x,
-}
+BUTTON_SI_CALLBACK = lambda x: telegram.InlineKeyboardButton(
+    text = '✅ SI',
+    callback_data = x
+)
 
-BUTTON_NO_CALLBACK = lambda x: {
-    'text': '❌ NO',
-    'callback_data': x,
-}
+BUTTON_NO_CALLBACK = lambda x: telegram.InlineKeyboardButton(
+    text = '❌ NO',
+    callback_data = x
+)
+
 
 ####################
 # CONVERSATIONS
