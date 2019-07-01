@@ -6,6 +6,8 @@ from airtable import Airtable
 def downloadSelfies(hunt_password, output_dir):
     import requests
     import os
+    if not os.path.isdir(output_dir):
+        os.mkdir(output_dir)
     table_id = key.HUNTS[hunt_password]['Airtable_Risultati_ID']
     GAME_TABLE = Airtable(table_id, 'Games', api_key=key.AIRTABLE_API_KEY)
     table_entries = GAME_TABLE.get_all()
@@ -27,4 +29,4 @@ def downloadSelfies(hunt_password, output_dir):
 
 if __name__ == "__main__":
     #downloadSelfies('Suffragio_1_July_2018', '/Users/fedja/Downloads/caccia')
-    downloadSelfies('05_Aldeno_03_May_2019', '/Users/fedja/Downloads/05_Aldeno_03_May_2019')
+    downloadSelfies('historicmichelinvigiliane', '/Users/fedja/Downloads/Albere_B')
