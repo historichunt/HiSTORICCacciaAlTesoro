@@ -2,3 +2,4 @@ env
 key.py
 lib
 env3
+.flaskenv

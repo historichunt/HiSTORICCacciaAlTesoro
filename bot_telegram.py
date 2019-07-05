@@ -20,8 +20,6 @@ If kb==None keep last keyboard
 # @retry_on_network_error
 def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
     inline_keyboard=False, sleep=False, **kwargs):
-    #sendMessage(chat_id, text, parse_mode=None, disable_web_page_preview=None, disable_notification=False,
-    # reply_to_message_id=None, reply_markup=None, timeout=None, **kwargs)
     if kb or remove_keyboard:
         if inline_keyboard:
             reply_markup = {  
@@ -33,7 +31,7 @@ def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
         else:
             p.set_keyboard(kb)
             reply_markup = telegram.ReplyKeyboardMarkup(kb, resize_keyboard=True)
-        BOT.sendMessage(
+        BOT.send_message(
             chat_id = p.chat_id,
             text = text,
             parse_mode = telegram.ParseMode.MARKDOWN if markdown else None,
@@ -42,7 +40,7 @@ def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
         )
     else:
         try:
-            BOT.sendMessage(
+            BOT.send_message(
                 chat_id = p.chat_id,
                 text = text,
                 parse_mode = telegram.ParseMode.MARKDOWN if markdown else None,
@@ -53,6 +51,10 @@ def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
             p.switch_notifications()
     if sleep:
         time.sleep(0.1)
+
+def send_location(p, lat, lon):
+    loc = telegram.Location(lat,lon)
+    BOT.send_location(p.chat_id, location = loc)
 
 def send_typing_action(p, sleep_time=None):    
     BOT.sendChatAction(
@@ -69,7 +71,9 @@ def send_media_url(p, url_attachment, kb=None, caption=None):
         BOT.send_photo(p.chat_id, photo=url_attachment, caption=caption)
     elif attach_type in ['mp3']:
         BOT.send_audio(p.chat_id, audio=url_attachment, caption=caption)
-    elif attach_type in ['gif']:
+    elif attach_type in ['ogg']:
+        BOT.send_voice(p.chat_id, voice=url_attachment, caption=caption)       
+    elif attach_type in ['gif']:        
         BOT.send_animation(p.chat_id, animation=url_attachment, caption=caption)
     elif attach_type in ['mp4']:
         BOT.send_audio(p.chat_id, audio=url_attachment, caption=caption)

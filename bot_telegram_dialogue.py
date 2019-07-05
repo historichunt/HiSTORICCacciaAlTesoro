@@ -1,5 +1,5 @@
 import logging
-from bot_telegram import BOT, send_message, send_typing_action, \
+from bot_telegram import BOT, send_message, send_location, send_typing_action, \
     report_master, send_text_document, send_media_url, \
     broadcast, tell_admin, reset_all_users
 import utility
@@ -15,7 +15,7 @@ import key
 import geoUtils
 import date_time_util as dtu
 import json
-
+import random
 
 # ================================
 # CONFIG
@@ -46,17 +46,17 @@ def make_payer_exit_game(p, message=None):
 # ================================
 # REDIRECT TO STATE
 # ================================
-def redirect_to_state_multi(users, new_function, message_obj=None):
-    reversed_users = list(reversed(users)) # so that game creator is last
-    for u in reversed_users:
-        redirect_to_state(u, new_function, message_obj)
-
 def redirect_to_state(user, new_function, message_obj=None):
     new_state = new_function.__name__
     if user.state != new_state:
         logging.debug("In redirect_to_state. current_state:{0}, new_state: {1}".format(str(user.state), str(new_state)))
         user.set_state(new_state)
     repeat_state(user, message_obj)
+
+def redirect_to_state_multi(users, new_function, message_obj=None):
+    reversed_users = list(reversed(users)) # so that game creator is last
+    for u in reversed_users:
+        redirect_to_state(u, new_function, message_obj)
 
 
 # ================================
@@ -78,40 +78,41 @@ def repeat_state(user, message_obj=None):
 # Initial State
 # ================================
 
-def state_INITIAL(p, message_obj=None, **kwargs):
-    text_input = message_obj.text
-    if text_input is None:
+def state_INITIAL(p, message_obj=None, **kwargs):    
+    if message_obj is None:
         pass #don't reply anything
-    else: #text_input.lower().startswith('/start'):
-        if not key.ARE_THERE_ACTIVE_HUNTS:
-            msg = "Ciao 😀\n" \
-                  "In questo momento non c'è nessuna caccia al tesoro attiva.\n" \
-                  "Vieni a trovarci su [historic](https://www.historictrento.it) " \
-                  "o mandaci una email a historic.trento@gmail.com."
-            send_message(p, msg)
-        elif text_input.lower().startswith('/start '):
-            hunt_password = text_input.lower().split()[1]
-            if hunt_password in key.ACTIVE_HUNTS:
-                game.resetGame(p, hunt_password)
-                game_name = key.ACTIVE_HUNTS[hunt_password]['Name']
-                send_message(p, ux.MSG_WELCOME.format(game_name))
-                redirect_to_state(p, state_START)
-            else:
-                msg = '🙈 Non hai inserito la parola magica giusta per iniziare la caccia al tesoro.'
+    else: 
+        text_input = message_obj.text
+        if text_input:
+            if not key.ARE_THERE_ACTIVE_HUNTS:
+                msg = "Ciao 😀\n" \
+                    "In questo momento non c'è nessuna caccia al tesoro attiva.\n" \
+                    "Vieni a trovarci su [historic](https://www.historictrento.it) " \
+                    "o mandaci una email a historic.trento@gmail.com."
                 send_message(p, msg)
-        else:
-            msg = "Ciao 😀\n" \
-                  "C'è una caccia al tesoro in corso ma devi utilizzare il QR code per accedere.\n" \
-                  "In alternativa digita /start seguito dalla *password* fornita dagli organizzatori."
-            send_message(p, msg)
+            elif text_input.lower().startswith('/start '):
+                hunt_password = text_input.lower().split()[1]
+                if hunt_password in key.ACTIVE_HUNTS:
+                    game.resetGame(p, hunt_password)
+                    game_name = key.ACTIVE_HUNTS[hunt_password]['Name']
+                    send_message(p, ux.MSG_WELCOME.format(game_name), remove_keyboard=True)
+                    redirect_to_state(p, state_START)
+                else:
+                    msg = '🙈 Non hai inserito la parola magica giusta per iniziare la caccia al tesoro.'
+                    send_message(p, msg)
+            else:
+                msg = "Ciao 😀\n" \
+                    "C'è una caccia al tesoro in corso ma devi utilizzare il QR code per accedere.\n" \
+                    "In alternativa digita /start seguito dalla *password* fornita dagli organizzatori."
+                send_message(p, msg)
 
-def state_START(p, message_obj=None, **kwargs):
-    text_input = message_obj.text if message_obj else None
-    giveInstruction = text_input is None
-    if giveInstruction:
+def state_START(p, message_obj=None, **kwargs):    
+    give_instruction = message_obj is None
+    if give_instruction:
         kb = [[ux.BUTTON_START_GAME]]
         send_message(p, ux.MSG_PRESS_TO_START, kb)
     else:
+        text_input = message_obj.text
         kb = p.get_keyboard()
         if text_input in utility.flatten(kb):
             if text_input == ux.BUTTON_START_GAME:
@@ -126,12 +127,12 @@ def state_START(p, message_obj=None, **kwargs):
 # Nome Gruppo State
 # ================================
 
-def state_NOME_GRUPPO(p, message_obj=None, **kwargs):
-    text_input = message_obj.text if message_obj else None
-    giveInstruction = text_input is None
-    if giveInstruction:
+def state_NOME_GRUPPO(p, message_obj=None, **kwargs):    
+    give_instruction = message_obj is None
+    if give_instruction:
         send_message(p, ux.MSG_GROUP_NAME)
     else:
+        text_input = message_obj.text
         if text_input:
             if len(text_input) > params.MAX_TEAM_NAME_LENGTH:
                 send_message(p, ux.MSG_GROUP_NAME_TOO_LONG.format(params.MAX_TEAM_NAME_LENGTH))
@@ -152,12 +153,12 @@ def state_NOME_GRUPPO(p, message_obj=None, **kwargs):
 # Selfie Iniziale State
 # ================================
 
-def state_SELFIE_INIZIALE(p, message_obj=None, **kwargs):
-    photo = message_obj.photo if message_obj else None
-    giveInstruction = photo is None
-    if giveInstruction:
+def state_SELFIE_INIZIALE(p, message_obj=None, **kwargs):    
+    give_instruction = message_obj is None
+    if give_instruction:
         send_message(p, ux.MSG_SELFIE_INIZIALE)
     else:
+        photo = message_obj.photo
         if photo:
             photo_file_id = photo[-1]['file_id']
             game.appendGroupSelfieFileId(p, photo_file_id)
@@ -176,34 +177,34 @@ def state_SELFIE_INIZIALE(p, message_obj=None, **kwargs):
 # INTRO
 # ================================
 
-def state_MISSION_INTRO(p, message_obj=None, **kwargs):
-    text_input = message_obj.text if message_obj else None
-    giveInstruction = text_input is None
-    if giveInstruction:
-        current_indovinello = game.setNextIndovinello(p)
+def state_MISSION_INTRO(p, message_obj=None, **kwargs):        
+    give_instruction = message_obj is None
+    if give_instruction:
+        current_indovinello = game.setNextIndovinello(p)        
         indovinello_number = game.completedIndovinelloNumber(p) + 1
-        total_indovinelli = game.getTotalIndovinelli(p)
-        msg = '*🎳 Missione {}/{}*'.format(indovinello_number, total_indovinelli)
-        send_message(p, msg)
-        send_typing_action(p, sleep_time=1)
+        total_missioni = game.getTotalIndovinelli(p)
+        msg = ux.MSG_MISSION_N_TOT.format(indovinello_number, total_missioni)
+        send_message(p, msg, remove_keyboard=True)
+        send_typing_action(p, sleep_time=1)        
+        if 'INTRODUZIONE_LOCATION' not in current_indovinello:
+            redirect_to_state(p, state_GPS)
+            return
         if 'INTRO_MEDIA' in current_indovinello:
             caption = current_indovinello.get('INTRO_MEDIA_CAPTION',None)
             url_attachment = current_indovinello['INTRO_MEDIA'][0]['url']
             send_media_url(p, url_attachment, caption=caption)
-            send_typing_action(p, sleep_time=3)
+            send_typing_action(p, sleep_time=1)
         msg = current_indovinello['INTRODUZIONE_LOCATION'] # '*Introduzione*: ' + 
-        kb = [[ux.BUTTON_CONTINUE]]
+        kb = [[random.choice(ux.BUTTON_CONTINUE_MULTI)]]
         send_message(p, msg, kb)
         p.put()
     else:
+        text_input = message_obj.text
         kb = p.get_keyboard()
         if text_input in utility.flatten(kb):
-            if text_input == ux.BUTTON_CONTINUE:
+            if text_input in ux.BUTTON_CONTINUE_MULTI:
                 current_indovinello = game.getCurrentIndovinello(p)
-                if 'GPS' in current_indovinello:
-                    redirect_to_state(p, state_GPS)
-                else:
-                    redirect_to_state(p, state_INDOVINELLO)
+                redirect_to_state(p, state_GPS)
             else:
                 assert False
         else:
@@ -211,19 +212,22 @@ def state_MISSION_INTRO(p, message_obj=None, **kwargs):
 
 # ================================
 # GPS state
-# ================================
+# ================================  
 
-def state_GPS(p, message_obj=None, **kwargs):
-    location = message_obj.location if message_obj else None
-    giveInstruction = location is None
+def state_GPS(p, message_obj=None, **kwargs):        
+    give_instruction = message_obj is None
     current_indovinello = game.getCurrentIndovinello(p)
-    if giveInstruction:
+    if 'GPS' not in current_indovinello:
+        redirect_to_state(p, state_DOMANDA)
+        return
+    if give_instruction:
         goal_position = [float(x) for x in current_indovinello['GPS'].split(',')]
         msg = ux.MSG_GO_TO_PLACE
         kb = [[ux.BUTTON_LOCATION]]
         send_message(p, msg, kb)
-        BOT.send_location(p.chat_id, goal_position[0], goal_position[1])
+        send_location(p, goal_position[0], goal_position[1])
     else:
+        location = message_obj.location
         if location:            
             goal_position = [float(x) for x in current_indovinello['GPS'].split(',')]
             lat, lon = location['latitude'], location['longitude']
@@ -233,7 +237,7 @@ def state_GPS(p, message_obj=None, **kwargs):
             if distance <= params.GPS_TOLERANCE_METERS:
                 send_message(p, ux.MSG_GPS_OK, remove_keyboard=True)
                 send_typing_action(p, sleep_time=1)
-                redirect_to_state(p, state_INDOVINELLO)
+                redirect_to_state(p, state_DOMANDA)
             else:
                 msg = ux.MSG_TOO_FAR.format(distance)
                 send_message(p, msg)
@@ -241,24 +245,29 @@ def state_GPS(p, message_obj=None, **kwargs):
             send_message(p, ux.MSG_WRONG_INPUT_SEND_LOCATION)
 
 # ================================
-# INDOVINELLO state
+# DOMANDA state
 # ================================
-def state_INDOVINELLO(p, message_obj=None, **kwargs):
-    text_input = message_obj.text if message_obj else None
-    giveInstruction = text_input is None
+def state_DOMANDA(p, message_obj=None, **kwargs):    
+    give_instruction = message_obj is None
     current_indovinello = game.getCurrentIndovinello(p)
-    if giveInstruction:
-        game.set_mission_start_time(p)
+    if give_instruction:
+        if 'DOMANDA_MEDIA' in current_indovinello:
+            caption = current_indovinello.get('DOMANDA_MEDIA_CAPTION',None)
+            url_attachment = current_indovinello['DOMANDA_MEDIA'][0]['url']
+            send_media_url(p, url_attachment, caption=caption)
+            send_typing_action(p, sleep_time=1)        
         current_indovinello['start_time'] = dtu.nowUtcIsoFormat()
         current_indovinello['wrong_answers'] = []       
-        msg = current_indovinello['INDOVINELLO'] 
+        msg = current_indovinello['DOMANDA'] 
         if current_indovinello.get('INDIZIO_1',False):
             kb = [['💡 PRIMO INDIZIO']]
             send_message(p, msg, kb)
         else:
             send_message(p, msg, remove_keyboard=True)
+        game.set_mission_start_time(p)
         p.put()
     else:
+        text_input = message_obj.text
         if text_input:            
             kb = p.get_keyboard()
             if text_input in utility.flatten(kb):
@@ -292,14 +301,23 @@ def state_INDOVINELLO(p, message_obj=None, **kwargs):
                 #correct_answers_upper_word_set = set(utility.flatten([x.split() for x in correct_answers_upper]))
                 if text_input.upper() in correct_answers_upper:
                     current_indovinello['end_time'] = dtu.nowUtcIsoFormat()
-                    send_message(p, ux.MSG_ANSWER_OK)
-                    if 'POST_MESSAGE' in current_indovinello:
-                        redirect_to_state(p, state_POST_INDOVINELLO)
+                    send_message(p, ux.MSG_ANSWER_OK, remove_keyboard=True)
+                    send_typing_action(p, sleep_time=1)
+                    if 'POST_MESSAGE' in current_indovinello:                        
+                        if 'POST_MEDIA' in current_indovinello:
+                            caption = current_indovinello.get('POST_MEDIA_CAPTION',None)
+                            url_attachment = current_indovinello['POST_MEDIA'][0]['url']
+                            send_media_url(p, url_attachment, caption=caption)
+                            send_typing_action(p, sleep_time=1)
+                        msg = current_indovinello['POST_MESSAGE']
+                        send_message(p, msg, remove_keyboard=True)
+                        send_typing_action(p, sleep_time=1)
+                        redirect_to_state(p, state_COMPLETE_MISSION)
                     elif 'GPS' in current_indovinello and not current_indovinello.get('SKIP_SELFIE', False):
-                        # only indovinelli with GPS require selfies
-                        redirect_to_state(p, state_SELFIE_INDOVINELLO)
+                        # only missioni with GPS require selfies
+                        redirect_to_state(p, state_SELFIE_MISSION)
                     else:
-                        complete_indovinello(p)
+                        redirect_to_state(p, state_COMPLETE_MISSION)
                 # elif utility.answer_is_almost_correct(text_input.upper(), correct_answers_upper_word_set):
                 #     send_message(p, ux.MSG_ANSWER_ALMOST)
                 else:
@@ -310,42 +328,17 @@ def state_INDOVINELLO(p, message_obj=None, **kwargs):
         else:
             send_message(p, ux.MSG_WRONG_INPUT_INSERT_TEXT)
 
-# ================================
-# POST indovinello message
-# ================================
 
-def state_POST_INDOVINELLO(p, message_obj=None, **kwargs):
-    text_input = message_obj.text if message_obj else None
-    giveInstruction = text_input is None
-    current_indovinello = game.getCurrentIndovinello(p)
-    if giveInstruction:
-        if 'POST_MEDIA' in current_indovinello:
-            caption = current_indovinello.get('POST_MEDIA_CAPTION',None)
-            url_attachment = current_indovinello['POST_MEDIA'][0]['url']
-            send_media_url(p, url_attachment, caption=caption)
-            send_typing_action(p, sleep_time=3)
-        msg = current_indovinello['POST_MESSAGE']
-        kb = [[ux.BUTTON_CONTINUE]]
-        send_message(p, msg, kb)
-    else:
-        kb = p.get_keyboard()
-        if text_input in utility.flatten(kb):
-            if text_input == ux.BUTTON_CONTINUE:
-                complete_indovinello(p)
-            else:
-                assert False
-        else:
-            send_message(p, ux.MSG_WRONG_INPUT_USE_BUTTONS)
 # ================================
 # Selfie Indovinello
 # ================================
 
-def state_SELFIE_INDOVINELLO(p, message_obj=None, **kwargs):
-    photo = message_obj.photo if message_obj else None
-    giveInstruction = photo is None
-    if giveInstruction:
-        send_message(p, ux.MSG_SELFIE_INDOVINELLO, remove_keyboard=True)
+def state_SELFIE_MISSION(p, message_obj=None, **kwargs):    
+    give_instruction = message_obj is None
+    if give_instruction:
+        send_message(p, ux.MSG_SELFIE_MISSIONE, remove_keyboard=True)
     else:
+        photo = message_obj.photo
         if photo:
             photo_file_id = photo[-1]['file_id']
             current_indovinello = game.getCurrentIndovinello(p)
@@ -383,7 +376,7 @@ def approve_selfie_indovinello(p, approved, signature):
     if current_indovinello is None or (game.manual_validation(p) and signature != current_indovinello['sign']):
         return False
     if approved:
-        send_message(p, ux.MSG_SELFIE_INDOVINELLO_OK)
+        send_message(p, ux.MSG_SELFIE_MISSIONE_OK)
         photo_file_id = current_indovinello['SELFIE']
         if game.send_notification_to_group(p):
             squadra_name = game.getGroupName(p)
@@ -392,38 +385,58 @@ def approve_selfie_indovinello(p, approved, signature):
             caption = 'Selfie indovinello {} squadra {} per indovinello {}'.format(indovinello_number, squadra_name, indovinello_name)
             BOT.send_photo(game.HISTORIC_GROUP, photo=photo_file_id, caption=caption)
         game.appendGroupSelfieFileId(p, photo_file_id)        
-        complete_indovinello(p)
+        redirect_to_state(p, state_COMPLETE_MISSION)
     else:
-        send_message(p, ux.MSG_SELFIE_INDOVINELLO_WRONG)
+        send_message(p, ux.MSG_SELFIE_MISSIONE_WRONG)
     return True
 
-def complete_indovinello(p):
-    game.setCurrentIndovinelloAsCompleted(p)        
-    jump_to_survey = JUMP_TO_SURVEY_AFTER and game.completedIndovinelloNumber(p) == JUMP_TO_SURVEY_AFTER
-    if jump_to_survey or game.remainingIndovinelloNumber(p) == 0:
-        # game over
-        game.set_mission_end_time(p)
-        game.setEndTime(p)
-        send_message(p, ux.MSG_TIME_STOP)
-        send_typing_action(p, sleep_time=1)
-        send_message(p, ux.MSG_CONGRATS_PRE_SURVEY)
-        send_typing_action(p, sleep_time=1)
-        send_message(p, ux.MSG_SURVEY_INTRO)
-        send_typing_action(p, sleep_time=1)
-        redirect_to_state(p, state_SURVEY)
-    else:        
-        game.set_mission_end_time(p)
-        redirect_to_state(p, state_MISSION_INTRO)
 
+# ================================
+# COMPLETE CURRENT MISSION
+# ================================
+
+def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
+    give_instruction = message_obj is None        
+    if give_instruction:
+        game.setCurrentIndovinelloAsCompleted(p)
+        survery_time = game.remainingIndovinelloNumber(p) == 0 or \
+            JUMP_TO_SURVEY_AFTER and game.completedIndovinelloNumber(p) == JUMP_TO_SURVEY_AFTER
+        game.set_mission_end_time(p)
+        if survery_time:            
+            game.setEndTime(p)
+            msg = ux.MSG_PRESS_FOR_ENDING
+            kb = [[ux.BUTTON_END]]
+            send_message(p, msg, kb)
+        else:        
+            msg = ux.MSG_PRESS_FOR_NEXT_MISSION
+            kb = [[ux.BUTTON_NEXT_MISSION]]            
+            send_message(p, msg, kb)
+    else:
+        text_input = message_obj.text
+        kb = p.get_keyboard()
+        if text_input in utility.flatten(kb):
+            if text_input == ux.BUTTON_NEXT_MISSION:
+                redirect_to_state(p, state_MISSION_INTRO)
+            elif text_input == ux.BUTTON_END:
+                send_message(p, ux.MSG_TIME_STOP, remove_keyboard=True)
+                send_typing_action(p, sleep_time=1)
+                send_message(p, ux.MSG_CONGRATS_PRE_SURVEY)
+                send_typing_action(p, sleep_time=1)
+                send_message(p, ux.MSG_SURVEY_INTRO)
+                send_typing_action(p, sleep_time=1)
+                redirect_to_state(p, state_SURVEY)
+            else:
+                assert False
+        else:
+            send_message(p, ux.MSG_WRONG_INPUT_USE_BUTTONS)        
 
 # ================================
 # Survey State
 # ================================
 
 def state_SURVEY(p, message_obj=None, **kwargs):
-    text_input = message_obj.text if message_obj else None
-    giveInstruction = text_input is None
-    if giveInstruction:
+    give_instruction = message_obj is None
+    if give_instruction:
         current_question = game.setNextQuestion(p)
         questions_number = game.completedQuestionsNumber(p) + 1
         total_questions = game.getTotalQuestions(p)
@@ -432,6 +445,7 @@ def state_SURVEY(p, message_obj=None, **kwargs):
         kb = [risposte]
         send_message(p, msg, kb)
     else:
+        text_input = message_obj.text
         kb = p.get_keyboard()
         current_question = game.getCurrentQuestion(p)
         question_type_open = current_question['TYPE'] == 'Open'
@@ -459,13 +473,13 @@ def state_SURVEY(p, message_obj=None, **kwargs):
 # Survey State
 # ================================
 
-def state_EMAIL(p, message_obj=None, **kwargs):
-    text_input = message_obj.text if message_obj else None
-    giveInstruction = text_input is None
-    if giveInstruction:
+def state_EMAIL(p, message_obj=None, **kwargs):    
+    give_instruction = message_obj is None
+    if give_instruction:
         kb = [[ux.BUTTON_SKIP_EMAIL]]
         send_message(p, ux.MSG_EMAIL, kb)
     else:
+        text_input = message_obj.text
         if text_input:
             if text_input == ux.BUTTON_SKIP_EMAIL:
                 redirect_to_state(p, state_END)
@@ -482,10 +496,9 @@ def state_EMAIL(p, message_obj=None, **kwargs):
 # Final State
 # ================================
 
-def state_END(p, message_obj=None, **kwargs):
-    text_input = message_obj.text if message_obj else None
-    giveInstruction = text_input is None
-    if giveInstruction:        
+def state_END(p, message_obj=None, **kwargs):    
+    give_instruction = message_obj is None
+    if give_instruction:        
         penalty_hms, total_hms_game, ellapsed_hms_game, \
         total_hms_missions, ellapsed_hms_missions = game.set_elapsed_and_penalty_and_compute_total(p)
         msg = ux.MSG_END.format(penalty_hms, \

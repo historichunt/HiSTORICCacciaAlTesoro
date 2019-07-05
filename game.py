@@ -7,62 +7,69 @@ from ndb_person import Person
 import params
 
 #################
-# INDOVINELLI TABLE
+# MISSIONI TABLE
 #################
 '''
 NOME, ACTIVE, FINALE, CATEGORIA, 
 INTRO_MEDIA, INTRO_MEDIA_CAPTION, 
 INTRODUZIONE_LOCATION,
-INDOVINELLO, SOLUZIONI,
+DOMANDA, SOLUZIONI,
 INDIZIO_1, INDIZIO_2, 
 GPS, SKIP_SELFIE,
 POST_MEDIA, POST_MEDIA_CAPTION,
 POST_MESSAGE
 '''
 
-def get_random_indovinelli(airtable_missioni_id):
+def get_random_missioni(airtable_missioni_id):
     import itertools
-    INDOVINELLI_TABLE = Airtable(airtable_missioni_id, 'Indovinelli', api_key=key.AIRTABLE_API_KEY)
-    INDOVINELLI_ALL = [row['fields'] for row in INDOVINELLI_TABLE.get_all() if row['fields'].get('ACTIVE',False)]    
-    for row in INDOVINELLI_ALL:
+    MISSIONI_TABLE = Airtable(airtable_missioni_id, 'Missioni', api_key=key.AIRTABLE_API_KEY)
+    MISSIONI_ALL = [row['fields'] for row in MISSIONI_TABLE.get_all() if row['fields'].get('ACTIVE',False)]    
+    for row in MISSIONI_ALL:
         if 'FINALE' not in row:
             row['FINALE'] = False
         if 'CATEGORIA' not in row:
             row['CATEGORIA'] = ''
-    indovinelli_categories = list(set(row['CATEGORIA'] for row in INDOVINELLI_ALL))
-    indovinelli = [row for row in INDOVINELLI_ALL if not row['FINALE']]
-    indovinelli_final = [row for row in INDOVINELLI_ALL if row['FINALE']]    
-    indovinallo_final = choice(indovinelli_final) if indovinelli_final else None
-    if indovinallo_final:
-        indovinelli_final.remove(indovinallo_final)
-        indovinelli.extend(indovinelli_final)
-    indovinelli_cat_bucket = {
-        cat:[row for row in indovinelli if row['CATEGORIA']==cat]
-        for cat in indovinelli_categories
+    SETTINGS_TABLE = Airtable(airtable_missioni_id, 'Settings', api_key=key.AIRTABLE_API_KEY)
+    SETTINGS = {row['fields']['Name']:row['fields']['Value'] for row in SETTINGS_TABLE.get_all() if row['fields'].get('Name', False)}
+    initial_cat =   SETTINGS.get('INITIAL_CAT', None)
+    missioni_categories = list(set(row['CATEGORIA'] for row in MISSIONI_ALL))
+    missioni = [row for row in MISSIONI_ALL if not row['FINALE']]
+    missioni_finali = [row for row in MISSIONI_ALL if row['FINALE']]    
+    missione_finale = choice(missioni_finali) if missioni_finali else None
+    if missione_finale:
+        missioni_finali.remove(missione_finale)
+        missioni.extend(missioni_finali)
+    missioni_cat_bucket = {
+        cat:[row for row in missioni if row['CATEGORIA']==cat]
+        for cat in missioni_categories
     }
-    for indovinelli_list_cat in indovinelli_cat_bucket.values():
-        shuffle(indovinelli_list_cat)        
-    if indovinallo_final:
-        indovinallo_final_cat = indovinallo_final['CATEGORIA']
-        indovinelli_categories.remove(indovinallo_final_cat)
-        shuffle(indovinelli_categories)
-        indovinelli_categories.append(indovinallo_final_cat)
+    for missioni_list_cat in missioni_cat_bucket.values():
+        shuffle(missioni_list_cat)   
+    
+    if initial_cat in missioni_categories and len(missioni_categories)>1:
+        missioni_categories.remove(initial_cat)
+        missioni_categories.insert(0, initial_cat)
+    elif missione_finale:
+        missione_finale_cat = missione_finale['CATEGORIA']
+        missioni_categories.remove(missione_finale_cat)
+        shuffle(missioni_categories)
+        missioni_categories.append(missione_finale_cat)
     else:
-        shuffle(indovinelli_categories)
-    indovinelli_random = []
-    round_robin_cot = itertools.cycle(indovinelli_categories)
-    while len(indovinelli_random) < len(indovinelli):
-        cat = next(round_robin_cot)
-        if len(indovinelli_cat_bucket[cat])>0:
-            indovinelli_random.append(indovinelli_cat_bucket[cat].pop())
-    if indovinallo_final:
-        indovinelli_random.append(indovinallo_final)
+        shuffle(missioni_categories)
+    missioni_random = []
+    round_robin_cat = itertools.cycle(missioni_categories)
+    while len(missioni_random) < len(missioni):
+        cat = next(round_robin_cat)
+        if len(missioni_cat_bucket[cat])>0:
+            missioni_random.append(missioni_cat_bucket[cat].pop())
+    if missione_finale:
+        missioni_random.append(missione_finale)
     # debug
     # if True: 
-    #     from main import tell_admin   
-    #     random_indovinelli_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(indovinelli_random,1)])
-    #     tell_admin("Random indovinelli:\n{}".format(random_indovinelli_names))
-    return indovinelli_random
+    #     from bot_telegram import tell_admin   
+    #     random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_random,1)])
+    #     tell_admin("Random missioni:\n{}".format(random_missioni_names))
+    return missioni_random
 
 #################
 # SURVEY
@@ -92,7 +99,7 @@ def save_game_data_in_airtable(p):
     game_data = p.tmp_variables
     airtable_risultati_id = game_data['HUNT_INFO']['Airtable_Risultati_ID']
 
-    RESULTS_GAME_TABLE = Airtable(airtable_risultati_id, 'Games', api_key=key.AIRTABLE_API_KEY)
+    RESULTS_GAME_TABLE = Airtable(airtable_risultati_id, 'Results', api_key=key.AIRTABLE_API_KEY)
     RESULTS_SURVEY_TABLE = Airtable(airtable_risultati_id, 'Survey', api_key=key.AIRTABLE_API_KEY)
 
     games_row = {}
@@ -127,7 +134,7 @@ with client.context():
 def resetGame(p, hunt_password):
     hunt_info = key.ACTIVE_HUNTS[hunt_password]
     airtable_missioni_id = hunt_info['Airtable_Missioni_ID']    
-    indovinelli = get_random_indovinelli(airtable_missioni_id)
+    missioni = get_random_missioni(airtable_missioni_id)
     notify_group = hunt_info.get('Notify_Group', False)
     validator_id = hunt_info.get('Validator_ID', None)
     survey = get_survey_data()
@@ -142,7 +149,7 @@ def resetGame(p, hunt_password):
     p.tmp_variables['USERNAME'] = p.get_username(escape_markdown=False)
     p.tmp_variables['EMAIL'] = ''
     p.tmp_variables['MISSION_TIMES'] = []
-    p.tmp_variables['INDOVINELLI_INFO'] = {'TODO': indovinelli, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(indovinelli)}
+    p.tmp_variables['MISSIONI_INFO'] = {'TODO': missioni, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(missioni)}
     p.tmp_variables['SURVEY_INFO'] = {'TODO': survey, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(survey)}
     # question -> 'ANSWER'
     p.tmp_variables['GROUP_NAME'] = ''
@@ -165,8 +172,8 @@ def exitGame(p, put=True):
 
 def get_game_stats(p):
     group_name = p.tmp_variables['GROUP_NAME']
-    completed = len(p.tmp_variables['INDOVINELLI_INFO']['COMPLETED'])
-    total = p.tmp_variables['INDOVINELLI_INFO']['TOTAL']
+    completed = len(p.tmp_variables['MISSIONI_INFO']['COMPLETED'])
+    total = p.tmp_variables['MISSIONI_INFO']['TOTAL']
     return '{} {}/{}'.format(group_name, completed, total)
 
 def send_notification_to_group(p):
@@ -246,43 +253,43 @@ def getEndTime(p):
     return p.tmp_variables['END_TIME']
 
 def getTotalIndovinelli(p):
-    return p.tmp_variables['INDOVINELLI_INFO']['TOTAL']
+    return p.tmp_variables['MISSIONI_INFO']['TOTAL']
 
 def remainingIndovinelloNumber(p):
-    indovinello_info = p.tmp_variables['INDOVINELLI_INFO']
+    indovinello_info = p.tmp_variables['MISSIONI_INFO']
     return len(indovinello_info['TODO'])
 
 def completedIndovinelloNumber(p):
-    indovinello_info = p.tmp_variables['INDOVINELLI_INFO']
+    indovinello_info = p.tmp_variables['MISSIONI_INFO']
     return len(indovinello_info['COMPLETED'])
 
 def setNextIndovinello(p):
-    indovinello_info = p.tmp_variables['INDOVINELLI_INFO']
-    todo_indovinelli = indovinello_info['TODO']
-    current_indovinello = todo_indovinelli.pop(0)
+    indovinello_info = p.tmp_variables['MISSIONI_INFO']
+    todo_missioni = indovinello_info['TODO']
+    current_indovinello = todo_missioni.pop(0)
     indovinello_info['CURRENT'] = current_indovinello
     current_indovinello['wrong_answers'] = []    
     return current_indovinello
 
 def getCurrentIndovinello(p):
-    indovinello_info = p.tmp_variables['INDOVINELLI_INFO']
+    indovinello_info = p.tmp_variables['MISSIONI_INFO']
     return indovinello_info['CURRENT']
 
 def getCompletedIndovinello(p):
-    game_info = p.tmp_variables['INDOVINELLI_INFO']
+    game_info = p.tmp_variables['MISSIONI_INFO']
     return game_info['COMPLETED']
 
 def appendGroupSelfieFileId(p, file_id):
     p.tmp_variables['GROUP_SELFIES'].append(file_id)
 
 def setCurrentIndovinelloAsCompleted(p):
-    indovinello_info = p.tmp_variables['INDOVINELLI_INFO']
+    indovinello_info = p.tmp_variables['MISSIONI_INFO']
     current_indovinello = indovinello_info['CURRENT']
     indovinello_info['COMPLETED'].append(current_indovinello)
     indovinello_info['CURRENT'] = None
 
 def increase_wrong_answers_current_indovinello(p, answer, put=True):
-    indovinello_info = p.tmp_variables['INDOVINELLI_INFO']
+    indovinello_info = p.tmp_variables['MISSIONI_INFO']
     current_indovinello = indovinello_info['CURRENT']
     current_indovinello['wrong_answers'].append(answer)
     p.tmp_variables['WRONG ANSWERS'] += 1
@@ -328,5 +335,5 @@ def setEmail(p, email):
 
 def debugTmpVariables(p):
     import json
-    #return json.dumps(p.tmp_variables['INDOVINELLI_INFO']['CURRENT'], indent=4)
+    #return json.dumps(p.tmp_variables['MISSIONI_INFO']['CURRENT'], indent=4)
     return json.dumps(p.tmp_variables, indent=4, ensure_ascii=False)

@@ -1,12 +1,7 @@
 import utility
 import key
 
-USE_NGROK = True
-
-#PARAMETRI_ORIGINAL = utility.import_url_csv_to_dict_list(key.PARAMETRI_URL)
-# NOME, DESCRIZIONE, VALORE
-
-#PARAMS = {row['NOME']:int(row['VALORE']) for row in PARAMETRI_ORIGINAL}
+USE_NGROK = False
 
 MAX_TEAM_NAME_LENGTH = 30
 MIN_SEC_INDIZIO_1 = 60

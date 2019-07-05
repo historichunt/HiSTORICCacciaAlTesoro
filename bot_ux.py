@@ -1,7 +1,6 @@
 import utility
 import key
 import telegram
-
 # ================================
 # BUTTONS
 # ================================
@@ -15,7 +14,9 @@ RIGHT_ARROW_SYMBOL = '→'
 
 BUTTON_SI = '✅ SI'
 BUTTON_NO = '❌ NO'
-BUTTON_CONTINUE = '⏭️ CONTINUA'
+BUTTON_CONTINUE_MULTI = ['⏭️ CONTINUA','🤔 E QUINDI?']
+BUTTON_NEXT_MISSION = '🎳 PROSSIMA MISSIONE'
+BUTTON_END = '🎇 FINE'
 BUTTON_INDIETRO = "🔙 INDIETRO"
 BUTTON_INIZIO = "🏠 TORNA ALL'INIZIO"
 BUTTON_INFO = "ℹ INFO"
@@ -48,6 +49,7 @@ BUTTON_NO_CALLBACK = lambda x: telegram.InlineKeyboardButton(
 ####################
 
 MSG_WORK_IN_PROGRESS = "🏗 Il sistema è in aggiornamento, ti preghiamo di riprovare più tardi."
+MSG_MISSION_N_TOT = '*🎳 Missione {}/{}*'
 MSG_PRESS_TO_START = "Quando siete pronti per iniziare premete il pulsante."
 MSG_GO = '🏃‍♂️🏃‍♀️ Si parte!'
 MSG_WELCOME = 'Ciao! 😀 Benvenuto nella caccia al tesoro di hiSTORIC: *{}*!'
@@ -66,11 +68,11 @@ MSG_ANSWER_OK = '🤗 Risposta esatta!'
 MSG_ANSWER_ALMOST = '🙄 Ci sei quasi!'
 MSG_ANSWER_WRONG_SG = '🤔 Risposta sbagliata, riprova!\n\n⚠️ Attenzione, hai totalizzato {} risposta sbagliata che comporta una penalità di {} secondi.'
 MSG_ANSWER_WRONG_PL = '🤔 Risposta sbagliata, riprova!\n\n⚠️ Attenzione, hai totalizzato {} risposte sbagliate che comportano una penalità di {} secondi.'
-MSG_SELFIE_INDOVINELLO = "📷 Ora mandatemi un vostro selfie assieme all'oggetto dell'indovinello."
+MSG_SELFIE_MISSIONE = "📷 Ora mandatemi un vostro selfie assieme all'oggetto dell'indovinello."
 MSG_WAIT_SELFIE_APPROVAL = 'Rimanete in attesa qualche istante prima che il selfie venga verificato.'
-MSG_SELFIE_INDOVINELLO_OK = 'Fantastico! 😀'
-MSG_SELFIE_INDOVINELLO_WRONG = "🤔 Mi dispiace, il selfie non è stato accettato perché non rappresenta l'oggetto dell'indovinello.\n\n📷 Riprova a mandarmi un nuovo selfie!"
-MSG_NEXT_GIOCO = '🎲 Ecco un piccolo gioco prima della prossima missione.'
+MSG_SELFIE_MISSIONE_OK = 'Fantastico! 😀'
+MSG_SELFIE_MISSIONE_WRONG = "🤔 Mi dispiace, il selfie non è stato accettato perché non rappresenta l'oggetto dell'indovinello.\n\n📷 Riprova a mandarmi un nuovo selfie!"
+# MSG_NEXT_GIOCO = '🎲 Ecco un piccolo gioco prima della prossima missione.'
 MSG_TIME_STOP = '⏱ Stop al tempo!'
 MSG_CONGRATS_PRE_SURVEY = '🎉 Bravissimi, avete concluso la caccia al tesoro! 🎊'
 MSG_SURVEY_INTRO = '📋 Prima di dirvi quanto ci avete messo, vorrei farvi alcune domande...'
@@ -86,3 +88,5 @@ MSG_NO_FORWARDING_ALLOWED = '⛔️ Input non valido! Non puoi inoltrarmi inform
 MSG_EMAIL = '📧 Potete lasciarci i vostri indirizzi email (separati da spazio) per informarvi di altre iniziative simili?'
 MSG_EMAIL_WRONG = '⛔️ Input non valido, devi inserire uno o più indirizzi email o premere su ⏩ SALTA.'
 MSG_EXITED_FROM_GAME = "🚪 Sei uscito/a dal gioco!"
+MSG_PRESS_FOR_NEXT_MISSION = "🎳 Premi sul pulsante per andare alla prossima missione."
+MSG_PRESS_FOR_ENDING = "🎇 Premi sul pulsante per terminare il gioco."

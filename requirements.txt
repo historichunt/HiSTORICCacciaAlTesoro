@@ -12,3 +12,4 @@ gunicorn
 Pillow
 airtable-python-wrapper
 geopy
+python-dotenv

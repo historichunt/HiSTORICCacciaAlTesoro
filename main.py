@@ -1,5 +1,6 @@
 from flask import Flask, Response, request, jsonify
 import key
+import params
 
 import logging
 import google.cloud.logging
@@ -11,6 +12,10 @@ client.setup_logging(log_level=logging.DEBUG)
 # If `entrypoint` is not defined in app.yaml, App Engine will look for an app
 # called `app` in `main.py`.
 app = Flask(__name__)
+
+if params.USE_NGROK:
+    from dotenv import load_dotenv
+    load_dotenv()
 
 
 @app.route('/')

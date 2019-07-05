@@ -7,8 +7,8 @@ def downloadSelfies(hunt_password, output_dir):
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
     table_id = key.HUNTS[hunt_password]['Airtable_Risultati_ID']
-    GAME_TABLE = Airtable(table_id, 'Games', api_key=key.AIRTABLE_API_KEY)
-    table_entries = GAME_TABLE.get_all()
+    RESULTS_TABLE = Airtable(table_id, 'Results', api_key=key.AIRTABLE_API_KEY)
+    table_entries = RESULTS_TABLE.get_all()
     for entry in table_entries:
         fields = entry['fields']
         group_name = fields['GROUP_NAME']
@@ -28,14 +28,14 @@ def get_wrong_answers(hunt_password):
     from collections import defaultdict
     import json
     table_id = key.HUNTS[hunt_password]['Airtable_Risultati_ID']
-    GAME_TABLE = Airtable(table_id, 'Games', api_key=key.AIRTABLE_API_KEY)
-    table_entries = GAME_TABLE.get_all()
+    RESULTS_TABLE = Airtable(table_id, 'Results', api_key=key.AIRTABLE_API_KEY)
+    table_entries = RESULTS_TABLE.get_all()
     mission_wrong_ansers = defaultdict(list)
     for entry in table_entries:
         fields = entry['fields']
         # group_name = fields['GROUP_NAME']
         game_vars = json.loads(fields['GAME VARS'])
-        completed_missioni = game_vars['INDOVINELLI_INFO']['COMPLETED']
+        completed_missioni = game_vars['MISSIONI_INFO']['COMPLETED']
         for m in completed_missioni:
             name = m['NOME']
             answers = m['wrong_answers']
