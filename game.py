@@ -15,7 +15,7 @@ INTRO_MEDIA, INTRO_MEDIA_CAPTION,
 INTRODUZIONE_LOCATION,
 DOMANDA, SOLUZIONI,
 INDIZIO_1, INDIZIO_2, 
-GPS, SKIP_SELFIE,
+GPS, REQUIRED_INPUT,
 POST_MEDIA, POST_MEDIA_CAPTION,
 POST_MESSAGE
 '''
@@ -106,9 +106,9 @@ def save_game_data_in_airtable(p):
     for h in RESULTS_GAME_TABLE_HEADERS:
         games_row[h] = game_data[h]
     games_row['GAME VARS'] = json.dumps(game_data,ensure_ascii=False)
-    games_row['GROUP_SELFIES'] = [
+    games_row['GROUP_MEDIA_FILE_IDS'] = [
         {'url': get_photo_url_from_telegram(file_id)} 
-        for file_id in game_data['GROUP_SELFIES']
+        for file_id in game_data['GROUP_MEDIA_FILE_IDS']
     ]
     RESULTS_GAME_TABLE.insert(games_row)
     survey_row = {'ID': game_data['ID']}
@@ -153,7 +153,7 @@ def resetGame(p, hunt_password):
     p.tmp_variables['SURVEY_INFO'] = {'TODO': survey, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(survey)}
     # question -> 'ANSWER'
     p.tmp_variables['GROUP_NAME'] = ''
-    p.tmp_variables['GROUP_SELFIES'] = []
+    p.tmp_variables['GROUP_MEDIA_FILE_IDS'] = []
     p.tmp_variables['START_TIME'] = ''
     p.tmp_variables['END_TIME'] = ''
     p.tmp_variables['ELAPSED'] = 0 # seconds
@@ -188,32 +188,40 @@ def get_validator_chat_id(p):
         return validator_id[0].split('_')[1]
     return None
 
-def setGroupName(p, name):
+def set_group_name(p, name):
     p.tmp_variables['GROUP_NAME'] = name
 
-def getGroupName(p, escape_markdown=True):
+def get_group_name(p, escape_markdown=True):
     name = p.tmp_variables['GROUP_NAME']
     if escape_markdown:
         name = utility.escape_markdown(name)
     return name
 
-def setStartTime(p):
+def set_game_start_time(p):
     import date_time_util as dtu
     start_time = dtu.nowUtcIsoFormat()
     p.tmp_variables['START_TIME'] = start_time
 
-def getStartTime(p):
+def get_game_start_time(p):
     return p.tmp_variables['START_TIME']
 
-def setEndTime(p):
+def set_game_end_time(p):
     import date_time_util as dtu
     end_time = dtu.nowUtcIsoFormat()
     p.tmp_variables['END_TIME'] = end_time
 
-def set_mission_start_time(p):
+def start_mission(p):
     import date_time_util as dtu
-    start_time = dtu.nowUtcIsoFormat()
+    start_time = dtu.nowUtcIsoFormat()    
+    current_indovinello = getCurrentIndovinello(p)
+    current_indovinello['wrong_answers'] = []
+    current_indovinello['start_time'] = start_time
     p.tmp_variables['MISSION_TIMES'].append([start_time])
+
+def set_end_mission_time(p):
+    import date_time_util as dtu
+    current_indovinello = getCurrentIndovinello(p)
+    current_indovinello['end_time'] = dtu.nowUtcIsoFormat()
 
 def set_mission_end_time(p):
     import date_time_util as dtu
@@ -227,7 +235,7 @@ def set_elapsed_and_penalty_and_compute_total(p):
     import date_time_util as dtu
     tvar = p.tmp_variables    
     end_time = getEndTime(p)
-    start_time = getStartTime(p)
+    start_time = get_game_start_time(p)
     
     elapsed_sec_game = dtu.delta_seconds_iso(start_time, end_time)
     elapsed_sec_missions = sum(dtu.delta_seconds_iso(s, e) for s,e in tvar['MISSION_TIMES'])            
@@ -259,7 +267,7 @@ def remainingIndovinelloNumber(p):
     indovinello_info = p.tmp_variables['MISSIONI_INFO']
     return len(indovinello_info['TODO'])
 
-def completedIndovinelloNumber(p):
+def completed_indovinello_number(p):
     indovinello_info = p.tmp_variables['MISSIONI_INFO']
     return len(indovinello_info['COMPLETED'])
 
@@ -279,8 +287,8 @@ def getCompletedIndovinello(p):
     game_info = p.tmp_variables['MISSIONI_INFO']
     return game_info['COMPLETED']
 
-def appendGroupSelfieFileId(p, file_id):
-    p.tmp_variables['GROUP_SELFIES'].append(file_id)
+def append_group_media_input_file_id(p, file_id):
+    p.tmp_variables['GROUP_MEDIA_FILE_IDS'].append(file_id)
 
 def setCurrentIndovinelloAsCompleted(p):
     indovinello_info = p.tmp_variables['MISSIONI_INFO']

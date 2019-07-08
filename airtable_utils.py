@@ -15,7 +15,7 @@ def downloadSelfies(hunt_password, output_dir):
         output_dir_group = os.path.join(output_dir, group_name)
         os.mkdir(output_dir_group)
         print('Downloading selfies for group {}'.format(group_name))        
-        for selfie in fields['GROUP_SELFIES']:
+        for selfie in fields['GROUP_MEDIA_FILE_IDS']:
             url = selfie['url']
             file_name = selfie['filename']
             print('\t{}'.format(file_name))        

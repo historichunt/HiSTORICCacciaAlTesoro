@@ -1,7 +1,7 @@
 import utility
 import key
 
-USE_NGROK = False
+USE_NGROK = True
 
 MAX_TEAM_NAME_LENGTH = 30
 MIN_SEC_INDIZIO_1 = 60
