@@ -234,7 +234,8 @@ def state_GPS(p, message_obj=None, **kwargs):
             p.set_location(lat, lon)
             given_position = [lat, lon]
             distance = geoUtils.distance_meters(goal_position, given_position)
-            if distance <= params.GPS_TOLERANCE_METERS:
+            GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
+            if distance <= GPS_TOLERANCE_METERS:
                 send_message(p, ux.MSG_GPS_OK, remove_keyboard=True)
                 send_typing_action(p, sleep_time=1)
                 redirect_to_state(p, state_DOMANDA)
@@ -274,22 +275,24 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
             kb = p.get_keyboard()
             if text_input in utility.flatten(kb):
                 now_string = dtu.nowUtcIsoFormat()
+                MIN_SEC_INDIZIO_1 = int(p.tmp_variables['SETTINGS']['MIN_SEC_INDIZIO_1'])
+                MIN_SEC_INDIZIO_2 = int(p.tmp_variables['SETTINGS']['MIN_SEC_INDIZIO_2'])
                 if text_input == '💡 PRIMO INDIZIO':
                     before_string = current_indovinello['start_time']
                     ellapsed = dtu.delta_seconds_iso(before_string, now_string)
-                    if ellapsed > params.MIN_SEC_INDIZIO_1 and current_indovinello.get('INDIZIO_1',False):
+                    if ellapsed > MIN_SEC_INDIZIO_1 and current_indovinello.get('INDIZIO_1',False):
                         msg = '💡 *Indizio 1*: {}'.format(current_indovinello['INDIZIO_1'])
                         if current_indovinello.get('INDIZIO_2',False):
                             kb = [['💡 SECONDO INDIZIO']]
                             current_indovinello['indizio1_time'] = now_string
                             send_message(p, msg, kb)
                     else:
-                        remaining = params.MIN_SEC_INDIZIO_1 - ellapsed
+                        remaining = MIN_SEC_INDIZIO_1 - ellapsed
                         send_message(p, ux.MSG_TOO_EARLY.format(remaining))
                 elif text_input == '💡 SECONDO INDIZIO' and current_indovinello.get('INDIZIO_2',False):
                     before_string = current_indovinello['indizio1_time']
                     ellapsed = dtu.delta_seconds_iso(before_string, now_string)
-                    if ellapsed > params.MIN_SEC_INDIZIO_2 and current_indovinello.get('INDIZIO_2',False):
+                    if ellapsed > MIN_SEC_INDIZIO_2 and current_indovinello.get('INDIZIO_2',False):
                         msg = '💡 *Indizio 2*: {}'.format(current_indovinello['INDIZIO_2'])                    
                         current_indovinello['indizio2_time'] = now_string
                         send_message(p, msg, remove_keyboard=True)
@@ -323,10 +326,14 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                 # elif utility.answer_is_almost_correct(text_input.upper(), correct_answers_upper_word_set):
                 #     send_message(p, ux.MSG_ANSWER_ALMOST)
                 else:
-                    game.increase_wrong_answers_current_indovinello(p, text_input)
-                    wrong_answers, penalty_sec = game.get_total_penalty(p)
-                    msg = ux.MSG_ANSWER_WRONG_SG if wrong_answers==1 else ux.MSG_ANSWER_WRONG_PL
-                    send_message(p, msg.format(wrong_answers, penalty_sec))
+                    give_penalty = current_indovinello.get('PENALTÀ',False)
+                    game.increase_wrong_answers_current_indovinello(p, text_input, give_penalty)
+                    if give_penalty:
+                        penalties, penalty_sec = game.get_total_penalty(p)
+                        msg = ux.MSG_ANSWER_WRONG_SG if penalties==1 else ux.MSG_ANSWER_WRONG_PL
+                        send_message(p, msg.format(penalties, penalty_sec))
+                    else:
+                        send_message(p, ux.MSG_ANSWER_WRONG_NO_PENALTY)
         else:
             send_message(p, ux.MSG_WRONG_INPUT_INSERT_TEXT)
 
@@ -350,7 +357,7 @@ def state_MEDIA_INPUT_MISSION(p, message_obj=None, **kwargs):
             if photo:
                 photo_file_id = photo[-1]['file_id']                
                 current_indovinello['MEDIA_INPUT_ID_TYPE'] = [photo_file_id, input_type]
-                if game.manual_validation(p):
+                if game.manual_validation(p) and not current_indovinello.get('SKIP_VALIDATION', False):
                     send_to_validator(p, game, current_indovinello, input_type)
                 else:
                     approve_media_input_indovinello(p, approved=True, signature=None)
@@ -362,7 +369,7 @@ def state_MEDIA_INPUT_MISSION(p, message_obj=None, **kwargs):
             if voice:
                 voice_file_id = voice['file_id']                
                 current_indovinello['MEDIA_INPUT_ID_TYPE'] = [voice_file_id, input_type]
-                if game.manual_validation(p):
+                if game.manual_validation(p) and not current_indovinello.get('SKIP_VALIDATION', False):
                     send_to_validator(p, game, current_indovinello, input_type)
                 else:
                     approve_media_input_indovinello(p, approved=True, signature=None)

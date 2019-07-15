@@ -20,7 +20,7 @@ POST_MEDIA, POST_MEDIA_CAPTION,
 POST_MESSAGE
 '''
 
-def get_random_missioni(airtable_missioni_id):
+def get_random_missioni_and_settings(p, airtable_missioni_id):
     import itertools
     MISSIONI_TABLE = Airtable(airtable_missioni_id, 'Missioni', api_key=key.AIRTABLE_API_KEY)
     MISSIONI_ALL = [row['fields'] for row in MISSIONI_TABLE.get_all() if row['fields'].get('ACTIVE',False)]    
@@ -29,18 +29,24 @@ def get_random_missioni(airtable_missioni_id):
             row['FINALE'] = False
         if 'CATEGORIA' not in row:
             row['CATEGORIA'] = ''
+    NEXT_MISSIONI = [
+        m for m in MISSIONI_ALL if m['NOME'] in \
+        [row.get('NEXT') for row in MISSIONI_ALL if row.get('NEXT',False)]
+    ]
+    MISSIONI_NOT_NEXT = [m for m in MISSIONI_ALL if m not in NEXT_MISSIONI]
     SETTINGS_TABLE = Airtable(airtable_missioni_id, 'Settings', api_key=key.AIRTABLE_API_KEY)
     SETTINGS = {row['fields']['Name']:row['fields']['Value'] for row in SETTINGS_TABLE.get_all() if row['fields'].get('Name', False)}
     initial_cat =   SETTINGS.get('INITIAL_CAT', None)
-    missioni_categories = list(set(row['CATEGORIA'] for row in MISSIONI_ALL))
-    missioni = [row for row in MISSIONI_ALL if not row['FINALE']]
-    missioni_finali = [row for row in MISSIONI_ALL if row['FINALE']]    
-    missione_finale = choice(missioni_finali) if missioni_finali else None
+    missioni_categories = list(set(row['CATEGORIA'] for row in MISSIONI_NOT_NEXT))
+    missioni_tmp = [row for row in MISSIONI_NOT_NEXT if not row['FINALE']]
+    missioni_finali = [row for row in MISSIONI_NOT_NEXT if row['FINALE']]    
+    missione_finale = choice(missioni_finali) if missioni_finali else None    
+
     if missione_finale:
         missioni_finali.remove(missione_finale)
-        missioni.extend(missioni_finali)
+        missioni_tmp.extend(missioni_finali) # adding all missini_finali except one (the actual final one)
     missioni_cat_bucket = {
-        cat:[row for row in missioni if row['CATEGORIA']==cat]
+        cat:[row for row in missioni_tmp if row['CATEGORIA']==cat]
         for cat in missioni_categories
     }
     for missioni_list_cat in missioni_cat_bucket.values():
@@ -58,10 +64,17 @@ def get_random_missioni(airtable_missioni_id):
         shuffle(missioni_categories)
     missioni_random = []
     round_robin_cat = itertools.cycle(missioni_categories)
-    while len(missioni_random) < len(missioni):
+    while sum(len(bucket) for bucket in missioni_cat_bucket.values()) > 0:
         cat = next(round_robin_cat)
         if len(missioni_cat_bucket[cat])>0:
-            missioni_random.append(missioni_cat_bucket[cat].pop())
+            chosen_mission = missioni_cat_bucket[cat].pop()
+            missioni_random.append(chosen_mission)
+            next_mission_name = chosen_mission.get('NEXT',None)
+            if next_mission_name:
+                next_mission = next(m for m in NEXT_MISSIONI if next_mission_name==m.get('NOME',None))
+                missioni_random.append(next_mission)
+                next_mission_cat = next_mission['CATEGORIA']                                
+                assert next(round_robin_cat) == next_mission_cat
     if missione_finale:
         missioni_random.append(missione_finale)
     # debug
@@ -69,7 +82,7 @@ def get_random_missioni(airtable_missioni_id):
     #     from bot_telegram import tell_admin   
     #     random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_random,1)])
     #     tell_admin("Random missioni:\n{}".format(random_missioni_names))
-    return missioni_random
+    return missioni_random, SETTINGS
 
 #################
 # SURVEY
@@ -91,7 +104,7 @@ def get_survey_data():
 RESULTS_GAME_TABLE_HEADERS = \
     ['ID', 'GROUP_NAME', 'NOME', 'COGNOME', 'USERNAME', 'EMAIL', \
     'START_TIME', 'END_TIME', 'ELAPSED GAME', 'ELAPSED MISSIONS', \
-    'WRONG ANSWERS', 'PENALTY TIME', 'TOTAL TIME GAME', 'TOTAL TIME MISSIONS']
+    'PENALTIES', 'PENALTY TIME', 'TOTAL TIME GAME', 'TOTAL TIME MISSIONS']
 
 def save_game_data_in_airtable(p):
     from bot_telegram import get_photo_url_from_telegram
@@ -133,13 +146,14 @@ with client.context():
 
 def resetGame(p, hunt_password):
     hunt_info = key.ACTIVE_HUNTS[hunt_password]
-    airtable_missioni_id = hunt_info['Airtable_Missioni_ID']    
-    missioni = get_random_missioni(airtable_missioni_id)
+    airtable_missioni_id = hunt_info['Airtable_Missioni_ID']        
+    missioni, settings = get_random_missioni_and_settings(p, airtable_missioni_id)
     notify_group = hunt_info.get('Notify_Group', False)
     validator_id = hunt_info.get('Validator_ID', None)
     survey = get_survey_data()
-    p.current_hunt = hunt_password
+    p.current_hunt = hunt_password    
     p.tmp_variables = {}
+    p.tmp_variables['SETTINGS'] = settings
     p.tmp_variables['HUNT_INFO'] = hunt_info
     p.tmp_variables['Notify_Group'] = notify_group
     p.tmp_variables['Validator_ID'] = validator_id
@@ -157,7 +171,7 @@ def resetGame(p, hunt_password):
     p.tmp_variables['START_TIME'] = ''
     p.tmp_variables['END_TIME'] = ''
     p.tmp_variables['ELAPSED'] = 0 # seconds
-    p.tmp_variables['WRONG ANSWERS'] = 0    
+    p.tmp_variables['PENALTIES'] = 0    
     p.tmp_variables['PENALTY TIME'] = 0 # seconds
     p.tmp_variables['TOTAL TIME'] = 0 # seconds
 
@@ -296,18 +310,20 @@ def setCurrentIndovinelloAsCompleted(p):
     indovinello_info['COMPLETED'].append(current_indovinello)
     indovinello_info['CURRENT'] = None
 
-def increase_wrong_answers_current_indovinello(p, answer, put=True):
+def increase_wrong_answers_current_indovinello(p, answer, give_penalty, put=True):
     indovinello_info = p.tmp_variables['MISSIONI_INFO']
     current_indovinello = indovinello_info['CURRENT']
     current_indovinello['wrong_answers'].append(answer)
-    p.tmp_variables['WRONG ANSWERS'] += 1
+    if give_penalty:
+        p.tmp_variables['PENALTIES'] += 1
     if put:
         p.put()                
 
 def get_total_penalty(p):    
-    WRONG_ANSWERS = p.tmp_variables['WRONG ANSWERS']
-    penalty_time_sec = WRONG_ANSWERS * params.SEC_PENALITY_WRONG_ANSWER
-    return WRONG_ANSWERS, penalty_time_sec
+    PENALTIES = p.tmp_variables['PENALTIES']
+    SEC_PENALITY_WRONG_ANSWER = int(p.tmp_variables['SETTINGS']['SEC_PENALITY_WRONG_ANSWER'])
+    penalty_time_sec = PENALTIES * SEC_PENALITY_WRONG_ANSWER
+    return PENALTIES, penalty_time_sec
 
 def getTotalQuestions(p):
     return p.tmp_variables['SURVEY_INFO']['TOTAL']

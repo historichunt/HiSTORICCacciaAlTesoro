@@ -53,7 +53,7 @@ def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
         time.sleep(0.1)
 
 def send_location(p, lat, lon):
-    loc = telegram.Location(lat,lon)
+    loc = telegram.Location(lon,lat)
     BOT.send_location(p.chat_id, location = loc)
 
 def send_typing_action(p, sleep_time=None):    
