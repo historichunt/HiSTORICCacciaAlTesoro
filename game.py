@@ -104,7 +104,7 @@ def get_survey_data():
 RESULTS_GAME_TABLE_HEADERS = \
     ['ID', 'GROUP_NAME', 'NOME', 'COGNOME', 'USERNAME', 'EMAIL', \
     'START_TIME', 'END_TIME', 'ELAPSED GAME', 'ELAPSED MISSIONS', \
-    'PENALTIES', 'PENALTY TIME', 'TOTAL TIME GAME', 'TOTAL TIME MISSIONS']
+    'PENALTIES', 'PENALTY TIME', 'COMPLETED', 'TOTAL TIME GAME', 'TOTAL TIME MISSIONS']
 
 def save_game_data_in_airtable(p):
     from bot_telegram import get_photo_url_from_telegram
@@ -174,6 +174,7 @@ def resetGame(p, hunt_password):
     p.tmp_variables['PENALTIES'] = 0    
     p.tmp_variables['PENALTY TIME'] = 0 # seconds
     p.tmp_variables['TOTAL TIME'] = 0 # seconds
+    p.tmp_variables['COMPLETED'] = False # seconds
 
 def exitGame(p, put=True):
     if p.current_hunt is None:
@@ -219,10 +220,12 @@ def set_game_start_time(p):
 def get_game_start_time(p):
     return p.tmp_variables['START_TIME']
 
-def set_game_end_time(p):
+def set_game_end_time(p, completed):
     import date_time_util as dtu
     end_time = dtu.nowUtcIsoFormat()
     p.tmp_variables['END_TIME'] = end_time
+    if completed:
+        p.tmp_variables['COMPLETED'] = True
 
 def start_mission(p):
     import date_time_util as dtu

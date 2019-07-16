@@ -297,7 +297,7 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                         current_indovinello['indizio2_time'] = now_string
                         send_message(p, msg, remove_keyboard=True)
                     else:
-                        remaining = params.MIN_SEC_INDIZIO_1 - ellapsed
+                        remaining = MIN_SEC_INDIZIO_1 - ellapsed
                         send_message(p, ux.MSG_TOO_EARLY.format(remaining))
                 else:
                     assert False
@@ -306,7 +306,7 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                 #correct_answers_upper_word_set = set(utility.flatten([x.split() for x in correct_answers_upper]))
                 if text_input.upper() in correct_answers_upper:
                     game.set_end_mission_time(p)
-                    send_message(p, ux.MSG_ANSWER_OK, remove_keyboard=True)
+                    send_message(p, ux.MSG_ANSWER_OK(), remove_keyboard=True)
                     send_typing_action(p, sleep_time=1)
                     if 'POST_MESSAGE' in current_indovinello:                        
                         if 'POST_MEDIA' in current_indovinello:
@@ -333,56 +333,45 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                         msg = ux.MSG_ANSWER_WRONG_SG if penalties==1 else ux.MSG_ANSWER_WRONG_PL
                         send_message(p, msg.format(penalties, penalty_sec))
                     else:
-                        send_message(p, ux.MSG_ANSWER_WRONG_NO_PENALTY)
+                        send_message(p, ux.MSG_ANSWER_WRONG_NO_PENALTY())
         else:
             send_message(p, ux.MSG_WRONG_INPUT_INSERT_TEXT)
 
 
 # ================================
-# Selfie Indovinello
+# MEDIA INPUT (photo, voice)
 # ================================
 
 def state_MEDIA_INPUT_MISSION(p, message_obj=None, **kwargs):    
     give_instruction = message_obj is None
     current_indovinello = game.getCurrentIndovinello(p)
-    input_type = current_indovinello['REQUIRED_INPUT'] # PHOTO, VOICE, VIDEO
+    input_type = current_indovinello['REQUIRED_INPUT'] # PHOTO, VOICE
+    assert input_type in ['PHOTO','VOICE']
     if give_instruction:
-        msg = ux.MSG_INPUT_SELFIE_MISSIONE if input_type == 'PHOTO' \
-            else ux.MSG_INPUT_RECORDING_MISSIONE if input_type == 'VOICE' \
-            else None
+        msg = ux.MSG_INPUT_SELFIE_MISSIONE if input_type == 'PHOTO' else ux.MSG_INPUT_RECORDING_MISSIONE
         send_message(p, msg, remove_keyboard=True)
     else:
-        if input_type == 'PHOTO':
-            photo = message_obj.photo
-            if photo:
-                photo_file_id = photo[-1]['file_id']                
-                current_indovinello['MEDIA_INPUT_ID_TYPE'] = [photo_file_id, input_type]
-                if game.manual_validation(p) and not current_indovinello.get('SKIP_VALIDATION', False):
-                    send_to_validator(p, game, current_indovinello, input_type)
-                else:
-                    approve_media_input_indovinello(p, approved=True, signature=None)
-                p.put()
-            else:
-                send_message(p, ux.MSG_WRONG_INPUT_SEND_PHOTO)
-        elif input_type == 'VOICE':
-            voice = message_obj.voice
-            if voice:
-                voice_file_id = voice['file_id']                
-                current_indovinello['MEDIA_INPUT_ID_TYPE'] = [voice_file_id, input_type]
-                if game.manual_validation(p) and not current_indovinello.get('SKIP_VALIDATION', False):
-                    send_to_validator(p, game, current_indovinello, input_type)
-                else:
-                    approve_media_input_indovinello(p, approved=True, signature=None)
-                p.put()
-            else:
-                send_message(p, ux.MSG_WRONG_INPUT_SEND_VOICE)
-        elif input_type == 'VIDEO':
-            pass
+        assert input_type in ['PHOTO', 'VOICE'] # missing video
+        photo = message_obj.photo
+        voice = message_obj.voice
+        if input_type == 'PHOTO' and photo is None:
+            send_message(p, ux.MSG_WRONG_INPUT_SEND_PHOTO)
+            return
+        if input_type == 'VOICE' and voice is None:          
+            send_message(p, ux.MSG_WRONG_INPUT_SEND_VOICE)
+            return  
+        file_id = photo[-1]['file_id'] if input_type=='PHOTO' else voice['file_id']
+        current_indovinello['MEDIA_INPUT_ID_TYPE'] = [file_id, input_type]
+        if current_indovinello.get('INPUT_CONFIRMATION', False):
+            redirect_to_state(p, state_CONFIRM_MEDIA_INPUT)
+        elif game.manual_validation(p):
+            send_to_validator(p, game, current_indovinello, input_type)        
         else:
-            assert False
+            approve_media_input_indovinello(p, approved=True, signature=None)
+        p.put()
 
 def send_to_validator(p, game, current_indovinello, input_type):
-    assert input_type in ['PHOTO','VOICE','VIDEO']
+    assert input_type in ['PHOTO','VOICE'] # missing 'VIDEO'
     squadra_name = game.get_group_name(p)
     indovinello_number = game.completed_indovinello_number(p) + 1
     indovinello_name = current_indovinello['NOME']
@@ -396,10 +385,6 @@ def send_to_validator(p, game, current_indovinello, input_type):
             'reply': ux.MSG_WAIT_SELFIE_APPROVAL,
             'caption': 'Registrazione indovinello {} squadra {} per indovinello {}'.format(\
                 indovinello_number, squadra_name, indovinello_name)
-        },
-        'VIDEO': {
-            'reply': 'pass',
-            'caption': 'pass'
         }
     }
     # store a random password to make sure the approval is correct
@@ -420,45 +405,69 @@ def send_to_validator(p, game, current_indovinello, input_type):
     logging.debug('Sending group input ({}) to validator'.format(input_type))
     if input_type == 'PHOTO':
         BOT.send_photo(game.get_validator_chat_id(p), photo=file_id, caption=caption, reply_markup=kb_markup)
-    elif input_type == 'VOICE':
+    else: # input_type == 'VOICE':
         BOT.send_voice(game.get_validator_chat_id(p), voice=file_id, caption=caption, reply_markup=kb_markup)
-    else:
-        # video
-        pass
 
 def approve_media_input_indovinello(p, approved, signature):
     # need to double check if team is still waiting for approval
     # (e.g., could have restarted the game, or validator pressed approve twice in a row)
     current_indovinello = game.getCurrentIndovinello(p)
     file_id, input_type = current_indovinello['MEDIA_INPUT_ID_TYPE']
-    if current_indovinello is None or (game.manual_validation(p) and signature != current_indovinello['sign']):
+    assert input_type in ['PHOTO','VOICE']
+    if current_indovinello is None:
+        return False
+    if game.manual_validation(p) and signature != current_indovinello.get('sign', signature):
+        # if 'sign' is not in current_indovinello it means we are in INPUT_CONFIRMATION mode 
         return False
     if approved:
         game.set_end_mission_time(p)
-        send_message(p, ux.MSG_MEDIA_INPUT_MISSIONE_OK)        
+        send_message(p, ux.MSG_MEDIA_INPUT_MISSIONE_OK())        
         if game.send_notification_to_group(p):
             squadra_name = game.get_group_name(p)
             indovinello_number = game.completed_indovinello_number(p) + 1
-            indovinello_name = current_indovinello['NOME']
+            indovinello_name = current_indovinello['NOME']            
             if input_type=='PHOTO':
                 caption = 'Selfie indovinello {} squadra {} per indovinello {}'.format(indovinello_number, squadra_name, indovinello_name)
                 BOT.send_photo(game.HISTORIC_GROUP, photo=file_id, caption=caption)
-            elif input_type=='VOICE':
+            else: #elif input_type=='VOICE':
                 caption = 'Registrazione indovinello {} squadra {} per indovinello {}'.format(indovinello_number, squadra_name, indovinello_name)
                 BOT.send_voice(game.HISTORIC_GROUP, voice=file_id, caption=caption)
-            else:
-                pass
         game.append_group_media_input_file_id(p, file_id)        
         redirect_to_state(p, state_COMPLETE_MISSION)
     else:
         if input_type=='PHOTO':
             send_message(p, ux.MSG_SELFIE_MISSIONE_WRONG)
-        elif input_type=='VOICE':
+        else: #input_type=='VOICE':
             send_message(p, ux.MSG_RECORDING_MISSIONE_WRONG)
-        else:
-            pass
     return True
 
+
+# ================================
+# CONFIRM MEDIA INPUT (photo, voice)
+# ================================
+
+def state_CONFIRM_MEDIA_INPUT(p, message_obj=None, **kwargs):    
+    give_instruction = message_obj is None
+    current_indovinello = game.getCurrentIndovinello(p)
+    input_type = current_indovinello['REQUIRED_INPUT'] # PHOTO, VOICE
+    if give_instruction:
+        msg = ux.MSG_CONFIRM_PHOTO_INPUT if input_type == 'PHOTO' else ux.MSG_CONFIRM_RECORDING_INPUT
+        kb = [[ux.BUTTON_SI, ux.BUTTON_NO]]
+        send_message(p, msg, kb)
+    else:
+        text_input = message_obj.text
+        kb = p.get_keyboard()
+        if text_input in utility.flatten(kb):
+            if text_input == ux.BUTTON_SI:
+                approve_media_input_indovinello(p, approved=True, signature=None)
+            else: 
+                assert text_input == ux.BUTTON_NO
+                msg = ux.MSG_MEDIA_INPUT_ABORTED
+                send_message(p, msg, remove_keyboard=True)
+                send_typing_action(p, sleep_time=1)
+                redirect_to_state(p, state_MEDIA_INPUT_MISSION)
+        else:
+            send_message(p, ux.MSG_WRONG_INPUT_USE_BUTTONS)  
 
 # ================================
 # COMPLETE CURRENT MISSION
@@ -472,7 +481,7 @@ def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
             JUMP_TO_SURVEY_AFTER and game.completed_indovinello_number(p) == JUMP_TO_SURVEY_AFTER
         game.set_mission_end_time(p)
         if survery_time:            
-            game.set_game_end_time(p)
+            game.set_game_end_time(p, completed=True)
             msg = ux.MSG_PRESS_FOR_ENDING
             kb = [[ux.BUTTON_END]]
             send_message(p, msg, kb)
@@ -701,13 +710,29 @@ def deal_with_tester_commands(p, message_obj):
             send_message(p, msg, markdown=False)
             return True
         if text_input.startswith('/stats_'):
-            hung_pw = text_input.split('_', 1)[1]
-            if hung_pw in key.ACTIVE_HUNTS:
-                msg = 'Stats:\n\n{}'.format(ndb_person.get_people_on_hunt_stats(hung_pw))
+            hunt_pw = text_input.split('_', 1)[1]
+            if hunt_pw in key.ACTIVE_HUNTS:
+                msg = 'Stats:\n\n{}'.format(ndb_person.get_people_on_hunt_stats(hunt_pw))
                 send_message(p, msg, markdown=False)
             else:
                 msg = 'Wrong stats command'
                 send_message(p, msg, markdown=False)
+            return True        
+        if text_input == '/terminate':
+            terminate_list_str = '\n'.join(["/terminate_{}".format(k) for k in key.ACTIVE_HUNTS.keys()])
+            msg = "Available games to terminate:\n{}".format(terminate_list_str)
+            send_message(p, msg, markdown=False)
+            return True
+        if text_input.startswith('/terminate_'):
+            hunt_pw = text_input.split('_', 1)[1]
+            if hunt_pw in key.ACTIVE_HUNTS:
+                qry = Person.query(Person.current_hunt==hunt_pw)
+                broadcast(p, ux.MSG_HUNT_TERMINATED, qry)
+                remaining_people = qry.fetch()
+                for p in remaining_people:
+                    send_typing_action(p, sleep_time=1)
+                    game.set_game_end_time(p, completed=False)
+                    redirect_to_state(p, state_SURVEY)                    
             return True
         return False
 

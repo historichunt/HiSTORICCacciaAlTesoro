@@ -47,10 +47,16 @@ def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
                 **kwargs
             )
         except Unauthorized:
-            logging.debug('User has blocked Bot: {}'.format(p))
+            logging.debug('User has blocked Bot: {}'.format(p.chat_id))
             p.switch_notifications()
+            return False
+        except TelegramError as e:
+            logging.debug('Exception in reaching user {}: {}'.format(p.chat_id, e))
+            p.switch_notifications()
+            return False
     if sleep:
         time.sleep(0.1)
+    return True
 
 def send_location(p, lat, lon):
     loc = telegram.Location(lon,lat)

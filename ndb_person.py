@@ -105,6 +105,10 @@ class Person(ndb.Model):
         self.tmp_variables[var_name] = initValue
         return initValue
 
+    def switch_notifications(self):
+        self.enabled = not self.enabled
+        self.put()
+
 def make_id(chat_id, application):
     return 'F_{}'.format(chat_id) if application=='messenger' else 'T_{}'.format(chat_id)
 
