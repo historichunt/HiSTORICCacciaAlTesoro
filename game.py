@@ -75,13 +75,16 @@ def get_random_missioni_and_settings(p, airtable_missioni_id):
                 missioni_random.append(next_mission)
                 next_mission_cat = next_mission['CATEGORIA']                                
                 assert next(round_robin_cat) == next_mission_cat
+        elif missione_finale and missione_finale['CATEGORIA']==cat:
+            missioni_random.append(missione_finale)
+            missione_finale = None
     if missione_finale:
         missioni_random.append(missione_finale)
     # debug
-    # if True: 
-    #     from bot_telegram import tell_admin   
-    #     random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_random,1)])
-    #     tell_admin("Random missioni:\n{}".format(random_missioni_names))
+    if p.is_tester(): 
+        from bot_telegram import send_message   
+        random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_random,1)])
+        send_message(p, "DEBUG Random missioni:\n{}".format(random_missioni_names))
     return missioni_random, SETTINGS
 
 #################
