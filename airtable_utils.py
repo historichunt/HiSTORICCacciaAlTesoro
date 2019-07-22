@@ -1,7 +1,7 @@
 import key
 from airtable import Airtable
 
-def downloadSelfies(hunt_password, output_dir):
+def download_selfies(hunt_password, output_dir):
     import requests
     import os
     if not os.path.isdir(output_dir):
@@ -24,7 +24,7 @@ def downloadSelfies(hunt_password, output_dir):
             with open(output_file, 'wb') as output:
                 output.write(r.content)
 
-def get_wrong_answers(hunt_password):
+def get_wrong_answers(hunt_password, output_file):
     from collections import defaultdict
     import json
     table_id = key.HUNTS[hunt_password]['Airtable_Risultati_ID']
@@ -40,10 +40,10 @@ def get_wrong_answers(hunt_password):
             name = m['NOME']
             answers = m['wrong_answers']
             mission_wrong_ansers[name].extend(answers)
-    print(json.dumps(mission_wrong_ansers, indent=3, ensure_ascii=False))
+    with open(output_file, 'w') as f_out:
+        f_out.write(json.dumps(mission_wrong_ansers, indent=3, ensure_ascii=False))
 
 
 if __name__ == "__main__":
-    #downloadSelfies('Suffragio_1_July_2018', '/Users/fedja/Downloads/caccia')
-    #downloadSelfies('05_Aldeno_03_May_2019', '/Users/fedja/Downloads/05_Aldeno_03_May_2019')
-    get_wrong_answers('historicmichelinvigiliane')
+    # download_selfies('password', '/Users/fedja/Downloads/outputdir')
+    get_wrong_answers('historicalvino19', 'calavino_errori.txt')

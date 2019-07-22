@@ -142,6 +142,7 @@ def save_game_data_in_airtable(p):
 from ndb_utils import client
 with client.context():
     HISTORIC_GROUP = ndb_person.get_person_by_id(key.HISTORIC_GROUP_ID) #key.FEDE_T_ID
+    HISTORIC_GROUP_id = HISTORIC_GROUP.chat_id
 
 ################################
 # GAME MANAGEMENT FUNCTIONS
@@ -254,7 +255,7 @@ def set_mission_end_time(p):
 def set_elapsed_and_penalty_and_compute_total(p):
     import date_time_util as dtu
     tvar = p.tmp_variables    
-    end_time = getEndTime(p)
+    end_time = get_end_time(p)
     start_time = get_game_start_time(p)
     
     elapsed_sec_game = dtu.delta_seconds_iso(start_time, end_time)
@@ -277,7 +278,7 @@ def set_elapsed_and_penalty_and_compute_total(p):
     p.put()
     return penalty_hms, total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions
 
-def getEndTime(p):
+def get_end_time(p):
     return p.tmp_variables['END_TIME']
 
 def getTotalIndovinelli(p):

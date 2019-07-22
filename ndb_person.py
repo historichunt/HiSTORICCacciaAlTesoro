@@ -52,9 +52,13 @@ class Person(ndb.Model):
         return utility.escape_markdown(self.name) if escape_markdown else self.name
 
     def get_last_name(self, escape_markdown=True):
+        if self.last_name is None:
+            return None
         return utility.escape_markdown(self.last_name) if escape_markdown else self.name
 
     def get_username(self, escape_markdown=True):
+        if self.username is None:
+            return None
         return utility.escape_markdown(self.username) if escape_markdown else self.name
 
     def get_first_last_name(self, escape_markdown=True):
@@ -124,7 +128,7 @@ def get_person_by_id(uid):
 def add_person(chat_id, name, last_name, username, application):
     p = Person(
         id=make_id(chat_id, application),
-        chat_id=chat_id,
+        chat_id=str(chat_id),
         name=name,
         last_name=last_name,
         username=username,

@@ -165,7 +165,7 @@ def state_SELFIE_INIZIALE(p, message_obj=None, **kwargs):
             send_typing_action(p, sleep_time=1)
             send_message(p, ux.MSG_SELFIE_INIZIALE_OK)            
             if game.send_notification_to_group(p):
-                BOT.send_photo(game.HISTORIC_GROUP, photo=photo_file_id, caption='Selfie iniziale {}'.format(game.get_group_name(p)))
+                BOT.send_photo(game.HISTORIC_GROUP_id, photo=photo_file_id, caption='Selfie iniziale {}'.format(game.get_group_name(p)))
             send_message(p, ux.MSG_START_TIME, sleepDelay=True, remove_keyboard=True)
             game.set_game_start_time(p)
             redirect_to_state(p, state_MISSION_INTRO)
@@ -286,6 +286,8 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                             kb = [['💡 SECONDO INDIZIO']]
                             current_indovinello['indizio1_time'] = now_string
                             send_message(p, msg, kb)
+                        else:
+                            send_message(p, msg, remove_keyboard=True)
                     else:
                         remaining = MIN_SEC_INDIZIO_1 - ellapsed
                         send_message(p, ux.MSG_TOO_EARLY.format(remaining))
@@ -308,15 +310,7 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                     game.set_end_mission_time(p)
                     send_message(p, ux.MSG_ANSWER_OK(), remove_keyboard=True)
                     send_typing_action(p, sleep_time=1)
-                    if 'POST_MESSAGE' in current_indovinello:                        
-                        if 'POST_MEDIA' in current_indovinello:
-                            caption = current_indovinello.get('POST_MEDIA_CAPTION',None)
-                            url_attachment = current_indovinello['POST_MEDIA'][0]['url']
-                            send_media_url(p, url_attachment, caption=caption)
-                            send_typing_action(p, sleep_time=1)
-                        msg = current_indovinello['POST_MESSAGE']
-                        send_message(p, msg, remove_keyboard=True)
-                        send_typing_action(p, sleep_time=1)
+                    if send_post_message(p, current_indovinello):
                         redirect_to_state(p, state_COMPLETE_MISSION)
                     elif 'REQUIRED_INPUT' in current_indovinello:
                         # only missioni with GPS require selfies
@@ -337,6 +331,18 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
         else:
             send_message(p, ux.MSG_WRONG_INPUT_INSERT_TEXT)
 
+def send_post_message(p, current_indovinello):
+    if 'POST_MESSAGE' in current_indovinello:                        
+        if 'POST_MEDIA' in current_indovinello:
+            caption = current_indovinello.get('POST_MEDIA_CAPTION',None)
+            url_attachment = current_indovinello['POST_MEDIA'][0]['url']
+            send_media_url(p, url_attachment, caption=caption)
+            send_typing_action(p, sleep_time=1)
+        msg = current_indovinello['POST_MESSAGE']
+        send_message(p, msg, remove_keyboard=True)
+        send_typing_action(p, sleep_time=1)
+        return True
+    return False
 
 # ================================
 # MEDIA INPUT (photo, voice)
@@ -354,12 +360,13 @@ def state_MEDIA_INPUT_MISSION(p, message_obj=None, **kwargs):
         assert input_type in ['PHOTO', 'VOICE'] # missing video
         photo = message_obj.photo
         voice = message_obj.voice
-        if input_type == 'PHOTO' and photo is None:
+        logging.debug("input_type: {} photo: {} voice: {}".format(input_type, photo, voice))
+        if input_type == 'PHOTO' and (photo is None or len(photo)==0):            
             send_message(p, ux.MSG_WRONG_INPUT_SEND_PHOTO)
             return
         if input_type == 'VOICE' and voice is None:          
             send_message(p, ux.MSG_WRONG_INPUT_SEND_VOICE)
-            return  
+            return        
         file_id = photo[-1]['file_id'] if input_type=='PHOTO' else voice['file_id']
         current_indovinello['MEDIA_INPUT_ID_TYPE'] = [file_id, input_type]
         if current_indovinello.get('INPUT_CONFIRMATION', False):
@@ -412,10 +419,10 @@ def approve_media_input_indovinello(p, approved, signature):
     # need to double check if team is still waiting for approval
     # (e.g., could have restarted the game, or validator pressed approve twice in a row)
     current_indovinello = game.getCurrentIndovinello(p)
-    file_id, input_type = current_indovinello['MEDIA_INPUT_ID_TYPE']
-    assert input_type in ['PHOTO','VOICE']
     if current_indovinello is None:
         return False
+    file_id, input_type = current_indovinello['MEDIA_INPUT_ID_TYPE']
+    assert input_type in ['PHOTO','VOICE']
     if game.manual_validation(p) and signature != current_indovinello.get('sign', signature):
         # if 'sign' is not in current_indovinello it means we are in INPUT_CONFIRMATION mode 
         return False
@@ -428,11 +435,12 @@ def approve_media_input_indovinello(p, approved, signature):
             indovinello_name = current_indovinello['NOME']            
             if input_type=='PHOTO':
                 caption = 'Selfie indovinello {} squadra {} per indovinello {}'.format(indovinello_number, squadra_name, indovinello_name)
-                BOT.send_photo(game.HISTORIC_GROUP, photo=file_id, caption=caption)
+                BOT.send_photo(game.HISTORIC_GROUP_id, photo=file_id, caption=caption)
             else: #elif input_type=='VOICE':
                 caption = 'Registrazione indovinello {} squadra {} per indovinello {}'.format(indovinello_number, squadra_name, indovinello_name)
-                BOT.send_voice(game.HISTORIC_GROUP, voice=file_id, caption=caption)
+                BOT.send_voice(game.HISTORIC_GROUP_id, voice=file_id, caption=caption)
         game.append_group_media_input_file_id(p, file_id)        
+        send_post_message(p, current_indovinello)
         redirect_to_state(p, state_COMPLETE_MISSION)
     else:
         if input_type=='PHOTO':
