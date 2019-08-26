@@ -534,6 +534,9 @@ def state_SURVEY(p, message_obj=None, **kwargs):
         text_input = message_obj.text
         kb = p.get_keyboard()
         current_question = game.getCurrentQuestion(p)
+        if current_question is None:
+            return
+            # when question has been set to complete and at the same time the user presses a button            
         question_type_open = current_question['TYPE'] == 'Open'
         if text_input:
             if text_input in utility.flatten(kb):
