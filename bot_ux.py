@@ -157,7 +157,7 @@ MSG_WRONG_INPUT_INSERT_TEXT = '⛔️ Input non valido, devi rispondere con del 
 
 MSG_WRONG_INPUT_INSERT_TEXT_OR_BUTTONS = '⛔️ Input non valido, devi rispondere con del testo o usa i bottoni qui sotto 🎛'
 
-MSG_WRONG_INPUT_SEND_PHOTO = "⛔️ Input non valido, devi mandarmi una foto. Usa l'iconda della macchina fotografica 📷 qua in basso o allega un'immagine dalla tua galleria con la graffetta 📎."
+MSG_WRONG_INPUT_SEND_PHOTO = "⛔️ Input non valido, devi mandarmi una foto. Premi la graffetta 📎 qua in basso e premi sull'immagine della fotocamera 📷, fai una foto e inviamela."
 
 MSG_WRONG_INPUT_SEND_VOICE = "⛔️ Input non valido, devi mandarmi una registrazione vocale. Usa l'iconda del microfono 🎤 qua in basso."
 
