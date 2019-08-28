@@ -46,4 +46,4 @@ def get_wrong_answers(hunt_password, output_file):
 
 if __name__ == "__main__":
     # download_selfies('password', '/Users/fedja/Downloads/outputdir')
-    get_wrong_answers('historicalvino19', 'calavino_errori.txt')
+    # get_wrong_answers('password', '/Users/fedja/Downloads/errori.txt')
