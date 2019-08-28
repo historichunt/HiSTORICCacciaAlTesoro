@@ -70,11 +70,12 @@ def get_random_missioni_and_settings(p, airtable_missioni_id):
             chosen_mission = missioni_cat_bucket[cat].pop()
             missioni_random.append(chosen_mission)
             next_mission_name = chosen_mission.get('NEXT',None)
-            if next_mission_name:
+            while next_mission_name:
                 next_mission = next(m for m in NEXT_MISSIONI if next_mission_name==m.get('NOME',None))
                 missioni_random.append(next_mission)
                 next_mission_cat = next_mission['CATEGORIA']                                
                 assert next(round_robin_cat) == next_mission_cat
+                next_mission_name = next_mission.get('NEXT',None)
         elif missione_finale and missione_finale['CATEGORIA']==cat:
             missioni_random.append(missione_finale)
             missione_finale = None
@@ -180,7 +181,7 @@ def resetGame(p, hunt_password):
     p.tmp_variables['TOTAL TIME'] = 0 # seconds
     p.tmp_variables['COMPLETED'] = False # seconds
 
-def exitGame(p, put=True):
+def exit_game(p, put=True):
     if p.current_hunt is None:
         return False
     p.current_hunt = None
@@ -251,6 +252,15 @@ def set_mission_end_time(p):
     last_mission_time.append(end_time)
     mission_ellapsed = dtu.delta_seconds_iso(*last_mission_time)
     return mission_ellapsed
+
+def set_empty_vars(p):
+    tvar = p.tmp_variables    
+    tvar['ELAPSED GAME'] = -1
+    tvar['ELAPSED MISSIONS'] = -1
+    tvar['PENALTY TIME'] = -1
+    tvar['TOTAL TIME GAME'] = -1
+    tvar['TOTAL TIME MISSIONS'] = -1
+    p.put()
 
 def set_elapsed_and_penalty_and_compute_total(p):
     import date_time_util as dtu

@@ -38,7 +38,7 @@ def restart_user(user):
 # EXIT GAME
 # ================================
 def make_payer_exit_game(p, message=None):
-    if game.exitGame(p):
+    if game.exit_game(p):
         if message:
             send_message(p, message, remove_keyboard=True)
         redirect_to_state(p, state_INITIAL)
@@ -598,7 +598,8 @@ def state_END(p, message_obj=None, **kwargs):
                 total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)
             send_message(game.HISTORIC_GROUP, msg_group)        
         game.save_game_data_in_airtable(p)
-        send_message(p, ux.MSG_GO_BACK_TO_START)        
+        send_message(p, ux.MSG_GO_BACK_TO_START)     
+        game.exit_game(p)   
     else:
         pass
 
@@ -734,16 +735,20 @@ def deal_with_tester_commands(p, message_obj):
             msg = "Available games to terminate:\n{}".format(terminate_list_str)
             send_message(p, msg, markdown=False)
             return True
-        if text_input.startswith('/terminate_'):
+        if text_input.startswith('/terminate_'):            
             hunt_pw = text_input.split('_', 1)[1]
             if hunt_pw in key.ACTIVE_HUNTS:
                 qry = Person.query(Person.current_hunt==hunt_pw)
-                broadcast(p, ux.MSG_HUNT_TERMINATED, qry)
-                remaining_people = qry.fetch()
-                for p in remaining_people:
-                    send_typing_action(p, sleep_time=1)
-                    game.set_game_end_time(p, completed=False)
-                    redirect_to_state(p, state_SURVEY)                    
+                broadcast(p, ux.MSG_HUNT_TERMINATED, qry)                
+                # TODO: FIX THIS
+                # remaining_people = qry.fetch()
+                # for p in remaining_people:
+                    # send_typing_action(p, sleep_time=1)
+                    # game.set_game_end_time(p, completed=False)
+                    # game.set_empty_vars(p)
+                    # # redirect_to_state(p, state_SURVEY)
+                    # game.save_game_data_in_airtable(p)
+                    # game.exit_game(p)                
             return True
         return False
 
