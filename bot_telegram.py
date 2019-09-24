@@ -10,7 +10,8 @@ import time
 import ndb_person
 from ndb_person import Person
 from ndb_utils import client_context
-
+import game
+import bot_ux as ux
 
 BOT = telegram.Bot(token=key.TELEGRAM_TOKEN)
 
@@ -133,10 +134,9 @@ BROADCAST_COUNT_REPORT = utility.unindent(
     """
 )
 
-def broadcast(sender, msg, qry = None, exit_game=False,
-              blackList_sender=False, sendNotification=True, test=False):
+def broadcast(sender, msg, qry = None, blackList_sender=False, sendNotification=True, test=False):
 
-    from bot_telegram_dialogue import make_payer_exit_game
+    from bot_telegram_dialogue import restart
     if qry is None:
         qry = Person.query()
     qry = qry.order(Person._key) #_MultiQuery with cursors requires __key__ order
@@ -150,15 +150,13 @@ def broadcast(sender, msg, qry = None, exit_game=False,
         for p in users:
             if not p.enabled:
                 continue
-            if test and not p.is_tester():
+            if test and not p.is_manager():
                 continue
             if blackList_sender and sender and p.get_id() == sender.get_id():
                 continue
             total += 1
             if send_message(p, msg, sleepDelay=True): #p.enabled
                 enabledCount += 1
-                if exit_game:
-                    make_payer_exit_game(p)
 
     disabled = total - enabledCount
     msg_debug = BROADCAST_COUNT_REPORT.format(total, enabledCount, disabled)
@@ -172,8 +170,7 @@ def broadcast(sender, msg, qry = None, exit_game=False,
 # ---------
 
 def reset_all_users(qry = None, message=None):
-    from bot_telegram_dialogue import make_payer_exit_game
-
+    from bot_telegram_dialogue import restart
     if qry is None:
         qry = Person.query()
     qry = qry.order(Person._key)  # _MultiQuery with cursors requires __key__ order
@@ -186,11 +183,11 @@ def reset_all_users(qry = None, message=None):
         users, cursor, more = qry.fetch_page(100, start_cursor=cursor)
         for p in users:
             if p.enabled:
-                #if p.state == INITIAL_STATE:
-                #    continue
-                #logging.debug('Restarting {}'.format(p.chat_id))
                 total += 1
-                make_payer_exit_game(p, message)
+                if game.user_in_game(p):
+                    game.exit_game(p, save_data=False)
+                    send_message(p, ux.MSG_THANKS_FOR_PARTECIPATING, remove_keyboard=True)
+                    restart(p)
             time.sleep(0.1)
 
     msg_admin = 'Resetted {} users.'.format(total)

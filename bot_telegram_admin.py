@@ -10,14 +10,11 @@ def get_ngrok_base():
 
 
 def set_webhook():
-    from params import USE_NGROK
-    base_url = get_ngrok_base() if USE_NGROK else key.GAE_SERVER_URL
-    webhook_url = '{}{}'.format(base_url, key.TELEGRAM_WEBHOOK_PATH)
-    s = BOT.setWebhook(webhook_url, allowed_updates=['message','callback_query'])
+    s = BOT.setWebhook(key.WEBHOOK_TELEGRAM_BASE, allowed_updates=['message'])
     if s:
-        print("webhook setup ok: {}".format(webhook_url))
+        print("webhook setup ok: {}".format(key.WEBHOOK_TELEGRAM_BASE))
     else:
-        return("webhook setup failed")
+        print("webhook setup failed")
 
 
 def delete_webhook():

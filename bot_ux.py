@@ -67,6 +67,10 @@ MSG_PRESS_TO_START = "Quando siete pronti per iniziare premete il pulsante."
 
 MSG_GO = '🏃‍♂️🏃‍♀️ Si parte!'
 
+MSG_WELCOME_START = "😀 Ciao, benvenuto/a alla caccia al tesoro di hiSTORIC! \n\n" \
+                    "Per iniziare devi utilizzare il *QR code*.\n" \
+                    "In alternativa digita /start seguito dalla *password* fornita dagli organizzatori."
+
 MSG_WELCOME = 'Ciao! 😀 Benvenuti nella caccia al tesoro di hiSTORIC: *{}*!'
 
 MSG_GROUP_NAME = 'Come prima cosa scegliete un *nome per la vostra squadra*.'
@@ -129,6 +133,8 @@ MSG_MEDIA_INPUT_MISSIONE_OK = lambda: random.choice(
     ]
 )
 
+MSG_THANKS_FOR_PARTECIPATING = '😀 Grazie di aver partecipato alla caccia al tesoro!'
+
 MSG_SELFIE_MISSIONE_WRONG = "🤔 Mi dispiace, il selfie non è stato accettato perché non rappresenta l'oggetto dell'indovinello o non vi si vede bene.\n\n📷 Riprovate a mandarmi un nuovo selfie!"
 
 MSG_RECORDING_MISSIONE_WRONG = "🤔 Mi dispiace, la registrazione non è stata accettata.\n\n🎤 Riprovate a mandarmi una nuova registrazione!"
@@ -169,9 +175,14 @@ MSG_EMAIL = '📧 Potete lasciarci i vostri indirizzi email (separati da spazio)
 
 MSG_EMAIL_WRONG = '⛔️ Input non valido, devi inserire uno o più indirizzi email o premere su ⏩ SALTA.'
 
-MSG_HUNT_TERMINATED = "⏰ Il tempo a disposizione è terminato! Vi preghiamo di tornare al punto di partenza per le premiazioni."
+MSG_HUNT_TERMINATED = (
+    "⏰ Il tempo a disposizione è terminato!\n\n"
+    "🏠 Vi preghiamo di tornare al punto di partenza per le premiazioni."
+)
 
-MSG_EXITED_FROM_GAME = "🚪 Sei uscito/a dal gioco!"
+MSG_EXITED_FROM_GAME = "🚪 Sei uscito/a dalla caccia al tesoro!"
+
+MSG_NOT_IN_GAME = '❌ Non hai iniziato una caccia al tesoro.'
 
 MSG_PRESS_FOR_NEXT_MISSION = "🎳 Premi sul pulsante per andare alla prossima missione."
 

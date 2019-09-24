@@ -31,17 +31,8 @@ def restart_multi(users):
     for u in users:
         redirect_to_state(u, state_INITIAL)
 
-def restart_user(user):
+def restart(user):
     redirect_to_state(user, state_INITIAL)
-
-# ================================
-# EXIT GAME
-# ================================
-def make_payer_exit_game(p, message=None):
-    if game.exit_game(p):
-        if message:
-            send_message(p, message, remove_keyboard=True)
-        redirect_to_state(p, state_INITIAL)
 
 # ================================
 # REDIRECT TO STATE
@@ -65,12 +56,13 @@ def redirect_to_state_multi(users, new_function, message_obj=None):
 def repeat_state(user, message_obj=None):
     state = user.state
     if state is None:
-        restart_user(user)
+        restart(user)
         return
     method = possibles.get(state)
     if not method:
         msg = "⚠️ User {} sent to unknown method state: {}".format(user.chat_id, state)
         report_master(msg)
+        restart(user)
     else:
         method(user, message_obj)
 
@@ -101,10 +93,7 @@ def state_INITIAL(p, message_obj=None, **kwargs):
                     msg = '🙈 Non hai inserito la parola magica giusta per iniziare la caccia al tesoro.'
                     send_message(p, msg)
             else:
-                msg = "Ciao 😀\n" \
-                    "C'è una caccia al tesoro in corso ma devi utilizzare il QR code per accedere.\n" \
-                    "In alternativa digita /start seguito dalla *password* fornita dagli organizzatori."
-                send_message(p, msg)
+                send_message(p, ux.MSG_WELCOME_START, remove_keyboard=True)
 
 def state_START(p, message_obj=None, **kwargs):    
     give_instruction = message_obj is None
@@ -596,10 +585,10 @@ def state_END(p, message_obj=None, **kwargs):
         if game.send_notification_to_group(p):
             msg_group = ux.MSG_END_NOTIFICATION.format(game.get_group_name(p), penalty_hms, \
                 total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)
-            send_message(game.HISTORIC_GROUP, msg_group)        
-        game.save_game_data_in_airtable(p)
+            send_message(game.HISTORIC_GROUP, msg_group)                
         send_message(p, ux.MSG_GO_BACK_TO_START)     
-        game.exit_game(p)   
+        game.exit_game(p, save_data=True)   
+        restart(p)
     else:
         pass
 
@@ -635,10 +624,6 @@ def deal_with_callback_query(callback_query):
 def deal_with_admin_commands(p, message_obj):
     text_input = message_obj.text
     if p.is_admin():
-        if text_input == '/update':
-            key.reload_config()
-            send_message(p, "Reloaded config table")
-            return True
         if text_input == '/debug':
             #send_message(p, game.debugTmpVariables(p), markdown=False)
             send_text_document(p, 'tmp_vars.json', game.debugTmpVariables(p))
@@ -675,17 +660,6 @@ def deal_with_admin_commands(p, message_obj):
             logging.debug("Starting to broadcast " + msg)
             broadcast(p, msg)
             return True
-        if text_input.startswith('/testBroadcast '):
-            text = text_input.split(' ', 1)[1]
-            msg = '🔔 *Messaggio da hiSTORIC* 🔔\n\n' + text                            
-            broadcast(p, msg, exit_game=True, test=True)
-            return True        
-        if text_input.startswith('/resetBroadcast '):
-            text = text_input.split(' ', 1)[1]
-            msg = '🔔 *Messaggio da hiSTORIC* 🔔\n\n' + text
-            logging.debug("Starting to broadcast and reset players" + msg)
-            broadcast(p, msg, exit_game=True)
-            return True
         if text_input.startswith('/textUser '):
             p_id, text = text_input.split(' ', 2)[1]
             p = Person.get_by_id(p_id)
@@ -696,12 +670,15 @@ def deal_with_admin_commands(p, message_obj):
                 msg_admin = 'Problems sending message to {}'.format(p.get_first_last_username())
                 tell_admin(msg_admin)
             return True
-        if text_input.startswith('/resetUser '):
+        if text_input.startswith('/restartUser '):
             p_id = ' '.join(text_input.split(' ')[1:])
             p = Person.get_by_id(p_id)
             if p:
-                make_payer_exit_game(p, message='Reset')
-                msg_admin = 'User resetted: {}'.format(p.get_first_last_username())
+                if game.user_in_game(p):
+                    game.exit_game(p, save_data=False)
+                    send_message(p, ux.MSG_EXITED_FROM_GAME, remove_keyboard=True)
+                restart(p)
+                msg_admin = 'User restarted: {}'.format(p.get_first_last_username())
                 tell_admin(msg_admin)                
             else:
                 msg_admin = 'No user found: {}'.format(p_id)
@@ -712,10 +689,21 @@ def deal_with_admin_commands(p, message_obj):
             return True
     return False
 
-def deal_with_tester_commands(p, message_obj):
+def deal_with_manager_commands(p, message_obj):
     text_input = message_obj.text
-    # logging.debug("In deal_with_tester_commands with user:{} istester:{}".format(p.get_id(), p.is_tester()))
-    if p.is_tester():
+    # logging.debug("In deal_with_manager_commands with user:{} ismanager:{}".format(p.get_id(), p.is_manager()))
+    if p.is_manager():
+        if text_input == '/admin':
+            msg = "Comandi disponibili:\n"
+            msg += "- /update: refresh configuarzione cacce al tesoro\n"
+            msg += "- /stats: statistiche delle cacce al tesoro\n"
+            msg += "- /terminate: termina una caccia al tesoro"
+            send_message(p, msg, markdown=False)
+            return True
+        if text_input == '/update':
+            key.reload_config()
+            send_message(p, "Reloaded config table")
+            return True
         if text_input == '/stats':
             stats_list_str = '\n'.join(["/stats_{}".format(k) for k in key.ACTIVE_HUNTS.keys()])
             msg = "Available stats:\n{}".format(stats_list_str)
@@ -724,7 +712,11 @@ def deal_with_tester_commands(p, message_obj):
         if text_input.startswith('/stats_'):
             hunt_pw = text_input.split('_', 1)[1]
             if hunt_pw in key.ACTIVE_HUNTS:
-                msg = 'Stats:\n\n{}'.format(ndb_person.get_people_on_hunt_stats(hunt_pw))
+                hunt_stats = ndb_person.get_people_on_hunt_stats(hunt_pw)
+                if hunt_stats:
+                    msg = 'Stats:\n\n{}'.format(hunt_stats)
+                else:
+                    msg = 'Nessuna squadra iscritta'
                 send_message(p, msg, markdown=False)
             else:
                 msg = 'Wrong stats command'
@@ -739,27 +731,27 @@ def deal_with_tester_commands(p, message_obj):
             hunt_pw = text_input.split('_', 1)[1]
             if hunt_pw in key.ACTIVE_HUNTS:
                 qry = Person.query(Person.current_hunt==hunt_pw)
-                broadcast(p, ux.MSG_HUNT_TERMINATED, qry)                
-                # TODO: FIX THIS
-                # remaining_people = qry.fetch()
-                # for p in remaining_people:
-                    # send_typing_action(p, sleep_time=1)
-                    # game.set_game_end_time(p, completed=False)
-                    # game.set_empty_vars(p)
-                    # # redirect_to_state(p, state_SURVEY)
-                    # game.save_game_data_in_airtable(p)
-                    # game.exit_game(p)                
-            return True
+                remaining_people = qry.fetch()
+                for u in remaining_people:                    
+                    game.exit_game(u, save_data=True)
+                    send_message(u, ux.MSG_HUNT_TERMINATED, remove_keyboard=True, sleep=True)            
+                send_message(p, "Sent terminate message to {} teams.".format(len(remaining_people)))
+                return True
         return False
 
 
 def deal_with_universal_command(p, message_obj):
     text_input = message_obj.text
     if text_input.startswith('/start'):
-        state_INITIAL(p, message_obj)
+        redirect_to_state(p, state_INITIAL, message_obj)
         return True
     if text_input == '/exit':
-        make_payer_exit_game(p, ux.MSG_EXITED_FROM_GAME)
+        if game.user_in_game(p):
+            game.exit_game(p, save_data=False)
+            send_message(p, ux.MSG_EXITED_FROM_GAME, remove_keyboard=True)
+            restart(p)
+        else:
+            send_message(p, ux.MSG_NOT_IN_GAME)
         return True
     if text_input == '/state':
         state = p.get_state()
@@ -809,7 +801,7 @@ def deal_with_request(request_json):
             msg = "Bot riattivato!"
             send_message(p, msg)
 
-    if message_obj.forward_from and not p.is_tester():
+    if message_obj.forward_from and not p.is_manager():
         send_message(p, ux.MSG_NO_FORWARDING_ALLOWED)
         return
 
@@ -817,14 +809,14 @@ def deal_with_request(request_json):
     if text:
         text_input = message_obj.text        
         logging.debug('Message from @{} in state {} with text {}'.format(chat_id, p.state, text_input))
-        if WORK_IN_PROGRESS and not p.is_tester():
+        if WORK_IN_PROGRESS and not p.is_manager():
             send_message(p, ux.MSG_WORK_IN_PROGRESS)    
             return
         if deal_with_admin_commands(p, message_obj):
             return
         if deal_with_universal_command(p, message_obj):
             return
-        if deal_with_tester_commands(p, message_obj):
+        if deal_with_manager_commands(p, message_obj):
             return
     logging.debug("Sending {} to state {} with input message_obj {}".format(p.get_first_name(), p.state, message_obj))
     repeat_state(p, message_obj=message_obj)

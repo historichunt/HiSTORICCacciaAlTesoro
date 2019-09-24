@@ -13,11 +13,6 @@ client.setup_logging(log_level=logging.DEBUG)
 # called `app` in `main.py`.
 app = Flask(__name__)
 
-if params.USE_NGROK:
-    from dotenv import load_dotenv
-    load_dotenv()
-
-
 @app.route('/')
 def root():
     logging.debug("in root function")
@@ -38,7 +33,7 @@ def page_not_found(e):
 def internal_error(error):
     return "500 error: {}".format(error), 500
 
-@app.route(key.TELEGRAM_WEBHOOK_PATH, methods=['POST'])
+@app.route(key.WEBHOOK_TELEGRAM_ROUTING, methods=['POST'])
 def telegram_webhook_handler():
     from main_exception import run_new_thread_and_report_exception
     from bot_telegram_dialogue import deal_with_request    

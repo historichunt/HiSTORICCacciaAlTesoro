@@ -44,9 +44,9 @@ class Person(ndb.Model):
         import key
         return self.get_id() in key.ADMIN_IDS
 
-    def is_tester(self):
+    def is_manager(self):
         import key
-        return self.get_id() in key.TESTER_IDS
+        return self.get_id() in key.MANAGER_IDS
 
     def get_first_name(self, escape_markdown=True):
         return utility.escape_markdown(self.name) if escape_markdown else self.name

@@ -82,7 +82,7 @@ def get_random_missioni_and_settings(p, airtable_missioni_id):
     if missione_finale:
         missioni_random.append(missione_finale)
     # debug
-    if p.is_tester(): 
+    if p.is_manager(): 
         from bot_telegram import send_message   
         random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_random,1)])
         send_message(p, "DEBUG Random missioni:\n{}".format(random_missioni_names))
@@ -110,14 +110,13 @@ RESULTS_GAME_TABLE_HEADERS = \
     'START_TIME', 'END_TIME', 'ELAPSED GAME', 'ELAPSED MISSIONS', \
     'PENALTIES', 'PENALTY TIME', 'COMPLETED', 'TOTAL TIME GAME', 'TOTAL TIME MISSIONS']
 
-def save_game_data_in_airtable(p):
+def save_game_data_in_airtable(p, save_survey):
     from bot_telegram import get_photo_url_from_telegram
     import json
     game_data = p.tmp_variables
     airtable_risultati_id = game_data['HUNT_INFO']['Airtable_Risultati_ID']
 
-    RESULTS_GAME_TABLE = Airtable(airtable_risultati_id, 'Results', api_key=key.AIRTABLE_API_KEY)
-    RESULTS_SURVEY_TABLE = Airtable(airtable_risultati_id, 'Survey', api_key=key.AIRTABLE_API_KEY)
+    RESULTS_GAME_TABLE = Airtable(airtable_risultati_id, 'Results', api_key=key.AIRTABLE_API_KEY)    
 
     games_row = {}
     for h in RESULTS_GAME_TABLE_HEADERS:
@@ -128,12 +127,15 @@ def save_game_data_in_airtable(p):
         for file_id in game_data['GROUP_MEDIA_FILE_IDS']
     ]
     RESULTS_GAME_TABLE.insert(games_row)
-    survey_row = {'ID': game_data['ID']}
-    for question in SURVEY_QUESTIONS:
-        questions_data = game_data['SURVEY_INFO']['COMPLETED']
-        answer = next(row['ANSWER'] for row in questions_data if row['DOMANDA'] == question)
-        survey_row[question] = answer
-    RESULTS_SURVEY_TABLE.insert(survey_row)
+    
+    if save_survey:
+        RESULTS_SURVEY_TABLE = Airtable(airtable_risultati_id, 'Survey', api_key=key.AIRTABLE_API_KEY)
+        survey_row = {'ID': game_data['ID']}
+        for question in SURVEY_QUESTIONS:
+            questions_data = game_data['SURVEY_INFO']['COMPLETED']
+            answer = next(row['ANSWER'] for row in questions_data if row['DOMANDA'] == question)
+            survey_row[question] = answer
+        RESULTS_SURVEY_TABLE.insert(survey_row)
 
 
 ################################
@@ -181,9 +183,18 @@ def resetGame(p, hunt_password):
     p.tmp_variables['TOTAL TIME'] = 0 # seconds
     p.tmp_variables['COMPLETED'] = False # seconds
 
-def exit_game(p, put=True):
+def user_in_game(p):
+    return p.current_hunt is not None
+
+def exit_game(p, save_data=True, put=True):
     if p.current_hunt is None:
         return False
+    if save_data:
+        completed = p.tmp_variables.get('COMPLETED', False)
+        if not completed:
+            set_empty_vars_for_airtable(p)
+            set_game_end_time(p, completed=False)
+        save_game_data_in_airtable(p, save_survey=completed)
     p.current_hunt = None
     p.tmp_variables = {}
     if put:
@@ -253,8 +264,9 @@ def set_mission_end_time(p):
     mission_ellapsed = dtu.delta_seconds_iso(*last_mission_time)
     return mission_ellapsed
 
-def set_empty_vars(p):
+def set_empty_vars_for_airtable(p):
     tvar = p.tmp_variables    
+    tvar['START_TIME'] = 0
     tvar['ELAPSED GAME'] = -1
     tvar['ELAPSED MISSIONS'] = -1
     tvar['PENALTY TIME'] = -1
