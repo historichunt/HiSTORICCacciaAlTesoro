@@ -5,13 +5,11 @@ from telegram.error import TelegramError, Unauthorized, BadRequest, TimedOut, Ch
 import key
 import logging
 import traceback
-import bot_ux
 import time
 import ndb_person
 from ndb_person import Person
 from ndb_utils import client_context
 import game
-import bot_ux as ux
 
 BOT = telegram.Bot(token=key.TELEGRAM_TOKEN)
 
@@ -186,7 +184,7 @@ def reset_all_users(qry = None, message=None):
                 total += 1
                 if game.user_in_game(p):
                     game.exit_game(p, save_data=False)
-                    send_message(p, ux.MSG_THANKS_FOR_PARTECIPATING, remove_keyboard=True)
+                    send_message(p, message, remove_keyboard=True)
                     restart(p)
             time.sleep(0.1)
 

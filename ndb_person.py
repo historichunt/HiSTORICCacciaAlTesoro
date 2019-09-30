@@ -3,6 +3,7 @@ import datetime
 from google.cloud import ndb #https://googleapis.github.io/python-ndb/latest/
 from ndb_utils import client_context
 import utility
+import bot_ux
 
 class Person(ndb.Model):
     chat_id = ndb.StringProperty()
@@ -16,7 +17,8 @@ class Person(ndb.Model):
     current_hunt = ndb.StringProperty()
     latitude = ndb.FloatProperty()
     longitude = ndb.FloatProperty()
-    tmp_variables = ndb.JsonProperty(indexed=False)
+    language = ndb.StringProperty(default='IT')
+    tmp_variables = ndb.JsonProperty(indexed=False)    
   
     def update_info(self, name, last_name, username):
         modified, was_disabled = False, False
@@ -36,6 +38,7 @@ class Person(ndb.Model):
         if modified:
             self.put()
         return modified, was_disabled
+
 
     def get_id(self):
         return self.key.id()
@@ -74,6 +77,13 @@ class Person(ndb.Model):
 
     def get_state(self):
         return self.state
+
+    def ux(self):
+        return bot_ux.UX_LANG(self.language)
+
+    def set_language(self, l, put=False):
+        self.language = l
+        if put: self.put()
 
     def set_enabled(self, enabled, put=False):
         self.enabled = enabled

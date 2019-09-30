@@ -10,7 +10,7 @@ def get_ngrok_base():
 
 
 def set_webhook():
-    s = BOT.setWebhook(key.WEBHOOK_TELEGRAM_BASE, allowed_updates=['message'])
+    s = BOT.setWebhook(key.WEBHOOK_TELEGRAM_BASE, allowed_updates=['message','callback_query'])
     if s:
         print("webhook setup ok: {}".format(key.WEBHOOK_TELEGRAM_BASE))
     else:

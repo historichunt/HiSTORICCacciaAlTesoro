@@ -20,9 +20,18 @@ POST_MEDIA, POST_MEDIA_CAPTION,
 POST_MESSAGE
 '''
 
-def get_random_missioni_and_settings(p, airtable_missioni_id):
+def get_settings(p, airtable_missioni_id):
+    SETTINGS_TABLE = Airtable(airtable_missioni_id, 'Settings', api_key=key.AIRTABLE_API_KEY)
+    SETTINGS = {
+        row['fields']['Name']:row['fields']['Value'] 
+        for row in SETTINGS_TABLE.get_all() 
+        if row['fields'].get('Name', False)
+    }
+    return SETTINGS
+
+def get_random_missioni_and_settings(p, airtable_missioni_id, mission_tab_name, initial_cat):
     import itertools
-    MISSIONI_TABLE = Airtable(airtable_missioni_id, 'Missioni', api_key=key.AIRTABLE_API_KEY)
+    MISSIONI_TABLE = Airtable(airtable_missioni_id, mission_tab_name, api_key=key.AIRTABLE_API_KEY)
     MISSIONI_ALL = [row['fields'] for row in MISSIONI_TABLE.get_all() if row['fields'].get('ACTIVE',False)]    
     for row in MISSIONI_ALL:
         if 'FINALE' not in row:
@@ -33,10 +42,7 @@ def get_random_missioni_and_settings(p, airtable_missioni_id):
         m for m in MISSIONI_ALL if m['NOME'] in \
         [row.get('NEXT') for row in MISSIONI_ALL if row.get('NEXT',False)]
     ]
-    MISSIONI_NOT_NEXT = [m for m in MISSIONI_ALL if m not in NEXT_MISSIONI]
-    SETTINGS_TABLE = Airtable(airtable_missioni_id, 'Settings', api_key=key.AIRTABLE_API_KEY)
-    SETTINGS = {row['fields']['Name']:row['fields']['Value'] for row in SETTINGS_TABLE.get_all() if row['fields'].get('Name', False)}
-    initial_cat =   SETTINGS.get('INITIAL_CAT', None)
+    MISSIONI_NOT_NEXT = [m for m in MISSIONI_ALL if m not in NEXT_MISSIONI]    
     missioni_categories = list(set(row['CATEGORIA'] for row in MISSIONI_NOT_NEXT))
     missioni_tmp = [row for row in MISSIONI_NOT_NEXT if not row['FINALE']]
     missioni_finali = [row for row in MISSIONI_NOT_NEXT if row['FINALE']]    
@@ -86,7 +92,7 @@ def get_random_missioni_and_settings(p, airtable_missioni_id):
         from bot_telegram import send_message   
         random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_random,1)])
         send_message(p, "DEBUG Random missioni:\n{}".format(random_missioni_names))
-    return missioni_random, SETTINGS
+    return missioni_random
 
 #################
 # SURVEY
@@ -151,16 +157,25 @@ with client.context():
 # GAME MANAGEMENT FUNCTIONS
 ################################
 
-def resetGame(p, hunt_password):
+def set_game_settings(p, hunt_password):
     hunt_info = key.ACTIVE_HUNTS[hunt_password]
     airtable_missioni_id = hunt_info['Airtable_Missioni_ID']        
-    missioni, settings = get_random_missioni_and_settings(p, airtable_missioni_id)
+    settings = get_settings(p, airtable_missioni_id)
+    p.tmp_variables = {} 
+    p.tmp_variables['SETTINGS'] = settings
+    p.current_hunt = hunt_password 
+
+def reset_game(p, hunt_password):
+    hunt_info = key.ACTIVE_HUNTS[hunt_password]
+    airtable_missioni_id = hunt_info['Airtable_Missioni_ID']        
+    settings = p.tmp_variables['SETTINGS']
+    initial_cat = settings.get('INITIAL_CAT', None)
+    multilingual =  settings.get('MULTILINGUAL', 'False') == 'True'
+    mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni'
+    missioni = get_random_missioni_and_settings(p, airtable_missioni_id, mission_tab_name, initial_cat)
     notify_group = hunt_info.get('Notify_Group', False)
     validator_id = hunt_info.get('Validator_ID', None)
-    survey = get_survey_data()
-    p.current_hunt = hunt_password    
-    p.tmp_variables = {}
-    p.tmp_variables['SETTINGS'] = settings
+    survey = get_survey_data()           
     p.tmp_variables['HUNT_INFO'] = hunt_info
     p.tmp_variables['Notify_Group'] = notify_group
     p.tmp_variables['Validator_ID'] = validator_id
@@ -347,6 +362,9 @@ def increase_wrong_answers_current_indovinello(p, answer, give_penalty, put=True
         p.tmp_variables['PENALTIES'] += 1
     if put:
         p.put()                
+
+def is_multilingual(p):
+    return p.tmp_variables['SETTINGS'].get('MULTILINGUAL', 'False') == 'True'
 
 def get_total_penalty(p):    
     PENALTIES = p.tmp_variables['PENALTIES']
