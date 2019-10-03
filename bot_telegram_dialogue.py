@@ -392,7 +392,7 @@ def send_to_validator(p, game, current_indovinello, input_type):
                 indovinello_number, squadra_name, indovinello_name)
         },
         'VOICE': {
-            'reply': p.ux().MSG_WAIT_SELFIE_APPROVAL,
+            'reply': p.ux().MSG_WAIT_VOICE_APPROVAL,
             'caption': 'Registrazione indovinello {} squadra {} per indovinello {}'.format(\
                 indovinello_number, squadra_name, indovinello_name)
         }
