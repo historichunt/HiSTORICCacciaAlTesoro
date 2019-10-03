@@ -29,7 +29,7 @@ def get_settings(p, airtable_missioni_id):
     }
     return SETTINGS
 
-def get_random_missioni_and_settings(p, airtable_missioni_id, mission_tab_name, initial_cat):
+def get_random_missioni(p, airtable_missioni_id, mission_tab_name, initial_cat):
     import itertools
     MISSIONI_TABLE = Airtable(airtable_missioni_id, mission_tab_name, api_key=key.AIRTABLE_API_KEY)
     MISSIONI_ALL = [row['fields'] for row in MISSIONI_TABLE.get_all() if row['fields'].get('ACTIVE',False)]    
@@ -172,7 +172,7 @@ def reset_game(p, hunt_password):
     initial_cat = settings.get('INITIAL_CAT', None)
     multilingual =  settings.get('MULTILINGUAL', 'False') == 'True'
     mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni'
-    missioni = get_random_missioni_and_settings(p, airtable_missioni_id, mission_tab_name, initial_cat)
+    missioni = get_random_missioni(p, airtable_missioni_id, mission_tab_name, initial_cat)
     notify_group = hunt_info.get('Notify_Group', False)
     validator_id = hunt_info.get('Validator_ID', None)
     survey = get_survey_data()           
