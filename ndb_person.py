@@ -104,7 +104,7 @@ class Person(ndb.Model):
         self.set_tmp_variable("keyboard", value=kb, put=put)
 
     def get_keyboard(self):
-        return self.get_tmp_variable("keyboard")
+        return self.get_tmp_variable("keyboard", [])
 
     def reset_tmp_variables(self):
         self.tmp_variables = {}

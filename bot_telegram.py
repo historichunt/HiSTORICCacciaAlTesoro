@@ -180,16 +180,28 @@ def reset_all_users(qry = None, message=None):
     while more:
         users, cursor, more = qry.fetch_page(100, start_cursor=cursor)
         for p in users:
+            if p.get_id() == key.HISTORIC_GROUP_ID:
+                continue
+            if p.state == 'state_INITIAL':
+                continue
             if p.enabled:
                 total += 1
                 if game.user_in_game(p):
                     game.exit_game(p, save_data=False)
+                    # send_message(p, p.ux().MSG_EXITED_FROM_GAME, remove_keyboard=True)
+                if message:
                     send_message(p, message, remove_keyboard=True)
-                    restart(p)
-            time.sleep(0.1)
+                p.reset_tmp_variables()
+                restart(p)
+                time.sleep(0.2)
 
     msg_admin = 'Resetted {} users.'.format(total)
     tell_admin(msg_admin)
+
+def remove_keyboard_from_notification_group():
+    group_id = key.HISTORIC_GROUP_ID
+    p = ndb_person.get_person_by_id(group_id)
+    send_message(p, 'Removing Keyboard', remove_keyboard=True)
 
 # ================================
 # UTILIITY TELL FUNCTIONS

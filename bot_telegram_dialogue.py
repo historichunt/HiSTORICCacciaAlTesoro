@@ -1,4 +1,5 @@
 import logging
+import bot_telegram
 from bot_telegram import BOT, send_message, send_location, send_typing_action, \
     report_master, send_text_document, send_media_url, \
     broadcast, tell_admin, reset_all_users
@@ -72,56 +73,68 @@ def repeat_state(user, message_obj=None):
 
 def state_INITIAL(p, message_obj=None, **kwargs):    
     if message_obj is None:
-        pass #don't reply anything
+        if key.ARE_THERE_ACTIVE_HUNTS:
+            switch_language_button = p.ux().BUTTON_ENGLISH if p.language=='IT' else p.ux().BUTTON_ITALIAN
+            kb = [
+                [switch_language_button],
+                [p.ux().BUTTON_INFO]
+            ]            
+            send_message(p, p.ux().MSG_WELCOME_START, kb)
+        else:
+            send_message(p, p.ux().MSG_NO_HUNTS)
     else: 
         text_input = message_obj.text
         if text_input:
-            if not key.ARE_THERE_ACTIVE_HUNTS:
-                send_message(p, p.ux().MSG_NO_HUNTS)
-            elif text_input.lower().startswith('/start '):
-                hunt_password = text_input.lower().split()[1]
-                if hunt_password in key.ACTIVE_HUNTS:                    
-                    game.set_game_settings(p, hunt_password)
-                    game_name = key.ACTIVE_HUNTS[hunt_password]['Name']
-                    send_message(p, p.ux().MSG_WELCOME.format(game_name), remove_keyboard=True)
-                    if game.is_multilingual(p):
-                        redirect_to_state(p, state_CHOOSE_LANGUAGE)
-                    else:
-                        redirect_to_state(p, state_START)
+            kb = p.get_keyboard()
+            if text_input in utility.flatten(kb):
+                if text_input == p.ux().BUTTON_INFO:
+                    send_message(p, p.ux().MSG_HISTORIC_INFO, remove_keyboard=True)
+                    send_typing_action(p, sleep_time=5)
+                    repeat_state(p)
+                elif text_input == p.ux().BUTTON_ITALIAN:
+                    p.set_language('IT')
+                    repeat_state(p)
+                elif text_input == p.ux().BUTTON_ENGLISH:
+                    p.set_language('EN')                
+                    repeat_state(p)           
                 else:
-                    msg = '🙈 Non hai inserito la parola magica giusta per iniziare la caccia al tesoro.'
-                    send_message(p, msg)
+                    assert False
+                return
+            if text_input.lower() == '/start':
+                repeat_state(p)
+                return
+            if text_input.lower().startswith('/start '):
+                hunt_password = text_input.lower().split()[1]
+            else: 
+                hunt_password = text_input
+            if hunt_password in key.ACTIVE_HUNTS:                    
+                game.reset_game(p, hunt_password)
+                game_name = key.ACTIVE_HUNTS[hunt_password]['Name']
+                send_message(p, p.ux().MSG_WELCOME.format(game_name), remove_keyboard=True)
+                redirect_to_state(p, state_START)
             else:
-                send_message(p, p.ux().MSG_WELCOME_START, remove_keyboard=True)
-
-def state_CHOOSE_LANGUAGE(p, message_obj=None, **kwargs):    
-    give_instruction = message_obj is None
-    if give_instruction:
-        kb = [[p.ux().BUTTON_ITALIAN, p.ux().BUTTON_ENGLISH]]
-        send_message(p, p.ux().MSG_SELECT_LANGUAGE, kb)
-    else:
-        text_input = message_obj.text
-        kb = p.get_keyboard()
-        if text_input in utility.flatten(kb):
-            if text_input == p.ux().BUTTON_ITALIAN:
-                p.set_language('IT')
-            else: # text_input == p.ux().BUTTON_ENGLISH:
-                p.set_language('EN')                
-            redirect_to_state(p, state_START)
+                msg = '🙈 Non hai inserito la parola magica giusta per iniziare la caccia al tesoro.'
+                send_message(p, msg)
         else:
             send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
 def state_START(p, message_obj=None, **kwargs):    
     give_instruction = message_obj is None
     if give_instruction:
-        kb = [[p.ux().BUTTON_START_GAME]]
+        switch_language_button = p.ux().BUTTON_ENGLISH if p.language=='IT' else p.ux().BUTTON_ITALIAN
+        kb = [[p.ux().BUTTON_START_GAME],[switch_language_button]]
         send_message(p, p.ux().MSG_PRESS_TO_START, kb)
     else:
         text_input = message_obj.text
         kb = p.get_keyboard()
         if text_input in utility.flatten(kb):
-            if text_input == p.ux().BUTTON_START_GAME:
-                game.reset_game(p, p.current_hunt)
+            if text_input == p.ux().BUTTON_ITALIAN:
+                p.set_language('IT')
+                repeat_state(p)
+            elif text_input == p.ux().BUTTON_ENGLISH:
+                p.set_language('EN')                
+                repeat_state(p)     
+            elif text_input == p.ux().BUTTON_START_GAME:
                 send_message(p, p.ux().MSG_GO, remove_keyboard=True)
                 send_typing_action(p, sleep_time=1)                
                 redirect_to_state(p, state_NOME_GRUPPO)
@@ -702,8 +715,11 @@ def deal_with_admin_commands(p, message_obj):
                 msg_admin = 'No user found: {}'.format(p_id)
                 tell_admin(msg_admin)
             return True
-        if text_input == '/reset_all_users':
-            reset_all_users(message=p.ux().MSG_THANKS_FOR_PARTECIPATING)
+        if text_input == '/remove_keyboard_from_notification_group':
+            bot_telegram.remove_keyboard_from_notification_group()
+            return True
+        if text_input == '/reset_all_users':            
+            reset_all_users(message=None) #message=p.ux().MSG_THANKS_FOR_PARTECIPATING
             return True
     return False
 
@@ -721,7 +737,7 @@ def deal_with_manager_commands(p, message_obj):
             return True
         if text_input == '/info':
             info_cacce = '\n'.join(["- {} 🔐{}".format(v['Name'], k) for k,v in key.ACTIVE_HUNTS.items()])
-            msg = "Available stats:\n{}".format(info_cacce)
+            msg = "Cacce al tesoro attive:\n{}".format(info_cacce)
             send_message(p, msg, markdown=False)
             return True
         if text_input == '/update':
@@ -731,7 +747,7 @@ def deal_with_manager_commands(p, message_obj):
             return True
         if text_input == '/stats':
             stats_list_str = '\n'.join(["/stats_{}".format(k) for k in key.ACTIVE_HUNTS.keys()])
-            msg = "Available stats:\n{}".format(stats_list_str)
+            msg = "Statistiche disponibili:\n{}".format(stats_list_str)
             send_message(p, msg, markdown=False)
             return True
         if text_input.startswith('/stats_'):
@@ -759,8 +775,10 @@ def deal_with_manager_commands(p, message_obj):
                 remaining_people = qry.fetch()
                 for u in remaining_people:                    
                     game.exit_game(u, save_data=True)
-                    send_message(u, p.ux().MSG_HUNT_TERMINATED, remove_keyboard=True, sleep=True)            
-                send_message(p, "Sent terminate message to {} teams.".format(len(remaining_people)))
+                    send_message(u, p.ux().MSG_HUNT_TERMINATED, remove_keyboard=True, sleep=True)
+                    send_typing_action(p, sleep_time=4)
+                    restart(p)
+                send_message(p, "Mandato messagio di termine a {} squadre.".format(len(remaining_people)))
                 return True
         return False
 
@@ -768,7 +786,10 @@ def deal_with_manager_commands(p, message_obj):
 def deal_with_universal_command(p, message_obj):
     text_input = message_obj.text
     if text_input.startswith('/start'):
-        redirect_to_state(p, state_INITIAL, message_obj)
+        if game.user_in_game(p):
+            send_message(p, p.ux().MSG_YOU_ARE_IN_A_GAME_EXIT_FIRST)
+        else:
+            redirect_to_state(p, state_INITIAL, message_obj)
         return True
     if text_input.lower() == '/it':
         send_message(p, "🇮🇹 Linua settata per ITALIANO")

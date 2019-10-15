@@ -157,18 +157,13 @@ with client.context():
 # GAME MANAGEMENT FUNCTIONS
 ################################
 
-def set_game_settings(p, hunt_password):
-    hunt_info = key.ACTIVE_HUNTS[hunt_password]
-    airtable_missioni_id = hunt_info['Airtable_Missioni_ID']        
-    settings = get_settings(p, airtable_missioni_id)
-    p.tmp_variables = {} 
-    p.tmp_variables['SETTINGS'] = settings
-    p.current_hunt = hunt_password 
-
 def reset_game(p, hunt_password):
     hunt_info = key.ACTIVE_HUNTS[hunt_password]
     airtable_missioni_id = hunt_info['Airtable_Missioni_ID']        
-    settings = p.tmp_variables['SETTINGS']
+    settings = get_settings(p, airtable_missioni_id)
+    p.current_hunt = hunt_password 
+    p.tmp_variables['SETTINGS'] = settings
+    p.tmp_variables = {} 
     initial_cat = settings.get('INITIAL_CAT', None)
     multilingual =  settings.get('MULTILINGUAL', 'False') == 'True'
     mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni'
