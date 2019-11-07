@@ -161,16 +161,16 @@ def reset_game(p, hunt_password):
     hunt_info = key.ACTIVE_HUNTS[hunt_password]
     airtable_missioni_id = hunt_info['Airtable_Missioni_ID']        
     settings = get_settings(p, airtable_missioni_id)
-    p.current_hunt = hunt_password 
-    p.tmp_variables['SETTINGS'] = settings
-    p.tmp_variables = {} 
+    p.current_hunt = hunt_password         
     initial_cat = settings.get('INITIAL_CAT', None)
     multilingual =  settings.get('MULTILINGUAL', 'False') == 'True'
     mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni'
     missioni = get_random_missioni(p, airtable_missioni_id, mission_tab_name, initial_cat)
     notify_group = hunt_info.get('Notify_Group', False)
     validator_id = hunt_info.get('Validator_ID', None)
-    survey = get_survey_data()           
+    survey = get_survey_data()    
+    p.tmp_variables = {}  
+    p.tmp_variables['SETTINGS'] = settings      
     p.tmp_variables['HUNT_INFO'] = hunt_info
     p.tmp_variables['Notify_Group'] = notify_group
     p.tmp_variables['Validator_ID'] = validator_id
