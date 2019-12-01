@@ -106,7 +106,7 @@ def state_INITIAL(p, message_obj=None, **kwargs):
             if text_input.lower().startswith('/start '):
                 hunt_password = text_input.lower().split()[1]
             else: 
-                hunt_password = text_input
+                hunt_password = text_input.lower()
             if hunt_password in key.ACTIVE_HUNTS:                    
                 game.reset_game(p, hunt_password)
                 game_name = key.ACTIVE_HUNTS[hunt_password]['Name']
