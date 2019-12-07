@@ -233,6 +233,8 @@ def set_group_name(p, name):
     p.tmp_variables['GROUP_NAME'] = name
 
 def get_group_name(p, escape_markdown=True):
+    if 'GROUP_NAME' not in p.tmp_variables:
+        return None
     name = p.tmp_variables['GROUP_NAME']
     if escape_markdown:
         name = utility.escape_markdown(name)

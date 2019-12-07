@@ -148,6 +148,8 @@ def broadcast(sender, msg, qry = None, blackList_sender=False, sendNotification=
         for p in users:
             if not p.enabled:
                 continue
+            if p.chat_id[0] == '-': # negative id for groups
+                continue
             if test and not p.is_manager():
                 continue
             if blackList_sender and sender and p.get_id() == sender.get_id():

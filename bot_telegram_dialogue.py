@@ -633,18 +633,21 @@ def deal_with_callback_query(callback_query):
     approval_signature = callback_query_data['sign']
     p = ndb_person.get_person_by_id(user_id)
     squadra_name = game.get_group_name(p)
-    callback_query_id = callback_query.id
-    chat_id = callback_query.from_user.id
-    message_id = callback_query.message.message_id
-    BOT.delete_message(chat_id, message_id)
-    validation_success = approve_media_input_indovinello(p, approved, signature=approval_signature)
+    if squadra_name is None:
+        validation_success = False
+    else:
+        callback_query_id = callback_query.id
+        chat_id = callback_query.from_user.id
+        message_id = callback_query.message.message_id
+        BOT.delete_message(chat_id, message_id)
+        validation_success = approve_media_input_indovinello(p, approved, signature=approval_signature)
     if validation_success:
         if approved:
             answer = "Messaggio di conferma inviato alla squadra {}!".format(squadra_name)
         else:
             answer = "Inviato messsaggio di rifare il selfie alla squadra {}!".format(squadra_name)
     else:
-        answer = "Problema di validazione. La squadra {} ha ricomnciato il gioco " \
+        answer = "Problema di validazione. La squadra {} ha ricomnciato o terminato il gioco " \
                  "o l'approvazione è stata mandata più volte".format(squadra_name)
     BOT.answer_callback_query(callback_query_id, answer)
 
@@ -763,7 +766,7 @@ def deal_with_manager_commands(p, message_obj):
                 msg = 'Wrong stats command'
                 send_message(p, msg, markdown=False)
             return True        
-        if text_input == '/terminate':
+        if text_input == '/terminate':            
             terminate_list_str = '\n'.join(["/terminate_{}".format(k) for k in key.ACTIVE_HUNTS.keys()])
             msg = "Available games to terminate:\n{}".format(terminate_list_str)
             send_message(p, msg, markdown=False)
