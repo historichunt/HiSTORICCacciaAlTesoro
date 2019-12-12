@@ -105,7 +105,6 @@ def get_photo_url_from_telegram(file_id):
 
 bot_telegram_MASTER = None
 
-@client_context
 def report_master(message):
     global bot_telegram_MASTER
     if bot_telegram_MASTER is None:
@@ -209,7 +208,6 @@ def remove_keyboard_from_notification_group():
 # UTILIITY TELL FUNCTIONS
 # ================================
 
-@client_context
 def tell_admin(msg):
     logging.debug(msg)
     for uid in key.ADMIN_IDS:
