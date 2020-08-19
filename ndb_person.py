@@ -45,7 +45,7 @@ class Person(ndb.Model):
 
     def is_admin(self):
         import key
-        return self.get_id() in key.ADMIN_IDS
+        return self.get_id() == key.ADMIN_ID
 
     def is_manager(self):
         import key

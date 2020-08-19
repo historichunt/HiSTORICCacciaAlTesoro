@@ -10,6 +10,7 @@ import ndb_person
 from ndb_person import Person
 from ndb_utils import client_context
 import game
+import utility
 
 BOT = telegram.Bot(token=key.TELEGRAM_TOKEN)
 
@@ -19,6 +20,7 @@ If kb==None keep last keyboard
 # @retry_on_network_error
 def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
     inline_keyboard=False, sleep=False, **kwargs):
+    chat_id = p.chat_id if isinstance(p, Person) else p[2:]
     if kb or remove_keyboard:
         if inline_keyboard:
             reply_markup = {  
@@ -31,7 +33,7 @@ def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
             p.set_keyboard(kb)
             reply_markup = telegram.ReplyKeyboardMarkup(kb, resize_keyboard=True)
         BOT.send_message(
-            chat_id = p.chat_id,
+            chat_id = chat_id,
             text = text,
             parse_mode = telegram.ParseMode.MARKDOWN if markdown else None,
             reply_markup = reply_markup,
@@ -40,7 +42,7 @@ def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
     else:
         try:
             BOT.send_message(
-                chat_id = p.chat_id,
+                chat_id = chat_id,
                 text = text,
                 parse_mode = telegram.ParseMode.MARKDOWN if markdown else None,
                 **kwargs
@@ -103,21 +105,17 @@ def get_photo_url_from_telegram(file_id):
     url = key.TELEGRAM_BASE_URL_FILE + file_path
     return url
 
-bot_telegram_MASTER = None
-
+@client_context
 def report_master(message):
-    global bot_telegram_MASTER
-    if bot_telegram_MASTER is None:
-        bot_telegram_MASTER = ndb_person.get_person_by_id(key.ADMIN_IDS[0])
+    logging.debug('Reporting to master: {}'.format(message))
     max_length = 2000
     if len(message)>max_length:
         chunks = (message[0+i:max_length+i] for i in range(0, len(message), max_length))
         for m in chunks:
-            send_message(bot_telegram_MASTER, m, markdown=False)    
+            send_message(key.ADMIN_ID, m, markdown=False)    
     else:
-        send_message(bot_telegram_MASTER, message, markdown=False)
+        send_message(key.ADMIN_ID, message, markdown=False)
 
-import utility
 
 # ---------
 # BROADCAST
@@ -197,7 +195,7 @@ def reset_all_users(qry = None, message=None):
                 time.sleep(0.2)
 
     msg_admin = 'Resetted {} users.'.format(total)
-    tell_admin(msg_admin)
+    report_master(msg_admin)
 
 def remove_keyboard_from_notification_group():
     group_id = key.HISTORIC_GROUP_ID
@@ -207,12 +205,6 @@ def remove_keyboard_from_notification_group():
 # ================================
 # UTILIITY TELL FUNCTIONS
 # ================================
-
-def tell_admin(msg):
-    logging.debug(msg)
-    for uid in key.ADMIN_IDS:
-        p = ndb_person.get_person_by_id(uid)
-        send_message(p, msg, markdown=False)
 
 def send_message_to_person(uid, msg, markdown=False):
     p = Person.get_by_id(uid)

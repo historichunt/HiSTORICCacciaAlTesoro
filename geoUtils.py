@@ -1,9 +1,9 @@
-from geopy.distance import vincenty
+from geopy.distance import distance
 
 #point1 = (41.49008, -71.312796)
 #point2 = (41.499498, -81.695391)
 def distance_meters(point1, point2):
-    return int(vincenty(point1, point2).meters)
+    return int(distance(point1, point2).meters)
 
 
 # lat, lon, poly is a list of lat lon coords
@@ -22,3 +22,12 @@ def point_inside_polygon(x,y,poly):
                         inside = not inside
         p1x,p1y = p2x,p2y
     return inside
+
+def test_distance():
+    point1 = (41.49008, -71.312796)
+    point2 = (41.499498, -81.695391)
+    d = distance_meters(point1, point2)
+    assert d == 866455
+
+if __name__ == "__main__":
+    test_distance()

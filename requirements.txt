@@ -1,7 +1,7 @@
 pylint
 Flask
-#google-cloud-ndb
-git+https://github.com/googleapis/python-ndb.git@master
+google-cloud-ndb
+# git+https://github.com/googleapis/python-ndb.git@master
 google-cloud-logging
 google-cloud-datastore
 requests

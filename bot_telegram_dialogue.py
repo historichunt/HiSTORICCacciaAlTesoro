@@ -2,7 +2,7 @@ import logging
 import bot_telegram
 from bot_telegram import BOT, send_message, send_location, send_typing_action, \
     report_master, send_text_document, send_media_url, \
-    broadcast, tell_admin, reset_all_users
+    broadcast, report_master, reset_all_users
 import utility
 import telegram
 import ndb_person
@@ -699,10 +699,10 @@ def deal_with_admin_commands(p, message_obj):
             p = Person.get_by_id(p_id)
             if send_message(p, text, kb=p.get_keyboard()):
                 msg_admin = 'Message sent successfully to {}'.format(p.get_first_last_username())
-                tell_admin(msg_admin)
+                report_master(msg_admin)
             else:
                 msg_admin = 'Problems sending message to {}'.format(p.get_first_last_username())
-                tell_admin(msg_admin)
+                report_master(msg_admin)
             return True
         if text_input.startswith('/restartUser '):
             p_id = ' '.join(text_input.split(' ')[1:])
@@ -713,10 +713,10 @@ def deal_with_admin_commands(p, message_obj):
                     send_message(p, p.ux().MSG_EXITED_FROM_GAME, remove_keyboard=True)
                 restart(p)
                 msg_admin = 'User restarted: {}'.format(p.get_first_last_username())
-                tell_admin(msg_admin)                
+                report_master(msg_admin)                
             else:
                 msg_admin = 'No user found: {}'.format(p_id)
-                tell_admin(msg_admin)
+                report_master(msg_admin)
             return True
         if text_input == '/remove_keyboard_from_notification_group':
             bot_telegram.remove_keyboard_from_notification_group()
