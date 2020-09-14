@@ -84,8 +84,8 @@ def state_INITIAL(p, message_obj=None, **kwargs):
             send_message(p, p.ux().MSG_NO_HUNTS)
     else: 
         text_input = message_obj.text
-        if text_input:
-            kb = p.get_keyboard()
+        kb = p.get_keyboard()
+        if text_input:            
             if text_input in utility.flatten(kb):
                 if text_input == p.ux().BUTTON_INFO:
                     send_message(p, p.ux().MSG_HISTORIC_INFO, remove_keyboard=True)
