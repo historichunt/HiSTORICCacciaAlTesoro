@@ -158,7 +158,7 @@ with client.context():
 ################################
 
 def reset_game(p, hunt_password):
-    hunt_info = key.ACTIVE_HUNTS[hunt_password]
+    hunt_info = key.HUNTS[hunt_password]
     airtable_missioni_id = hunt_info['Airtable_Missioni_ID']        
     settings = get_settings(p, airtable_missioni_id)
     p.current_hunt = hunt_password         

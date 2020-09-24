@@ -73,15 +73,12 @@ def repeat_state(user, message_obj=None):
 
 def state_INITIAL(p, message_obj=None, **kwargs):    
     if message_obj is None:
-        if key.ARE_THERE_ACTIVE_HUNTS:
-            switch_language_button = p.ux().BUTTON_ENGLISH if p.language=='IT' else p.ux().BUTTON_ITALIAN
-            kb = [
-                [switch_language_button],
-                [p.ux().BUTTON_INFO]
-            ]            
-            send_message(p, p.ux().MSG_WELCOME_START, kb)
-        else:
-            send_message(p, p.ux().MSG_NO_HUNTS)
+        switch_language_button = p.ux().BUTTON_ENGLISH if p.language=='IT' else p.ux().BUTTON_ITALIAN
+        kb = [
+            [switch_language_button],
+            [p.ux().BUTTON_INFO]
+        ]            
+        send_message(p, p.ux().MSG_WELCOME_START, kb)
     else: 
         text_input = message_obj.text
         kb = p.get_keyboard()
@@ -107,14 +104,16 @@ def state_INITIAL(p, message_obj=None, **kwargs):
                 hunt_password = text_input.lower().split()[1]
             else: 
                 hunt_password = text_input.lower()
-            if hunt_password in key.ACTIVE_HUNTS:                    
-                game.reset_game(p, hunt_password)
-                game_name = key.ACTIVE_HUNTS[hunt_password]['Name']
-                send_message(p, p.ux().MSG_WELCOME.format(game_name), remove_keyboard=True)
-                redirect_to_state(p, state_START)
+            if hunt_password in key.HUNTS:   
+                if key.HUNTS[hunt_password].get('Active', False) or p.is_manager():
+                    game.reset_game(p, hunt_password)
+                    game_name = key.HUNTS[hunt_password]['Name']
+                    send_message(p, p.ux().MSG_WELCOME.format(game_name), remove_keyboard=True)
+                    redirect_to_state(p, state_START)
+                else:
+                    send_message(p, p.ux().MSG_HUNT_DISABLED)
             else:
-                msg = '🙈 Non hai inserito la parola magica giusta per iniziare la caccia al tesoro.'
-                send_message(p, msg)
+                send_message(p, p.ux().MSG_WRONG_PASSWORD)
         else:
             send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
