@@ -104,7 +104,7 @@ def get_photo_url_from_telegram(file_id):
     url = key.TELEGRAM_BASE_URL_FILE + file_path
     return url
 
-@client_context
+# @client_context
 def report_master(message):
     logging.debug('Reporting to master: {}'.format(message))
     max_length = 2000
