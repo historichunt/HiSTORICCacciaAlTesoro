@@ -774,18 +774,18 @@ def deal_with_manager_commands(p, message_obj):
             send_message(p, p.ux().MSG_RELOADED_CONFIG_TABLE)
             return True
         if text_input == '/info':
-            info_cacce = '\n'.join(["- {} 🔐{}".format(v['Name'], k) for k,v in game.ACTIVE_HUNTS.items()])
+            info_cacce = '\n'.join(["- {} 🔐{}".format(v['Name'], k) for k,v in game.HUNTS.items()])
             msg = "Cacce al tesoro attive:\n{}".format(info_cacce)
             send_message(p, msg, markdown=False)
             return True
         if text_input == '/stats':
-            stats_list_str = '\n'.join(["- {} /stats_{}".format(k, k) for k in game.ACTIVE_HUNTS.keys()])
+            stats_list_str = '\n'.join(["- {} /stats_{}".format(k, k) for k in game.HUNTS.keys()])
             msg = "Statistiche disponibili:\n{}".format(stats_list_str)
             send_message(p, msg, markdown=False)
             return True
         if text_input.startswith('/stats_'):
             hunt_pw = text_input.split('_', 1)[1]
-            if hunt_pw in game.ACTIVE_HUNTS:
+            if hunt_pw in game.HUNTS:
                 hunt_stats = ndb_person.get_people_on_hunt_stats(hunt_pw)
                 if hunt_stats:
                     msg = 'Stats:\n\n{}'.format(hunt_stats)
@@ -797,13 +797,13 @@ def deal_with_manager_commands(p, message_obj):
                 send_message(p, msg, markdown=False)
             return True        
         if text_input == '/terminate':            
-            terminate_list_str = '\n'.join(["- {} /terminate_{}".format(k,k) for k in game.ACTIVE_HUNTS.keys()])
+            terminate_list_str = '\n'.join(["- {} /terminate_{}".format(k,k) for k in game.HUNTS.keys()])
             msg = "Available games to terminate:\n{}".format(terminate_list_str)
             send_message(p, msg, markdown=False)
             return True
         if text_input.startswith('/terminate_'):            
             hunt_pw = text_input.split('_', 1)[1]
-            if hunt_pw in game.ACTIVE_HUNTS:
+            if hunt_pw in game.HUNTS:
                 qry = Person.query(Person.current_hunt==hunt_pw)
                 remaining_people = qry.fetch()
                 if remaining_people:

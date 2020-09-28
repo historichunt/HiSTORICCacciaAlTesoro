@@ -15,10 +15,9 @@ import airtable_utils
 HUNTS_CONFIG_TABLE = Airtable(key.AIRTABLE_CONFIG_ID, 'Hunts', api_key=key.AIRTABLE_API_KEY)
 
 HUNTS = {} # pw -> hunt_details (all)
-ACTIVE_HUNTS = {} # pw -> hunt_details (active)
 
 def reload_config():
-    global HUNTS, ACTIVE_HUNTS
+    global HUNTS
     HUNTS = {
         r['Password'].lower(): r
         for r in [
@@ -27,7 +26,7 @@ def reload_config():
             if 'Password' in row['fields']
         ]
     }
-    ACTIVE_HUNTS = {k:v for k,v in HUNTS.items() if v.get('Active',False)}
+    # ACTIVE_HUNTS = {k:v for k,v in HUNTS.items() if v.get('Active',False)}
 
 reload_config()
 
