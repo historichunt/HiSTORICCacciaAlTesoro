@@ -30,6 +30,9 @@ class UX_LANG:
         assert lang in ['IT','EN']
         self.lang = lang
 
+    def get_var(self, var):
+        return UX_DICT.get(var, {self.lang: None})[self.lang]
+
     def __getattr__(self, attr):
         return UX_DICT.get(attr, {self.lang: None})[self.lang]
 

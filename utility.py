@@ -236,3 +236,6 @@ def sec_to_hms(elapsed_sec):
     hour, mins = divmod(mins, 60)
     time_str = "%d:%02d:%02d" % (hour, mins, sec)
     return time_str
+
+def get_str_param_boolean(d, param):
+    return d.get(param, 'False').lower() in ['true', '1', 't', 'y', 'yes']

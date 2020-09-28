@@ -5,23 +5,49 @@ from random import shuffle, choice
 import ndb_person
 from ndb_person import Person
 import params
+import airtable_utils
+
+
+#################
+# GAMES CONFIG
+#################
+
+HUNTS_CONFIG_TABLE = Airtable(key.AIRTABLE_CONFIG_ID, 'Hunts', api_key=key.AIRTABLE_API_KEY)
+
+HUNTS = {} # pw -> hunt_details (all)
+ACTIVE_HUNTS = {} # pw -> hunt_details (active)
+
+def reload_config():
+    global HUNTS, ACTIVE_HUNTS
+    HUNTS = {
+        r['Password'].lower(): r
+        for r in [
+            row['fields'] 
+            for row in HUNTS_CONFIG_TABLE.get_all() 
+            if 'Password' in row['fields']
+        ]
+    }
+    ACTIVE_HUNTS = {k:v for k,v in HUNTS.items() if v.get('Active',False)}
+
+reload_config()
+
 
 #################
 # MISSIONI TABLE
 #################
 '''
-NOME, ACTIVE, FINALE, CATEGORIA, 
+NOME, ACTIVE, FINALE, NEXT, CATEGORIA, 
 INTRO_MEDIA, INTRO_MEDIA_CAPTION, 
-INTRODUZIONE_LOCATION,
-DOMANDA, SOLUZIONI,
-INDIZIO_1, INDIZIO_2, 
-GPS, REQUIRED_INPUT,
-POST_MEDIA, POST_MEDIA_CAPTION,
-POST_MESSAGE
+INTRODUZIONE_LOCATION, GPS, 
+DOMANDA_MEDIA, DOMANDA_MEDIA_CAPTION, DOMANDA,
+SOLUZIONI, INDIZIO_1, INDIZIO_2, 
+PENALTÀ,
+POST_MEDIA, POST_MEDIA_CAPTION, POST_MESSAGE,
+INPUT_INSTRUCTIONS, INPUT_TYPE, INPUT_CONFIRMATION,
 '''
 
-def get_settings(p, airtable_missioni_id):
-    SETTINGS_TABLE = Airtable(airtable_missioni_id, 'Settings', api_key=key.AIRTABLE_API_KEY)
+def get_settings(p, airtable_game_id):
+    SETTINGS_TABLE = Airtable(airtable_game_id, 'Settings', api_key=key.AIRTABLE_API_KEY)
     SETTINGS = {
         row['fields']['Name']:row['fields']['Value'] 
         for row in SETTINGS_TABLE.get_all() 
@@ -29,9 +55,9 @@ def get_settings(p, airtable_missioni_id):
     }
     return SETTINGS
 
-def get_random_missioni(p, airtable_missioni_id, mission_tab_name, initial_cat):
+def get_random_missioni(p, airtable_game_id, mission_tab_name, initial_cat):
     import itertools
-    MISSIONI_TABLE = Airtable(airtable_missioni_id, mission_tab_name, api_key=key.AIRTABLE_API_KEY)
+    MISSIONI_TABLE = Airtable(airtable_game_id, mission_tab_name, api_key=key.AIRTABLE_API_KEY)
     MISSIONI_ALL = [row['fields'] for row in MISSIONI_TABLE.get_all() if row['fields'].get('ACTIVE',False)]    
     for row in MISSIONI_ALL:
         if 'FINALE' not in row:
@@ -95,34 +121,21 @@ def get_random_missioni(p, airtable_missioni_id, mission_tab_name, initial_cat):
     return missioni_random
 
 #################
-# SURVEY
-#################
-
-SURVEY_TABLE = Airtable(key.AIRTABLE_CONFIG_ID, 'Survey', api_key=key.AIRTABLE_API_KEY)
-SURVEY = [row['fields'] for row in SURVEY_TABLE.get_all()]
-
-# DOMANDA, RISPOSTE
-SURVEY_QUESTIONS = [s['DOMANDA'] for s in SURVEY]
-
-def get_survey_data():
-    return list(SURVEY)
-
-#################
 # RESULT GAME TABLE
 #################
 
 RESULTS_GAME_TABLE_HEADERS = \
     ['ID', 'GROUP_NAME', 'NOME', 'COGNOME', 'USERNAME', 'EMAIL', \
     'START_TIME', 'END_TIME', 'ELAPSED GAME', 'ELAPSED MISSIONS', \
-    'PENALTIES', 'PENALTY TIME', 'COMPLETED', 'TOTAL TIME GAME', 'TOTAL TIME MISSIONS']
+    'PENALTIES', 'PENALTY TIME', 'FINISHED', 'TOTAL TIME GAME', 'TOTAL TIME MISSIONS']
 
 def save_game_data_in_airtable(p, save_survey):
     from bot_telegram import get_photo_url_from_telegram
     import json
     game_data = p.tmp_variables
-    airtable_risultati_id = game_data['HUNT_INFO']['Airtable_Risultati_ID']
+    airtable_game_id = game_data['HUNT_INFO']['Airtable_Game_ID']
 
-    RESULTS_GAME_TABLE = Airtable(airtable_risultati_id, 'Results', api_key=key.AIRTABLE_API_KEY)    
+    RESULTS_GAME_TABLE = Airtable(airtable_game_id, 'Results', api_key=key.AIRTABLE_API_KEY)    
 
     games_row = {}
     for h in RESULTS_GAME_TABLE_HEADERS:
@@ -135,13 +148,12 @@ def save_game_data_in_airtable(p, save_survey):
     RESULTS_GAME_TABLE.insert(games_row)
     
     if save_survey:
-        RESULTS_SURVEY_TABLE = Airtable(airtable_risultati_id, 'Survey', api_key=key.AIRTABLE_API_KEY)
-        survey_row = {'ID': game_data['ID']}
-        for question in SURVEY_QUESTIONS:
-            questions_data = game_data['SURVEY_INFO']['COMPLETED']
-            answer = next(row['ANSWER'] for row in questions_data if row['DOMANDA'] == question)
-            survey_row[question] = answer
-        RESULTS_SURVEY_TABLE.insert(survey_row)
+        results_survey_table = Airtable(airtable_game_id, 'Survey Answers', api_key=key.AIRTABLE_API_KEY)
+        survey_row = {}
+        survey_data = game_data['SURVEY_INFO']['COMPLETED']
+        for row in survey_data:
+            survey_row[row['QN']] = row['ANSWER'] # columns: Q1, Q2, ...
+        results_survey_table.insert(survey_row)
 
 
 ################################
@@ -157,18 +169,28 @@ with client.context():
 # GAME MANAGEMENT FUNCTIONS
 ################################
 
-def reset_game(p, hunt_password):
-    hunt_info = key.HUNTS[hunt_password]
-    airtable_missioni_id = hunt_info['Airtable_Missioni_ID']        
-    settings = get_settings(p, airtable_missioni_id)
+def reset_game(p, hunt_password):    
+    '''
+    Save current game info user tmp_variable
+    '''    
+
+    hunt_info = HUNTS[hunt_password]
+    airtable_game_id = hunt_info['Airtable_Game_ID']
+    settings = get_settings(p, airtable_game_id)
+    instructions_table = Airtable(airtable_game_id, 'Instructions', api_key=key.AIRTABLE_API_KEY)    
+    survey_table = Airtable(airtable_game_id, 'Survey', api_key=key.AIRTABLE_API_KEY)        
     p.current_hunt = hunt_password         
     initial_cat = settings.get('INITIAL_CAT', None)
-    multilingual =  settings.get('MULTILINGUAL', 'False') == 'True'
+    multilingual =  utility.get_str_param_boolean(settings, 'MULTILINGUAL')
     mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni'
-    missioni = get_random_missioni(p, airtable_missioni_id, mission_tab_name, initial_cat)
+    missioni = get_random_missioni(p, airtable_game_id, mission_tab_name, initial_cat)
     notify_group = hunt_info.get('Notify_Group', False)
     validator_id = hunt_info.get('Validator_ID', None)
-    survey = get_survey_data()    
+    instructions_steps = airtable_utils.get_rows(
+        instructions_table, filter=lambda r: not r.get('Skip',False), 
+        sort_key=lambda r: r['ORDER']
+    )
+    survey = airtable_utils.get_rows(survey_table, sort_key=lambda r: r['QN'])
     p.tmp_variables = {}  
     p.tmp_variables['SETTINGS'] = settings      
     p.tmp_variables['HUNT_INFO'] = hunt_info
@@ -180,9 +202,9 @@ def reset_game(p, hunt_password):
     p.tmp_variables['USERNAME'] = p.get_username(escape_markdown=False)
     p.tmp_variables['EMAIL'] = ''
     p.tmp_variables['MISSION_TIMES'] = []
+    p.tmp_variables['INSTRUCTIONS'] = {'STEPS': instructions_steps, 'COMPLETED': 0}
     p.tmp_variables['MISSIONI_INFO'] = {'TODO': missioni, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(missioni)}
     p.tmp_variables['SURVEY_INFO'] = {'TODO': survey, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(survey)}
-    # question -> 'ANSWER'
     p.tmp_variables['GROUP_NAME'] = ''
     p.tmp_variables['GROUP_MEDIA_FILE_IDS'] = []
     p.tmp_variables['START_TIME'] = ''
@@ -191,31 +213,38 @@ def reset_game(p, hunt_password):
     p.tmp_variables['PENALTIES'] = 0    
     p.tmp_variables['PENALTY TIME'] = 0 # seconds
     p.tmp_variables['TOTAL TIME'] = 0 # seconds
-    p.tmp_variables['COMPLETED'] = False # seconds
+    p.tmp_variables['FINISHED'] = False # seconds
 
 def user_in_game(p):
     return p.current_hunt is not None
 
-def exit_game(p, save_data=True, put=True):
+def exit_game(p, save_data=True, reset_current_hunt=True, put=True):
     if p.current_hunt is None:
         return False
     if save_data:
-        completed = p.tmp_variables.get('COMPLETED', False)
-        if not completed:
+        finished = p.tmp_variables.get('FINISHED', False)
+        if not finished:
             set_empty_vars_for_airtable(p)
-            set_game_end_time(p, completed=False)
-        save_game_data_in_airtable(p, save_survey=completed)
-    p.current_hunt = None
-    p.tmp_variables = {}
+            set_game_end_time(p, finished=False)
+        save_game_data_in_airtable(p, save_survey=finished)
+    if reset_current_hunt:
+        p.current_hunt = None
+    # p.tmp_variables = {}
     if put:
         p.put()
     return True
 
 def get_game_stats(p):
-    group_name = p.tmp_variables['GROUP_NAME']
-    completed = len(p.tmp_variables['MISSIONI_INFO']['COMPLETED'])
-    total = p.tmp_variables['MISSIONI_INFO']['TOTAL']
-    return '{} {}/{}'.format(group_name, completed, total)
+    name_username = p.get_first_last_username()
+    group_name = p.tmp_variables.get('GROUP_NAME','')
+    mission_info = p.tmp_variables.get('MISSIONI_INFO', None)
+    if mission_info:
+        completed = len(p.tmp_variables['MISSIONI_INFO']['COMPLETED'])
+        total = p.tmp_variables['MISSIONI_INFO']['TOTAL']
+        finished = p.tmp_variables['FINISHED']
+        return '- {} {} {}/{} Finished={}'.format(name_username, group_name, completed, total, finished)
+    else:
+        return '- {} {} ?'.format(name_username, group_name)
 
 def send_notification_to_group(p):
     return p.tmp_variables['Notify_Group']
@@ -248,12 +277,11 @@ def set_game_start_time(p):
 def get_game_start_time(p):
     return p.tmp_variables['START_TIME']
 
-def set_game_end_time(p, completed):
+def set_game_end_time(p, finished):
     import date_time_util as dtu
     end_time = dtu.nowUtcIsoFormat()
     p.tmp_variables['END_TIME'] = end_time
-    if completed:
-        p.tmp_variables['COMPLETED'] = True
+    p.tmp_variables['FINISHED'] = finished
 
 def start_mission(p):
     import date_time_util as dtu
@@ -369,39 +397,42 @@ def get_total_penalty(p):
     penalty_time_sec = PENALTIES * SEC_PENALITY_WRONG_ANSWER
     return PENALTIES, penalty_time_sec
 
-def getTotalQuestions(p):
+def get_tot_survey_questions(p):
     return p.tmp_variables['SURVEY_INFO']['TOTAL']
 
-def completedQuestionsNumber(p):
+def get_num_completed_survey_questions(p):
     survey_info = p.tmp_variables['SURVEY_INFO']
     return len(survey_info['COMPLETED'])
 
-def setNextQuestion(p):
+def increase_intro_completed(p):
+    p.tmp_variables['INSTRUCTIONS']['COMPLETED'] += 1
+
+def set_next_survey_question(p):
     survey_info = p.tmp_variables['SURVEY_INFO']
     todo_questions = survey_info['TODO']
     current_question = todo_questions.pop(0)
     survey_info['CURRENT'] = current_question
     return current_question
 
-def getCurrentQuestion(p):
+def get_current_survey_question(p):
     survey_info = p.tmp_variables['SURVEY_INFO']
     return survey_info['CURRENT']
 
-def setCurrentQuestionAsCompleted(p, answer):
+def set_current_survey_question_as_completed(p, answer):
     survey_info = p.tmp_variables['SURVEY_INFO']
     current_question = survey_info['CURRENT']
     current_question['ANSWER'] = answer
     survey_info['COMPLETED'].append(current_question)
     survey_info['CURRENT'] = None
 
-def remainingQuestionsNumber(p):
+def get_remaing_survey_questions_number(p):
     survey_info = p.tmp_variables['SURVEY_INFO']
     return len(survey_info['TODO'])
 
-def setEmail(p, email):
+def set_email(p, email):
     p.tmp_variables['EMAIL'] = email
 
-def debugTmpVariables(p):
+def debug_tmp_vars(p):
     import json
     #return json.dumps(p.tmp_variables['MISSIONI_INFO']['CURRENT'], indent=4)
     return json.dumps(p.tmp_variables, indent=4, ensure_ascii=False)

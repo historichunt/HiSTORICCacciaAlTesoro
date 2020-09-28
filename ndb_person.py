@@ -85,6 +85,11 @@ class Person(ndb.Model):
         self.language = l
         if put: self.put()
 
+    def reset_current_hunt(self, put=True):
+        self.current_hunt = None
+        if put:
+            self.put()
+
     def set_enabled(self, enabled, put=False):
         self.enabled = enabled
         if put:
@@ -161,5 +166,6 @@ def get_people_count():
 def get_people_on_hunt_stats(hunt):
     import game
     people_on_hunt = Person.query(Person.current_hunt==hunt).fetch()    
-    stats = '\n'.join([game.get_game_stats(p) for p in people_on_hunt if p.tmp_variables['GROUP_NAME']])    
+    stats = '\n'.join(
+        [game.get_game_stats(p) for p in people_on_hunt])    #  if p.tmp_variables['GROUP_NAME']
     return stats

@@ -4,4 +4,4 @@
 entrypoint: gunicorn -b :$PORT main:app
 runtime: python37
 
-# gcloud app deploy -q -v 1
+# gcloud app deploy -q -v test/production

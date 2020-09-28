@@ -12,8 +12,20 @@ from ndb_utils import client_context
 import game
 import utility
 
-BOT = telegram.Bot(token=key.TELEGRAM_TOKEN)
+BOT = telegram.Bot(token=key.TELEGRAM_API_TOKEN)
 
+
+def get_reply_markup(p, kb=None, remove_keyboard=None, inline_keyboard=False):
+    if kb or remove_keyboard:
+        if inline_keyboard:
+            return {'inline_keyboard': kb}
+        elif remove_keyboard:
+            p.set_keyboard(kb=[])            
+            return telegram.ReplyKeyboardRemove()
+        else:
+            p.set_keyboard(kb)
+            return telegram.ReplyKeyboardMarkup(kb, resize_keyboard=True)
+    return None
 '''
 If kb==None keep last keyboard
 '''
@@ -21,17 +33,8 @@ If kb==None keep last keyboard
 def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
     inline_keyboard=False, sleep=False, **kwargs):
     chat_id = p.chat_id if isinstance(p, Person) else p[2:]
-    if kb or remove_keyboard:
-        if inline_keyboard:
-            reply_markup = {  
-                'inline_keyboard': kb
-            }
-        elif remove_keyboard:
-            p.set_keyboard(kb=[])            
-            reply_markup = telegram.ReplyKeyboardRemove()
-        else:
-            p.set_keyboard(kb)
-            reply_markup = telegram.ReplyKeyboardMarkup(kb, resize_keyboard=True)
+    reply_markup = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)
+    try:
         BOT.send_message(
             chat_id = chat_id,
             text = text,
@@ -39,22 +42,14 @@ def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
             reply_markup = reply_markup,
             **kwargs
         )
-    else:
-        try:
-            BOT.send_message(
-                chat_id = chat_id,
-                text = text,
-                parse_mode = telegram.ParseMode.MARKDOWN if markdown else None,
-                **kwargs
-            )
-        except Unauthorized:
-            logging.debug('User has blocked Bot: {}'.format(p.chat_id))
-            p.switch_notifications()
-            return False
-        except TelegramError as e:
-            logging.debug('Exception in reaching user {}: {}'.format(p.chat_id, e))
-            p.switch_notifications()
-            return False
+    except Unauthorized:
+        logging.debug('User has blocked Bot: {}'.format(p.chat_id))
+        p.switch_notifications()
+        return False
+    except TelegramError as e:
+        logging.debug('Exception in reaching user {}: {}'.format(p.chat_id, e))
+        p.switch_notifications()
+        return False
     if sleep:
         time.sleep(0.1)
     return True
@@ -72,18 +67,22 @@ def send_typing_action(p, sleep_time=None):
         time.sleep(sleep_time)
 
 
-def send_media_url(p, url_attachment, kb=None, caption=None):
-    attach_type = url_attachment.split('.')[-1].lower()            
+def send_media_url(p, url_attachment, kb=None, caption=None,
+    remove_keyboard=False, inline_keyboard=False):
+    attach_type = url_attachment.split('.')[-1].lower()     
+    rm = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)       
     if attach_type in ['jpg','png','jpeg']:
-        BOT.send_photo(p.chat_id, photo=url_attachment, caption=caption)
+        BOT.send_photo(p.chat_id, photo=url_attachment, caption=caption, reply_markup=rm)
     elif attach_type in ['mp3']:
-        BOT.send_audio(p.chat_id, audio=url_attachment, caption=caption)
+        BOT.send_audio(p.chat_id, audio=url_attachment, caption=caption, reply_markup=rm)
     elif attach_type in ['ogg']:
-        BOT.send_voice(p.chat_id, voice=url_attachment, caption=caption)       
+        BOT.send_voice(p.chat_id, voice=url_attachment, caption=caption, reply_markup=rm)       
     elif attach_type in ['gif']:        
-        BOT.send_animation(p.chat_id, animation=url_attachment, caption=caption)
+        BOT.send_animation(p.chat_id, animation=url_attachment, caption=caption, reply_markup=rm)
     elif attach_type in ['mp4']:
-        BOT.send_audio(p.chat_id, audio=url_attachment, caption=caption)
+        BOT.send_video(p.chat_id, video=url_attachment, caption=caption, reply_markup=rm)
+    elif attach_type in ['tgs']:
+        BOT.send_sticker(p.chat_id, sticker=url_attachment, reply_markup=rm)
     else:            
         error_msg = "Found attach_type: {}".format(attach_type)
         logging.error(error_msg)
@@ -152,7 +151,7 @@ def broadcast(sender, msg, qry = None, blackList_sender=False, sendNotification=
             if blackList_sender and sender and p.get_id() == sender.get_id():
                 continue
             total += 1
-            if send_message(p, msg, sleepDelay=True): #p.enabled
+            if send_message(p, msg, sleep=True): #p.enabled
                 enabledCount += 1
 
     disabled = total - enabledCount
@@ -186,7 +185,7 @@ def reset_all_users(qry = None, message=None):
             if p.enabled:
                 total += 1
                 if game.user_in_game(p):
-                    game.exit_game(p, save_data=False)
+                    game.exit_game(p, save_data=False, reset_current_hunt=True)
                     # send_message(p, p.ux().MSG_EXITED_FROM_GAME, remove_keyboard=True)
                 if message:
                     send_message(p, message, remove_keyboard=True)
