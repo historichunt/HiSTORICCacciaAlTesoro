@@ -585,11 +585,12 @@ def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
 
 def state_SURVEY(p, message_obj=None, **kwargs):
     give_instruction = message_obj is None
-    if give_instruction:
-        send_message(p, p.ux().MSG_SURVEY_INTRO)
-        send_typing_action(p, sleep_time=1)
+    if give_instruction:        
         current_question = game.set_next_survey_question(p)
         questions_number = game.get_num_completed_survey_questions(p) + 1
+        if questions_number == 1:
+            send_message(p, p.ux().MSG_SURVEY_INTRO)
+            send_typing_action(p, sleep_time=1)
         total_questions = game.get_tot_survey_questions(p)
         msg = '*Domanda {}/{}*: {}'.format(questions_number, total_questions, current_question['DOMANDA'])
         risposte = [x.strip() for x in current_question['RISPOSTE'].split(',')]
