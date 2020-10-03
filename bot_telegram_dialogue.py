@@ -364,9 +364,9 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                 #correct_answers_upper_word_set = set(flatten([x.split() for x in correct_answers_upper]))
                 if text_input.upper() in correct_answers_upper:
                     game.set_end_mission_time(p)
-                    send_message(p, bot_ux.MSG_ANSWER_OK(p.language), remove_keyboard=True)
-                    send_typing_action(p, sleep_time=1)
-                    send_post_message(p, current_indovinello)
+                    if not send_post_message(p, current_indovinello):
+                        send_message(p, bot_ux.MSG_ANSWER_OK(p.language), remove_keyboard=True)
+                        send_typing_action(p, sleep_time=1)                    
                     if 'INPUT_INSTRUCTIONS' in current_indovinello:
                         # only missioni with GPS require selfies
                         redirect_to_state(p, state_MEDIA_INPUT_MISSION)
@@ -398,6 +398,7 @@ def send_post_message(p, current_indovinello):
         send_typing_action(p, sleep_time=1)
         return True
     return False
+
 
 # ================================
 # MEDIA INPUT (photo, voice)
@@ -498,7 +499,10 @@ def approve_media_input_indovinello(p, approved, signature):
                 caption = 'Registrazione indovinello {} squadra {} per indovinello {}'.format(indovinello_number, squadra_name, indovinello_name)
                 BOT.send_voice(game.HISTORIC_GROUP_id, voice=file_id, caption=caption)
         game.append_group_media_input_file_id(p, file_id)        
-        send_post_message(p, current_indovinello)
+        if 'POST_INPUT' in current_indovinello:                        
+            msg = current_indovinello['POST_INPUT']
+            send_message(p, msg, remove_keyboard=True)
+            send_typing_action(p, sleep_time=1)
         redirect_to_state(p, state_COMPLETE_MISSION)
     else:
         if input_type=='PHOTO':
