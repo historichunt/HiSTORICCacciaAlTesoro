@@ -69,7 +69,7 @@ def send_typing_action(p, sleep_time=None):
 
 def send_media_url(p, url_attachment, kb=None, caption=None,
     remove_keyboard=False, inline_keyboard=False):
-    attach_type = url_attachment.split('.')[-1].lower()     
+    attach_type = url_attachment.rsplit('.',1)[1].lower()     
     rm = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)       
     if attach_type in ['jpg','png','jpeg']:
         BOT.send_photo(p.chat_id, photo=url_attachment, caption=caption, reply_markup=rm)

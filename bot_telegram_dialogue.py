@@ -366,9 +366,8 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                     game.set_end_mission_time(p)
                     send_message(p, bot_ux.MSG_ANSWER_OK(p.language), remove_keyboard=True)
                     send_typing_action(p, sleep_time=1)
-                    if send_post_message(p, current_indovinello):
-                        redirect_to_state(p, state_COMPLETE_MISSION)
-                    elif 'INPUT_INSTRUCTIONS' in current_indovinello:
+                    send_post_message(p, current_indovinello)
+                    if 'INPUT_INSTRUCTIONS' in current_indovinello:
                         # only missioni with GPS require selfies
                         redirect_to_state(p, state_MEDIA_INPUT_MISSION)
                     else:
