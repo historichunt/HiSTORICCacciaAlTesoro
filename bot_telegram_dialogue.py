@@ -376,7 +376,7 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                 # elif utility.answer_is_almost_correct(text_input.upper(), correct_answers_upper_word_set):
                 #     send_message(p, p.ux().MSG_ANSWER_ALMOST)
                 else:
-                    give_penalty = current_indovinello.get('PENALTÀ',False)
+                    give_penalty = current_indovinello.get('PENALTY',False)
                     game.increase_wrong_answers_current_indovinello(p, text_input, give_penalty)
                     if give_penalty:
                         penalties, penalty_sec = game.get_total_penalty(p)
