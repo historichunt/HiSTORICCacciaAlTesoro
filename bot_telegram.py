@@ -14,16 +14,23 @@ import utility
 
 BOT = telegram.Bot(token=key.TELEGRAM_API_TOKEN)
 
+def get_chat_id_from_str(s):
+    if s.startswith('T_'): 
+        return s[2:]
+    return s # e.g., HISTORIC_GROUP for notification has id "-1001499..."
 
 def get_reply_markup(p, kb=None, remove_keyboard=None, inline_keyboard=False):
+    is_person = isinstance(p, Person)
     if kb or remove_keyboard:
         if inline_keyboard:
             return {'inline_keyboard': kb}
         elif remove_keyboard:
-            p.set_keyboard(kb=[])            
+            if is_person:
+                p.set_keyboard(kb=[])            
             return telegram.ReplyKeyboardRemove()
         else:
-            p.set_keyboard(kb)
+            if is_person:
+                p.set_keyboard(kb)
             return telegram.ReplyKeyboardMarkup(kb, resize_keyboard=True)
     return None
 '''
@@ -32,7 +39,7 @@ If kb==None keep last keyboard
 # @retry_on_network_error
 def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
     inline_keyboard=False, sleep=False, **kwargs):
-    chat_id = p.chat_id if isinstance(p, Person) else p[2:]
+    chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
     reply_markup = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)
     try:
         BOT.send_message(
@@ -55,12 +62,14 @@ def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
     return True
 
 def send_location(p, lat, lon):
+    chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
     loc = telegram.Location(lon,lat)
-    BOT.send_location(p.chat_id, location = loc)
+    BOT.send_location(chat_id, location = loc)
 
 def send_typing_action(p, sleep_time=None):    
+    chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
     BOT.sendChatAction(
-        chat_id = p.chat_id,
+        chat_id = chat_id,
         action = telegram.ChatAction.TYPING
     )
     if sleep_time:
@@ -69,20 +78,21 @@ def send_typing_action(p, sleep_time=None):
 
 def send_media_url(p, url_attachment, kb=None, caption=None,
     remove_keyboard=False, inline_keyboard=False):
+    chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
     attach_type = url_attachment.rsplit('.',1)[1].lower()     
     rm = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)       
     if attach_type in ['jpg','png','jpeg']:
-        BOT.send_photo(p.chat_id, photo=url_attachment, caption=caption, reply_markup=rm)
+        BOT.send_photo(chat_id, photo=url_attachment, caption=caption, reply_markup=rm)
     elif attach_type in ['mp3']:
-        BOT.send_audio(p.chat_id, audio=url_attachment, caption=caption, reply_markup=rm)
+        BOT.send_audio(chat_id, audio=url_attachment, caption=caption, reply_markup=rm)
     elif attach_type in ['ogg']:
-        BOT.send_voice(p.chat_id, voice=url_attachment, caption=caption, reply_markup=rm)       
+        BOT.send_voice(chat_id, voice=url_attachment, caption=caption, reply_markup=rm)       
     elif attach_type in ['gif']:        
-        BOT.send_animation(p.chat_id, animation=url_attachment, caption=caption, reply_markup=rm)
+        BOT.send_animation(chat_id, animation=url_attachment, caption=caption, reply_markup=rm)
     elif attach_type in ['mp4']:
-        BOT.send_video(p.chat_id, video=url_attachment, caption=caption, reply_markup=rm)
+        BOT.send_video(chat_id, video=url_attachment, caption=caption, reply_markup=rm)
     elif attach_type in ['tgs']:
-        BOT.send_sticker(p.chat_id, sticker=url_attachment, reply_markup=rm)
+        BOT.send_sticker(chat_id, sticker=url_attachment, reply_markup=rm)
     else:            
         error_msg = "Found attach_type: {}".format(attach_type)
         logging.error(error_msg)
@@ -90,13 +100,14 @@ def send_media_url(p, url_attachment, kb=None, caption=None,
 
 def send_text_document(p, file_name, file_content):
     import requests
+    chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
     files = [('document', (file_name, file_content, 'text/plain'))]
-    data = {'chat_id': p.chat_id}
+    data = {'chat_id': chat_id}
     resp = requests.post(key.TELEGRAM_API_URL + 'sendDocument', data=data, files=files)
     logging.debug("Sent documnet. Response status code: {}".format(resp.status_code))
 
 def get_photo_url_from_telegram(file_id):
-    import requests
+    import requests    
     r = requests.post(key.TELEGRAM_API_URL + 'getFile', data={'file_id': file_id})
     r_json = r.json()
     r_result = r_json['result']

@@ -160,9 +160,6 @@ def save_game_data_in_airtable(p, save_survey):
 ################################
 
 from ndb_utils import client
-with client.context():
-    HISTORIC_GROUP = ndb_person.get_person_by_id(key.HISTORIC_GROUP_ID) #key.FEDE_T_ID
-    HISTORIC_GROUP_id = HISTORIC_GROUP.chat_id
 
 ################################
 # GAME MANAGEMENT FUNCTIONS
@@ -183,8 +180,6 @@ def reset_game(p, hunt_password):
     multilingual =  utility.get_str_param_boolean(settings, 'MULTILINGUAL')
     mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni'
     missioni = get_random_missioni(p, airtable_game_id, mission_tab_name, initial_cat)
-    notify_group = hunt_info.get('Notify_Group', False)
-    validator_id = hunt_info.get('Validator_ID', None)
     instructions_steps = airtable_utils.get_rows(
         instructions_table, filter=lambda r: not r.get('Skip',False), 
         sort_key=lambda r: r['ORDER']
@@ -193,8 +188,8 @@ def reset_game(p, hunt_password):
     p.tmp_variables = {}  
     p.tmp_variables['SETTINGS'] = settings      
     p.tmp_variables['HUNT_INFO'] = hunt_info
-    p.tmp_variables['Notify_Group'] = notify_group
-    p.tmp_variables['Validator_ID'] = validator_id
+    p.tmp_variables['Notify_Group'] = hunt_info.get('Notify_Group', False)
+    p.tmp_variables['Validator_ID'] = hunt_info.get('Validator_ID', None)
     p.tmp_variables['ID'] = p.get_id()
     p.tmp_variables['NOME'] = p.get_first_name(escape_markdown=False)
     p.tmp_variables['COGNOME'] = p.get_last_name(escape_markdown=False)

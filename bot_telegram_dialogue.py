@@ -16,6 +16,7 @@ import geoUtils
 import date_time_util as dtu
 import json
 import random
+import key
 
 # ================================
 # CONFIG
@@ -180,7 +181,7 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 game.set_group_name(p, text_input)
                 # send_message(p, p.ux().MSG_GROUP_NAME_OK.format(text_input))
                 if game.send_notification_to_group(p):
-                    send_message(game.HISTORIC_GROUP, "Nuova squadra registrata: {}".format(text_input))
+                    send_message(key.HISTORIC_GROUP_CHAT_ID, "Nuova squadra registrata: {}".format(text_input))
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:
@@ -207,7 +208,7 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 game.append_group_media_input_file_id(p, photo_file_id)
                 send_typing_action(p, sleep_time=1)                            
                 if game.send_notification_to_group(p):
-                    BOT.send_photo(game.HISTORIC_GROUP_id, photo=photo_file_id, caption='Selfie iniziale {}'.format(game.get_group_name(p)))
+                    BOT.send_photo(key.HISTORIC_GROUP_CHAT_ID, photo=photo_file_id, caption='Selfie iniziale {}'.format(game.get_group_name(p)))
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:
@@ -494,10 +495,10 @@ def approve_media_input_indovinello(p, approved, signature):
             indovinello_name = current_indovinello['NOME']            
             if input_type=='PHOTO':
                 caption = 'Selfie indovinello {} squadra {} per indovinello {}'.format(indovinello_number, squadra_name, indovinello_name)
-                BOT.send_photo(game.HISTORIC_GROUP_id, photo=file_id, caption=caption)
+                BOT.send_photo(key.HISTORIC_GROUP_CHAT_ID, photo=file_id, caption=caption)
             else: #elif input_type=='VOICE':
                 caption = 'Registrazione indovinello {} squadra {} per indovinello {}'.format(indovinello_number, squadra_name, indovinello_name)
-                BOT.send_voice(game.HISTORIC_GROUP_id, voice=file_id, caption=caption)
+                BOT.send_voice(key.HISTORIC_GROUP_CHAT_ID, voice=file_id, caption=caption)
         game.append_group_media_input_file_id(p, file_id)        
         if 'POST_INPUT' in current_indovinello:                        
             msg = current_indovinello['POST_INPUT']
@@ -644,7 +645,7 @@ def state_END(p, message_obj=None, **kwargs):
         if game.send_notification_to_group(p):
             msg_group = p.ux().MSG_END_NOTIFICATION.format(game.get_group_name(p), penalty_hms, \
                 total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)
-            send_message(game.HISTORIC_GROUP, msg_group)                
+            send_message(key.HISTORIC_GROUP_CHAT_ID, msg_group)                
         settings = p.tmp_variables['SETTINGS']
         final_message = settings.get('FINAL_MESSAGE','')
         reset_hunt_after_completion = get_str_param_boolean(settings, 'RESET_HUNT_AFTER_COMPLETION')
