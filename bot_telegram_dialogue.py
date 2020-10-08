@@ -668,10 +668,10 @@ def deal_with_callback_query(callback_query):
     approval_signature = callback_query_data['sign']
     p = ndb_person.get_person_by_id(user_id)
     squadra_name = game.get_group_name(p)
+    callback_query_id = callback_query.id
     if squadra_name is None:
         validation_success = False
-    else:
-        callback_query_id = callback_query.id
+    else:        
         chat_id = callback_query.from_user.id
         message_id = callback_query.message.message_id
         BOT.delete_message(chat_id, message_id)

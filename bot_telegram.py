@@ -115,7 +115,6 @@ def get_photo_url_from_telegram(file_id):
     url = key.TELEGRAM_BASE_URL_FILE + file_path
     return url
 
-# @client_context
 def report_master(message):
     logging.debug('Reporting to master: {}'.format(message))
     max_length = 2000
@@ -189,7 +188,7 @@ def reset_all_users(qry = None, message=None):
     while more:
         users, cursor, more = qry.fetch_page(100, start_cursor=cursor)
         for p in users:
-            if p.get_id() == key.HISTORIC_GROUP_ID:
+            if p.get_id() == key.HISTORIC_GROUP_CHAT_ID:
                 continue
             if p.state == 'state_INITIAL':
                 continue
@@ -208,9 +207,7 @@ def reset_all_users(qry = None, message=None):
     report_master(msg_admin)
 
 def remove_keyboard_from_notification_group():
-    group_id = key.HISTORIC_GROUP_ID
-    p = ndb_person.get_person_by_id(group_id)
-    send_message(p, 'Removing Keyboard', remove_keyboard=True)
+    send_message(key.HISTORIC_GROUP_CHAT_ID, 'Removing Keyboard', remove_keyboard=True)
 
 # ================================
 # UTILIITY TELL FUNCTIONS

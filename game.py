@@ -317,7 +317,7 @@ def set_elapsed_and_penalty_and_compute_total(p):
     elapsed_sec_game = dtu.delta_seconds_iso(start_time, end_time)
     elapsed_sec_missions = sum(dtu.delta_seconds_iso(s, e) for s,e in tvar['MISSION_TIMES'])            
 
-    wrong_answers, penalty_sec = get_total_penalty(p)
+    _, penalty_sec = get_total_penalty(p)
     penalty_hms = utility.sec_to_hms(penalty_sec)
     total_sec_game = elapsed_sec_game + penalty_sec
     total_sec_game_missions = elapsed_sec_missions + penalty_sec
