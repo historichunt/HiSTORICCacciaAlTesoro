@@ -813,10 +813,7 @@ def deal_with_manager_commands(p, message_obj):
                 remaining_people = qry.fetch()
                 if remaining_people:
                     first = remaining_people[0]
-                    msg_var = get_str_param_boolean(
-                        first.tmp_variables.get('SETTINGS'), 
-                        'TERMINATE_MESSAGE'
-                    )
+                    msg_var = first.tmp_variables['SETTINGS']['TERMINATE_MESSAGE']
                     for u in remaining_people:                     
                         if not p.tmp_variables.get('COMPLETED', False):                   
                             game.exit_game(u, save_data=True, reset_current_hunt=True)
