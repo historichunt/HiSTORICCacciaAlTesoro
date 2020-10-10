@@ -573,6 +573,8 @@ def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
                 send_typing_action(p, sleep_time=1)                
                 settings = p.tmp_variables['SETTINGS']
                 skip_survey = get_str_param_boolean(settings, 'SKIP_SURVEY')
+                # saving data in airtable
+                game.save_game_data_in_airtable(p)
                 if not skip_survey:
                     redirect_to_state(p, state_SURVEY)
                 else:
@@ -619,7 +621,8 @@ def state_SURVEY(p, message_obj=None, **kwargs):
                 send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)
                 return
             if game.get_remaing_survey_questions_number(p) == 0:
-                # end game
+                # end survey -> save survey data in airtable
+                game.save_survey_data_in_airtable(p)
                 redirect_to_state(p, state_END)
             else:
                 p.put()
@@ -815,7 +818,7 @@ def deal_with_manager_commands(p, message_obj):
                     first = remaining_people[0]
                     msg_var = first.tmp_variables['SETTINGS']['TERMINATE_MESSAGE']
                     for u in remaining_people:                     
-                        if not p.tmp_variables.get('COMPLETED', False):                   
+                        if not p.tmp_variables.get('FINISHED', False):                   
                             game.exit_game(u, save_data=True, reset_current_hunt=True)
                         else:
                             # people who have completed needs to be informed too

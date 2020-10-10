@@ -163,6 +163,19 @@ def get_people_count():
         total += len(keys)
     return total
 
+@client_context
+def dump_person_tmp_var(uid):
+    import json
+    p = get_person_by_id(uid)
+    with open('tmp_var.json', 'w') as f_out:
+        json.dump(p.tmp_variables, f_out, indent=3, ensure_ascii=False)
+
+@client_context
+def reset_person_tmp_var(uid):
+    p = get_person_by_id(uid)
+    p.tmp_variables = {}
+    p.put()
+
 def get_people_on_hunt_stats(hunt):
     import game
     people_on_hunt = Person.query(Person.current_hunt==hunt).fetch()    

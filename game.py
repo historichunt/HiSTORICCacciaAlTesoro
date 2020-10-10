@@ -128,7 +128,7 @@ RESULTS_GAME_TABLE_HEADERS = \
     'START_TIME', 'END_TIME', 'ELAPSED GAME', 'ELAPSED MISSIONS', \
     'PENALTIES', 'PENALTY TIME', 'FINISHED', 'TOTAL TIME GAME', 'TOTAL TIME MISSIONS']
 
-def save_game_data_in_airtable(p, save_survey):
+def save_game_data_in_airtable(p):
     from bot_telegram import get_photo_url_from_telegram
     import json
     game_data = p.tmp_variables
@@ -146,13 +146,15 @@ def save_game_data_in_airtable(p, save_survey):
     ]
     RESULTS_GAME_TABLE.insert(games_row)
     
-    if save_survey:
-        results_survey_table = Airtable(airtable_game_id, 'Survey Answers', api_key=key.AIRTABLE_API_KEY)
-        survey_row = {}
-        survey_data = game_data['SURVEY_INFO']['COMPLETED']
-        for row in survey_data:
-            survey_row[row['QN']] = row['ANSWER'] # columns: Q1, Q2, ...
-        results_survey_table.insert(survey_row)
+def save_survey_data_in_airtable(p):
+    game_data = p.tmp_variables
+    airtable_game_id = game_data['HUNT_INFO']['Airtable_Game_ID']
+    results_survey_table = Airtable(airtable_game_id, 'Survey Answers', api_key=key.AIRTABLE_API_KEY)
+    survey_row = {}
+    survey_data = game_data['SURVEY_INFO']['COMPLETED']
+    for row in survey_data:
+        survey_row[row['QN']] = row['ANSWER'] # columns: Q1, Q2, ...
+    results_survey_table.insert(survey_row)
 
 
 ################################
@@ -185,29 +187,32 @@ def reset_game(p, hunt_password):
         sort_key=lambda r: r['ORDER']
     )
     survey = airtable_utils.get_rows(survey_table, sort_key=lambda r: r['QN'])
-    p.tmp_variables = {}  
-    p.tmp_variables['SETTINGS'] = settings      
-    p.tmp_variables['HUNT_INFO'] = hunt_info
-    p.tmp_variables['Notify_Group'] = hunt_info.get('Notify_Group', False)
-    p.tmp_variables['Validator_ID'] = hunt_info.get('Validator_ID', None)
-    p.tmp_variables['ID'] = p.get_id()
-    p.tmp_variables['NOME'] = p.get_first_name(escape_markdown=False)
-    p.tmp_variables['COGNOME'] = p.get_last_name(escape_markdown=False)
-    p.tmp_variables['USERNAME'] = p.get_username(escape_markdown=False)
-    p.tmp_variables['EMAIL'] = ''
-    p.tmp_variables['MISSION_TIMES'] = []
-    p.tmp_variables['INSTRUCTIONS'] = {'STEPS': instructions_steps, 'COMPLETED': 0}
-    p.tmp_variables['MISSIONI_INFO'] = {'TODO': missioni, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(missioni)}
-    p.tmp_variables['SURVEY_INFO'] = {'TODO': survey, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(survey)}
-    p.tmp_variables['GROUP_NAME'] = ''
-    p.tmp_variables['GROUP_MEDIA_FILE_IDS'] = []
-    p.tmp_variables['START_TIME'] = ''
-    p.tmp_variables['END_TIME'] = ''
-    p.tmp_variables['ELAPSED'] = 0 # seconds
-    p.tmp_variables['PENALTIES'] = 0    
-    p.tmp_variables['PENALTY TIME'] = 0 # seconds
-    p.tmp_variables['TOTAL TIME'] = 0 # seconds
-    p.tmp_variables['FINISHED'] = False # seconds
+    tvar = p.tmp_variables = {}  
+    tvar['SETTINGS'] = settings      
+    tvar['HUNT_INFO'] = hunt_info
+    tvar['Notify_Group'] = hunt_info.get('Notify_Group', False)
+    tvar['Validator_ID'] = hunt_info.get('Validator_ID', None)
+    tvar['ID'] = p.get_id()
+    tvar['NOME'] = p.get_first_name(escape_markdown=False)
+    tvar['COGNOME'] = p.get_last_name(escape_markdown=False)
+    tvar['USERNAME'] = p.get_username(escape_markdown=False)
+    tvar['EMAIL'] = ''
+    tvar['MISSION_TIMES'] = []
+    tvar['INSTRUCTIONS'] = {'STEPS': instructions_steps, 'COMPLETED': 0}
+    tvar['MISSIONI_INFO'] = {'TODO': missioni, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(missioni)}
+    tvar['SURVEY_INFO'] = {'TODO': survey, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(survey)}
+    tvar['GROUP_NAME'] = ''
+    tvar['GROUP_MEDIA_FILE_IDS'] = []
+    tvar['START_TIME'] = 0
+    tvar['END_TIME'] = 0
+    tvar['ELAPSED GAME'] = -1
+    tvar['ELAPSED MISSIONS'] = -1
+    tvar['PENALTY TIME'] = -1
+    tvar['TOTAL TIME GAME'] = -1
+    tvar['TOTAL TIME MISSIONS'] = -1
+    tvar['PENALTIES'] = 0    
+    tvar['PENALTY TIME'] = 0 # seconds
+    tvar['FINISHED'] = False # seconds
 
 def user_in_game(p):
     return p.current_hunt is not None
@@ -218,12 +223,10 @@ def exit_game(p, save_data=True, reset_current_hunt=True, put=True):
     if save_data:
         finished = p.tmp_variables.get('FINISHED', False)
         if not finished:
-            set_empty_vars_for_airtable(p)
             set_game_end_time(p, finished=False)
-        save_game_data_in_airtable(p, save_survey=finished)
+            save_game_data_in_airtable(p)
     if reset_current_hunt:
         p.current_hunt = None
-    # p.tmp_variables = {}
     if put:
         p.put()
     return True
@@ -297,16 +300,6 @@ def set_mission_end_time(p):
     last_mission_time.append(end_time)
     mission_ellapsed = dtu.delta_seconds_iso(*last_mission_time)
     return mission_ellapsed
-
-def set_empty_vars_for_airtable(p):
-    tvar = p.tmp_variables    
-    tvar['START_TIME'] = 0
-    tvar['ELAPSED GAME'] = -1
-    tvar['ELAPSED MISSIONS'] = -1
-    tvar['PENALTY TIME'] = -1
-    tvar['TOTAL TIME GAME'] = -1
-    tvar['TOTAL TIME MISSIONS'] = -1
-    p.put()
 
 def set_elapsed_and_penalty_and_compute_total(p):
     import date_time_util as dtu
