@@ -13,9 +13,15 @@ def download_selfies(hunt_password, output_dir):
     for entry in table_entries:
         fields = entry['fields']
         group_name = fields['GROUP_NAME']
-        output_dir_group = os.path.join(output_dir, group_name)
-        os.mkdir(output_dir_group)
         print('Downloading selfies for group {}'.format(group_name))        
+        output_dir_group = os.path.join(output_dir, group_name)
+        if os.path.exists(output_dir_group):
+            print('\t Dir already present, skipping.')
+            continue
+        if 'GROUP_MEDIA_FILE_IDS' not in fields:
+            print('\t No media, skipping.')
+            continue
+        os.mkdir(output_dir_group)        
         for selfie in fields['GROUP_MEDIA_FILE_IDS']:
             url = selfie['url']
             file_name = selfie['filename']
@@ -56,6 +62,6 @@ def get_wrong_answers(hunt_password, output_file):
 
 
 if __name__ == "__main__":
-    password = 'password'
-    download_selfies(password, '/Users/fedja/Downloads/selfies')
-    get_wrong_answers(password, '/Users/fedja/Downloads/selfies/errori.txt')
+    password = ''
+    download_selfies(password, 'data/selfies')
+    get_wrong_answers(password, 'data/errori.txt')
