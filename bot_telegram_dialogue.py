@@ -28,12 +28,12 @@ JUMP_TO_SURVEY_AFTER = False  # 2
 # ================================
 # RESTART
 # ================================
-def restart_multi(users):
+def restart_multi(users, **kwargs):
     for u in users:
-        redirect_to_state(u, state_INITIAL)
+        redirect_to_state(u, state_INITIAL, **kwargs)
 
-def restart(user):
-    redirect_to_state(user, state_INITIAL)
+def restart(user, **kwargs):
+    redirect_to_state(user, state_INITIAL, **kwargs)
 
 # ================================
 # REDIRECT TO STATE
@@ -71,14 +71,15 @@ def repeat_state(user, message_obj=None, **kwargs):
 # Initial State
 # ================================
 
-def state_INITIAL(p, message_obj=None, **kwargs):    
+def state_INITIAL(p, message_obj=None, silent=False, **kwargs):    
     if message_obj is None:
-        switch_language_button = p.ux().BUTTON_ENGLISH if p.language=='IT' else p.ux().BUTTON_ITALIAN
-        kb = [
-            [switch_language_button],
-            [p.ux().BUTTON_INFO]
-        ]            
-        send_message(p, p.ux().MSG_WELCOME_START, kb)
+        if not silent:
+            switch_language_button = p.ux().BUTTON_ENGLISH if p.language=='IT' else p.ux().BUTTON_ITALIAN
+            kb = [
+                [switch_language_button],
+                [p.ux().BUTTON_INFO]
+            ]            
+            send_message(p, p.ux().MSG_WELCOME_START, kb)
     else: 
         text_input = message_obj.text
         kb = p.get_keyboard()
@@ -574,6 +575,7 @@ def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
                 settings = p.tmp_variables['SETTINGS']
                 skip_survey = get_str_param_boolean(settings, 'SKIP_SURVEY')
                 # saving data in airtable
+                game.set_elapsed_and_penalty_and_compute_total(p)
                 game.save_game_data_in_airtable(p)
                 if not skip_survey:
                     redirect_to_state(p, state_SURVEY)
@@ -641,7 +643,7 @@ def state_END(p, message_obj=None, **kwargs):
     give_instruction = message_obj is None
     if give_instruction:        
         penalty_hms, total_hms_game, ellapsed_hms_game, \
-        total_hms_missions, ellapsed_hms_missions = game.set_elapsed_and_penalty_and_compute_total(p)
+            total_hms_missions, ellapsed_hms_missions = game.get_elapsed_and_penalty_and_total_hms(p)
         msg = p.ux().MSG_END.format(penalty_hms, \
             total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)        
         send_message(p, msg, remove_keyboard=True)
@@ -655,11 +657,14 @@ def state_END(p, message_obj=None, **kwargs):
         if final_message:
             send_message(p, p.ux().get_var(final_message))     
         game.exit_game(p, save_data=True, reset_current_hunt=reset_hunt_after_completion)   
-        # we may still want to warn them that the game has terminated
-        # send_typing_action(p, sleep_time=4)
-        # restart(p)
+        if reset_hunt_after_completion:
+            restart(p, silent=True)        
     else:
-        pass
+        msg = p.ux().MSG_HUNT_NOT_TERMINATED
+        send_message(p, msg)
+        # thisi only happens if RESET_HUNT_AFTER_COMPLETION is False:
+        # we need to tell them that we will let them know when the games is over
+        
 
 
 ## +++++ END OF STATES +++++ ###
@@ -820,6 +825,7 @@ def deal_with_manager_commands(p, message_obj):
                     for u in remaining_people:                     
                         if not p.tmp_variables.get('FINISHED', False):                   
                             game.exit_game(u, save_data=True, reset_current_hunt=True)
+                            restart(u, silent=True)
                         else:
                             # people who have completed needs to be informed too
                             # we already saved the data but current hunt wasn't reset

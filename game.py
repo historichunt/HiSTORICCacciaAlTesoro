@@ -310,22 +310,37 @@ def set_elapsed_and_penalty_and_compute_total(p):
     elapsed_sec_game = dtu.delta_seconds_iso(start_time, end_time)
     elapsed_sec_missions = sum(dtu.delta_seconds_iso(s, e) for s,e in tvar['MISSION_TIMES'])            
 
-    _, penalty_sec = get_total_penalty(p)
-    penalty_hms = utility.sec_to_hms(penalty_sec)
+    _, penalty_sec = get_total_penalty(p)    
+    
     total_sec_game = elapsed_sec_game + penalty_sec
     total_sec_game_missions = elapsed_sec_missions + penalty_sec
-    ellapsed_hms_game = utility.sec_to_hms(elapsed_sec_game)
-    total_hms_game = utility.sec_to_hms(total_sec_game)    
-    ellapsed_hms_missions = utility.sec_to_hms(elapsed_sec_missions)
-    total_hms_missions = utility.sec_to_hms(total_sec_game_missions)    
     
+    # variables to print to users
+    tvar['penalty_hms'] = utility.sec_to_hms(penalty_sec)
+    tvar['total_hms_game'] = utility.sec_to_hms(total_sec_game)    
+    tvar['ellapsed_hms_game'] = utility.sec_to_hms(elapsed_sec_game)    
+    tvar['total_hms_missions'] = utility.sec_to_hms(total_sec_game_missions)    
+    tvar['ellapsed_hms_missions'] = utility.sec_to_hms(elapsed_sec_missions)    
+    
+    # variables to save in airtable
     tvar['ELAPSED GAME'] = elapsed_sec_game
     tvar['ELAPSED MISSIONS'] = elapsed_sec_missions
     tvar['PENALTY TIME'] = penalty_sec # seconds
     tvar['TOTAL TIME GAME'] = elapsed_sec_game + penalty_sec
     tvar['TOTAL TIME MISSIONS'] = elapsed_sec_missions + penalty_sec
+    
     p.put()
-    return penalty_hms, total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions
+
+def get_elapsed_and_penalty_and_total_hms(p):
+    tvar = p.tmp_variables 
+    return \
+        tvar['penalty_hms'], \
+        tvar['total_hms_game'], \
+        tvar['ellapsed_hms_game'], \
+        tvar['total_hms_missions'], \
+        tvar['ellapsed_hms_missions'] \
+
+
 
 def get_end_time(p):
     return p.tmp_variables['END_TIME']
