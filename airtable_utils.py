@@ -12,7 +12,10 @@ def download_selfies(hunt_password, output_dir):
     table_entries = RESULTS_TABLE.get_all()
     for entry in table_entries:
         fields = entry['fields']
-        group_name = fields['GROUP_NAME']
+        group_name = fields.get('GROUP_NAME', None)
+        if group_name is None:
+            print('No group name, skipping')
+            continue
         print('Downloading selfies for group {}'.format(group_name))        
         output_dir_group = os.path.join(output_dir, group_name)
         if os.path.exists(output_dir_group):
@@ -58,6 +61,7 @@ def get_wrong_answers(hunt_password, output_file):
             answers = m['wrong_answers']
             mission_wrong_ansers[name].extend(answers)
     with open(output_file, 'w') as f_out:
+        # TODO: uppercase, sort and make frequency stats
         f_out.write(json.dumps(mission_wrong_ansers, indent=3, ensure_ascii=False))
 
 
