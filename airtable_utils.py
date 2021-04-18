@@ -1,5 +1,6 @@
 import key
 from airtable import Airtable
+import collections
 
 def download_selfies(hunt_password, output_dir):
     import game
@@ -64,8 +65,29 @@ def get_wrong_answers(hunt_password, output_file):
         # TODO: uppercase, sort and make frequency stats
         f_out.write(json.dumps(mission_wrong_ansers, indent=3, ensure_ascii=False))
 
+    return mission_wrong_ansers
+
+def process_errori(error_dict, output_file):
+    with open(output_file, 'w') as f_out:
+        f_out.write("ERRORI piu' frequenti (Almeno 5 volte)\n")
+        for tappa in error_dict:
+            counter = collections.Counter(error_dict[tappa])
+            f_out.write(f'TAPPA = {tappa}\n')
+            f_out.write(f'  ERRORI TOTALI = {sum(counter.values())}\n')
+            for (error, freq) in counter.most_common(5):
+                f_out.write(f'   ERRORE = {error}   (con frequenza = {freq})\n')
+
+        f_out.write("\n\nTUTTI GLI ERRORI (anche quelli poco frequenti, ad esempio occorsi solo una volta)")
+        for tappa in error_dict:
+            counter = collections.Counter(error_dict[tappa])
+            f_out.write(f'TAPPA = {tappa}\n')
+            f_out.write(f'  ERRORI TOTALI = {sum(counter.values())}\n')
+            for (error, freq) in counter.most_common():
+                f_out.write(f'   ERRORE = {error}   (con frequenza = {freq})\n')
+
 
 if __name__ == "__main__":
-    password = ''
+    password = '' # insert password here (do not commit)
     download_selfies(password, 'data/selfies')
-    get_wrong_answers(password, 'data/errori.txt')
+    error_dict = get_wrong_answers(password, 'data/errori.txt')
+    process_errori(error_dict, 'data/errori_processed.txt')
