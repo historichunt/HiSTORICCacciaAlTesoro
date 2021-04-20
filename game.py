@@ -106,10 +106,10 @@ def get_random_missioni(p, airtable_game_id, mission_tab_name, initial_cat):
                 missioni_random.append(next_mission)
                 next_mission_cat = next_mission['CATEGORIA']      
                 expected_cat = next(round_robin_cat)
-                # while expected_cat != next_mission_cat:
-                #     expected_cat = next(round_robin_cat)
-                assert expected_cat == next_mission_cat, \
-                    f"Unexpected cat of NEXT mission: {expected_cat}/{next_mission_cat} (expected/found)"
+                while expected_cat != next_mission_cat:
+                    expected_cat = next(round_robin_cat)
+                # assert expected_cat == next_mission_cat, \
+                #     f"Unexpected cat of NEXT mission: {expected_cat}/{next_mission_cat} (expected/found)"
                 next_mission_name = next_mission.get('NEXT',None)
         elif missione_finale and missione_finale['CATEGORIA']==cat:
             missioni_random.append(missione_finale)
