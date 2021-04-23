@@ -300,6 +300,8 @@ def state_GPS(p, message_obj=None, **kwargs):
             else:
                 msg = p.ux().MSG_TOO_FAR.format(distance)
                 send_message(p, msg)
+                send_typing_action(p, sleep_time=1)
+                repeat_state(p)
         else:
             send_message(p, p.ux().MSG_WRONG_INPUT_SEND_LOCATION)
 
