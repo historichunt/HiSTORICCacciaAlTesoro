@@ -4,4 +4,6 @@
 entrypoint: gunicorn -b :$PORT main:app
 runtime: python37
 
+# gcloud config list project
+# gcloud config set project historictrentobot
 # gcloud app deploy -q -v test/production
