@@ -4,15 +4,19 @@ from airtable import Airtable
 APP_NAME = 'historictrentobot'
 APP_VERSION = '0.1.0'
 
-NGROK = False
-TEST = False
-
 # PARAMS
+NGROK = False # set to True for local testing
 MAX_TEAM_NAME_LENGTH = 30
 WORK_IN_PROGRESS = False
 JUMP_TO_SURVEY_AFTER = False  # 2
 
-ENV_VERSION = 'test' if TEST else 'production'
+ENV_VERSION = os.environ.get("ENV_VERSION") # tag or production
+TELEGRAM_API_TOKEN = os.environ.get("TELEGRAM_API_TOKEN")
+TELEGRAM_BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME")
+AIRTABLE_API_KEY = os.environ.get("AIRTABLE_API_KEY")
+AIRTABLE_CONFIG_ID = os.environ.get("AIRTABLE_CONFIG_ID")
+HISTORIC_NOTIFICHE_GROUP_CHAT_ID = os.environ.get("HISTORIC_NOTIFICHE_GROUP_CHAT_ID")
+ADMIN_ID = os.environ.get("ADMIN_ID")
 
 if NGROK:
     # local testing
@@ -25,12 +29,6 @@ else:
     APP_BASE_URL = 'https://{}-dot-{}.appspot.com'.format(ENV_VERSION, APP_NAME)
 
 
-TELEGRAM_API_TOKEN = os.environ.get("TELEGRAM_API_TOKEN")
-TELEGRAM_BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME")
-AIRTABLE_API_KEY = os.environ.get("AIRTABLE_API_KEY")
-AIRTABLE_CONFIG_ID = os.environ.get("AIRTABLE_CONFIG_ID")
-HISTORIC_NOTIFICHE_GROUP_CHAT_ID = os.environ.get("HISTORIC_NOTIFICHE_GROUP_CHAT_ID")
-ADMIN_ID = os.environ.get("ADMIN_ID")
 
 WEBHOOK_TELEGRAM_ROUTING = '/webhook_{}'.format(TELEGRAM_API_TOKEN)
 WEBHOOK_TELEGRAM_BASE = APP_BASE_URL + WEBHOOK_TELEGRAM_ROUTING
