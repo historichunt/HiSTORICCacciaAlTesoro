@@ -3,8 +3,8 @@ from airtable import Airtable
 
 APP_NAME = 'historictrentobot'
 
-NGROK = True
-TEST = True
+NGROK = False
+TEST = False
 
 # PARAMS
 MAX_TEAM_NAME_LENGTH = 30
