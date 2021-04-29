@@ -1,5 +1,5 @@
 # HiSTORICCacciaAlTesoro
-Caccia al tesoro di HiSTORIC
+Caccie al tesoro di HiSTORIC
 
 ## gcloud commands
 ```
