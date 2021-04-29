@@ -2,6 +2,7 @@ import os
 from airtable import Airtable
 
 APP_NAME = 'historictrentobot'
+APP_VERSION = '0.1.0'
 
 NGROK = False
 TEST = False
@@ -11,17 +12,17 @@ MAX_TEAM_NAME_LENGTH = 30
 WORK_IN_PROGRESS = False
 JUMP_TO_SURVEY_AFTER = False  # 2
 
-VERSION = 'test' if TEST else 'production'
+ENV_VERSION = 'test' if TEST else 'production'
 
 if NGROK:
+    # local testing
     from dotenv import load_dotenv
     from bot import ngrok 
-    dotenv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), f'.env_{VERSION}')
-    # dotenv_path = f'.env_{VERSION}'
+    dotenv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), f'.env_{ENV_VERSION}')
     load_dotenv(dotenv_path)
     APP_BASE_URL = ngrok.get_ngrok_base()
 else:
-    APP_BASE_URL = 'https://{}-dot-{}.appspot.com'.format(VERSION, APP_NAME)
+    APP_BASE_URL = 'https://{}-dot-{}.appspot.com'.format(ENV_VERSION, APP_NAME)
 
 
 TELEGRAM_API_TOKEN = os.environ.get("TELEGRAM_API_TOKEN")
