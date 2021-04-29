@@ -22,7 +22,11 @@ if NGROK:
     # local testing
     from dotenv import load_dotenv
     from bot import ngrok 
-    dotenv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), f'.env_{ENV_VERSION}')
+    env_file = '.env_test' # use '.env_production' if you want to force test on production bot
+    dotenv_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), 
+        env_file
+    )
     load_dotenv(dotenv_path)
     APP_BASE_URL = ngrok.get_ngrok_base()
 else:
