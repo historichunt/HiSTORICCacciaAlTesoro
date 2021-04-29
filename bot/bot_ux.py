@@ -1,10 +1,9 @@
-import utility
-import key
 import telegram
 import random
 from airtable import Airtable
+from bot import settings
 
-UX_TABLE = Airtable(key.AIRTABLE_CONFIG_ID, 'UX', api_key=key.AIRTABLE_API_KEY)
+UX_TABLE = Airtable(settings.AIRTABLE_CONFIG_ID, 'UX', api_key=settings.AIRTABLE_API_KEY)
 UX_DICT = None
 
 def reload_ux():

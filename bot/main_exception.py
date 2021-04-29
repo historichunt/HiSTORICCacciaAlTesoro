@@ -1,8 +1,8 @@
 import logging
 import traceback
-from bot_telegram import report_master
 import telegram
 import time
+from bot.bot_telegram import report_master
 
 def exception_reporter(func, *args, **kwargs):    
     def exception_reporter_wrapper(*args, **kwargs):

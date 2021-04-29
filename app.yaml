@@ -1,9 +1,5 @@
 # app name: historictrentobot
 # url: https://historictrentobot.appspot.com
 
-entrypoint: gunicorn -b :$PORT main:app
+entrypoint: gunicorn -b :$PORT main:app --chdir bot
 runtime: python37
-
-# gcloud config list project
-# gcloud config set project historictrentobot
-# gcloud app deploy -q -v test/production

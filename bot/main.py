@@ -1,6 +1,5 @@
-from flask import Flask, Response, request, jsonify
-import key
-import params
+from flask import Flask, request
+from bot import settings
 
 import logging
 import google.cloud.logging
@@ -33,10 +32,10 @@ def page_not_found(e):
 def internal_error(error):
     return "500 error: {}".format(error), 500
 
-@app.route(key.WEBHOOK_TELEGRAM_ROUTING, methods=['POST'])
+@app.route(settings.WEBHOOK_TELEGRAM_ROUTING, methods=['POST'])
 def telegram_webhook_handler():
-    from main_exception import run_new_thread_and_report_exception
-    from bot_telegram_dialogue import deal_with_request    
+    from bot.main_exception import run_new_thread_and_report_exception
+    from bot.bot_telegram_dialogue import deal_with_request    
     import json
     
     request_json = request.get_json(force=True)

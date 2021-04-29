@@ -1,18 +1,14 @@
-import utility
-import key
+
 from airtable import Airtable
 from random import shuffle, choice
-import ndb_person
-from ndb_person import Person
-import params
-import airtable_utils
-
+from bot import utility, settings, airtable_utils
+import bot.date_time_util as dtu
 
 #################
 # GAMES CONFIG
 #################
 
-HUNTS_CONFIG_TABLE = Airtable(key.AIRTABLE_CONFIG_ID, 'Hunts', api_key=key.AIRTABLE_API_KEY)
+HUNTS_CONFIG_TABLE = Airtable(settings.AIRTABLE_CONFIG_ID, 'Hunts', api_key=settings.AIRTABLE_API_KEY)
 
 HUNTS = {} # pw -> hunt_details (all)
 
@@ -46,7 +42,7 @@ INPUT_INSTRUCTIONS, INPUT_TYPE, INPUT_CONFIRMATION, POST_INPUT
 '''
 
 def get_settings(p, airtable_game_id):
-    SETTINGS_TABLE = Airtable(airtable_game_id, 'Settings', api_key=key.AIRTABLE_API_KEY)
+    SETTINGS_TABLE = Airtable(airtable_game_id, 'Settings', api_key=settings.AIRTABLE_API_KEY)
     SETTINGS = {
         row['fields']['Name']:row['fields']['Value'] 
         for row in SETTINGS_TABLE.get_all() 
@@ -56,7 +52,7 @@ def get_settings(p, airtable_game_id):
 
 def get_random_missioni(p, airtable_game_id, mission_tab_name, initial_cat):
     import itertools
-    MISSIONI_TABLE = Airtable(airtable_game_id, mission_tab_name, api_key=key.AIRTABLE_API_KEY)
+    MISSIONI_TABLE = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_API_KEY)
     MISSIONI_ALL = [row['fields'] for row in MISSIONI_TABLE.get_all() if row['fields'].get('ACTIVE',False)]    
     for row in MISSIONI_ALL:
         if 'FINALE' not in row:
@@ -118,7 +114,7 @@ def get_random_missioni(p, airtable_game_id, mission_tab_name, initial_cat):
         missioni_random.append(missione_finale)
     # debug
     if p.is_manager(): 
-        from bot_telegram import send_message   
+        from bot.bot_telegram import send_message   
         random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_random,1)])
         send_message(p, "DEBUG Random missioni:\n{}".format(random_missioni_names))
     return missioni_random
@@ -133,12 +129,12 @@ RESULTS_GAME_TABLE_HEADERS = \
     'PENALTIES', 'PENALTY TIME', 'FINISHED', 'TOTAL TIME GAME', 'TOTAL TIME MISSIONS']
 
 def save_game_data_in_airtable(p):
-    from bot_telegram import get_photo_url_from_telegram
+    from bot.bot_telegram import get_photo_url_from_telegram
     import json
     game_data = p.tmp_variables
     airtable_game_id = game_data['HUNT_INFO']['Airtable_Game_ID']
 
-    RESULTS_GAME_TABLE = Airtable(airtable_game_id, 'Results', api_key=key.AIRTABLE_API_KEY)    
+    RESULTS_GAME_TABLE = Airtable(airtable_game_id, 'Results', api_key=settings.AIRTABLE_API_KEY)    
 
     games_row = {}
     for h in RESULTS_GAME_TABLE_HEADERS:
@@ -153,19 +149,13 @@ def save_game_data_in_airtable(p):
 def save_survey_data_in_airtable(p):
     game_data = p.tmp_variables
     airtable_game_id = game_data['HUNT_INFO']['Airtable_Game_ID']
-    results_survey_table = Airtable(airtable_game_id, 'Survey Answers', api_key=key.AIRTABLE_API_KEY)
+    results_survey_table = Airtable(airtable_game_id, 'Survey Answers', api_key=settings.AIRTABLE_API_KEY)
     survey_row = {}
     survey_data = game_data['SURVEY_INFO']['COMPLETED']
     for row in survey_data:
         survey_row[row['QN']] = row['ANSWER'] # columns: Q1, Q2, ...
     results_survey_table.insert(survey_row)
 
-
-################################
-# PEOPLE FOR GAME
-################################
-
-from ndb_utils import client
 
 ################################
 # GAME MANAGEMENT FUNCTIONS
@@ -179,8 +169,8 @@ def reset_game(p, hunt_password):
     hunt_info = HUNTS[hunt_password]
     airtable_game_id = hunt_info['Airtable_Game_ID']
     settings = get_settings(p, airtable_game_id)
-    instructions_table = Airtable(airtable_game_id, 'Instructions', api_key=key.AIRTABLE_API_KEY)    
-    survey_table = Airtable(airtable_game_id, 'Survey', api_key=key.AIRTABLE_API_KEY)        
+    instructions_table = Airtable(airtable_game_id, 'Instructions', api_key=settings.AIRTABLE_API_KEY)    
+    survey_table = Airtable(airtable_game_id, 'Survey', api_key=settings.AIRTABLE_API_KEY)        
     p.current_hunt = hunt_password         
     initial_cat = settings.get('INITIAL_CAT', None)
     multilingual =  utility.get_str_param_boolean(settings, 'MULTILINGUAL')
@@ -271,7 +261,7 @@ def get_group_name(p, escape_markdown=True):
     return name
 
 def set_game_start_time(p):
-    import date_time_util as dtu
+    
     start_time = dtu.nowUtcIsoFormat()
     p.tmp_variables['START_TIME'] = start_time
 
@@ -279,13 +269,11 @@ def get_game_start_time(p):
     return p.tmp_variables['START_TIME']
 
 def set_game_end_time(p, finished):
-    import date_time_util as dtu
     end_time = dtu.nowUtcIsoFormat()
     p.tmp_variables['END_TIME'] = end_time
     p.tmp_variables['FINISHED'] = finished
 
 def start_mission(p):
-    import date_time_util as dtu
     start_time = dtu.nowUtcIsoFormat()    
     current_indovinello = getCurrentIndovinello(p)
     current_indovinello['wrong_answers'] = []
@@ -293,12 +281,10 @@ def start_mission(p):
     p.tmp_variables['MISSION_TIMES'].append([start_time])
 
 def set_end_mission_time(p):
-    import date_time_util as dtu
     current_indovinello = getCurrentIndovinello(p)
     current_indovinello['end_time'] = dtu.nowUtcIsoFormat()
 
 def set_mission_end_time(p):
-    import date_time_util as dtu
     end_time = dtu.nowUtcIsoFormat()
     last_mission_time = p.tmp_variables['MISSION_TIMES'][-1]
     last_mission_time.append(end_time)
@@ -306,7 +292,6 @@ def set_mission_end_time(p):
     return mission_ellapsed
 
 def set_elapsed_and_penalty_and_compute_total(p):
-    import date_time_util as dtu
     tvar = p.tmp_variables    
     end_time = get_end_time(p)
     start_time = get_game_start_time(p)

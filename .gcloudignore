@@ -12,12 +12,15 @@
 # below:
 .git/
 .gitignore
-.vscode/
 
 # Python pycache:
 __pycache__/
 # Ignored by the build system
 /setup.cfg
 
-.vscode
-env
+.env*
+.flaskenv
+.vscode/
+.venv/
+data/
+

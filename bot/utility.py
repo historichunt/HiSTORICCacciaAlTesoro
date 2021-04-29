@@ -1,6 +1,5 @@
 import re
 import textwrap
-from collections import OrderedDict
 
 
 def check_email(text_input):

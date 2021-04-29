@@ -1,15 +1,15 @@
-import key
-from airtable import Airtable
 import collections
+from airtable import Airtable
+from bot import settings
 
 def download_selfies(hunt_password, output_dir):
-    import game
+    from bot import game
     import requests
     import os
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
     table_id = game.HUNTS[hunt_password]['Airtable_Game_ID']
-    RESULTS_TABLE = Airtable(table_id, 'Results', api_key=key.AIRTABLE_API_KEY)
+    RESULTS_TABLE = Airtable(table_id, 'Results', api_key=settings.AIRTABLE_API_KEY)
     table_entries = RESULTS_TABLE.get_all()
     for entry in table_entries:
         fields = entry['fields']
@@ -40,16 +40,16 @@ def get_rows(table, filter=None, sort_key=None):
     if filter:
         rows = [r for r in rows if filter(r)]
     if sort_key:
-        return sorted(rows, key=sort_key)
+        return sorted(rows, settings=sort_key)
     else:
         return rows
 
 def get_wrong_answers(hunt_password, output_file):
-    import game
+    from bot import game
     from collections import defaultdict
     import json
     table_id = game.HUNTS[hunt_password]['Airtable_Game_ID']
-    RESULTS_TABLE = Airtable(table_id, 'Results', api_key=key.AIRTABLE_API_KEY)
+    RESULTS_TABLE = Airtable(table_id, 'Results', api_key=settings.AIRTABLE_API_KEY)
     table_entries = RESULTS_TABLE.get_all()
     mission_wrong_ansers = defaultdict(list)
     for entry in table_entries:
