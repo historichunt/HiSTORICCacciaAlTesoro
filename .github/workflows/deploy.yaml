@@ -9,15 +9,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - uses: ikuanyshbekov/app-yaml-env-compiler@v1.0
-        env:
-          ENV_VERSION: ${{ secrets.ENV_VERSION }}
-          TELEGRAM_BOT_USERNAME: ${{ secrets.TELEGRAM_BOT_USERNAME }}       
-          TELEGRAM_API_TOKEN: ${{ secrets.TELEGRAM_API_TOKEN }}       
-          AIRTABLE_API_KEY: ${{ secrets.AIRTABLE_API_KEY }}       
-          AIRTABLE_CONFIG_ID: ${{ secrets.AIRTABLE_CONFIG_ID }}       
-          HISTORIC_NOTIFICHE_GROUP_CHAT_ID: ${{ secrets.HISTORIC_NOTIFICHE_GROUP_CHAT_ID }}       
-          ADMIN_ID: ${{ secrets.ADMIN_ID }}                 
       - uses: actions-hub/gcloud@master
         env:
           PROJECT_ID: ${{secrets.GCLOUD_PROJECT_ID}}

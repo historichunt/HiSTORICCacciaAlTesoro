@@ -1,17 +1,2 @@
-# app name: historictrentobot
-# url: https://historictrentobot.appspot.com
-
 entrypoint: gunicorn -b :$PORT main:app --chdir bot
 runtime: python37
-
-# env_variables:
-#   ENV_VERSION: $ENV_VERSION
-#   TELEGRAM_BOT_USERNAME: $TELEGRAM_BOT_USERNAME
-#   TELEGRAM_API_TOKEN: $TELEGRAM_API_TOKEN
-#   AIRTABLE_API_KEY: $AIRTABLE_API_KEY
-#   AIRTABLE_CONFIG_ID: $AIRTABLE_CONFIG_ID
-#   HISTORIC_NOTIFICHE_GROUP_CHAT_ID: $HISTORIC_NOTIFICHE_GROUP_CHAT_ID
-#   ADMIN_ID: $ADMIN_ID
-
-# includes:
-#   - .env_test.yaml
