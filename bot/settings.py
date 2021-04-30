@@ -1,6 +1,5 @@
-import os 
 from airtable import Airtable
-from dotenv import load_dotenv
+from bot import ndb_envvar
 
 APP_NAME = 'historictrentobot'
 APP_VERSION = '0.1.0'
@@ -12,14 +11,6 @@ MAX_TEAM_NAME_LENGTH = 30
 WORK_IN_PROGRESS = False
 JUMP_TO_SURVEY_AFTER = False  # 2
 
-# on cloud env file does not exists and this will be ignored
-env_file = f'.env_{ENV_VERSION}' 
-dotenv_path = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)), 
-    env_file
-)
-load_dotenv(dotenv_path)
-
 if NGROK:
     # local version
     from bot import ngrok 
@@ -28,12 +19,14 @@ else:
     # cloud version
     APP_BASE_URL = 'https://{}-dot-{}.appspot.com'.format(ENV_VERSION, APP_NAME)
 
-TELEGRAM_API_TOKEN = os.environ.get("TELEGRAM_API_TOKEN")
-TELEGRAM_BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME")
-AIRTABLE_API_KEY = os.environ.get("AIRTABLE_API_KEY")
-AIRTABLE_CONFIG_ID = os.environ.get("AIRTABLE_CONFIG_ID")
-HISTORIC_NOTIFICHE_GROUP_CHAT_ID = os.environ.get("HISTORIC_NOTIFICHE_GROUP_CHAT_ID")
-ADMIN_ID = os.environ.get("ADMIN_ID")
+# ENVIRONMENT VARIABLES (SECRETS IN DB)
+ENV_VARS = ndb_envvar.get_all(ENV_VERSION)
+TELEGRAM_API_TOKEN = ENV_VARS.get("TELEGRAM_API_TOKEN")
+TELEGRAM_BOT_USERNAME = ENV_VARS.get("TELEGRAM_BOT_USERNAME")
+AIRTABLE_API_KEY = ENV_VARS.get("AIRTABLE_API_KEY")
+AIRTABLE_CONFIG_ID = ENV_VARS.get("AIRTABLE_CONFIG_ID")
+HISTORIC_NOTIFICHE_GROUP_CHAT_ID = ENV_VARS.get("HISTORIC_NOTIFICHE_GROUP_CHAT_ID")
+ADMIN_ID = ENV_VARS.get("ADMIN_ID")
 
 WEBHOOK_TELEGRAM_ROUTING = '/webhook_{}'.format(TELEGRAM_API_TOKEN)
 WEBHOOK_TELEGRAM_BASE = APP_BASE_URL + WEBHOOK_TELEGRAM_ROUTING
