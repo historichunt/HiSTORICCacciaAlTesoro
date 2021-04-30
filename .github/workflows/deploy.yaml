@@ -1,24 +1,17 @@
+name: deploy-app-to-gcp
 on:
   push:
-    branches:
-      - refactoring
-
-name: Deploy to Google App Engine
-
+    branches: [refactoring]
 jobs:
   deploy:
+    name: Deploy
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Deploy to App Engine
-        id: deploy
-        uses: google-github-actions/deploy-appengine@v0.2.0
+      - uses: actions/checkout@v1
+      - uses: actions-hub/gcloud@master
+        env:
+          PROJECT_ID: ${{secrets.GCP_PROJECT}}
+          APPLICATION_CREDENTIALS: ${{secrets.GCP_CREDENTIALS}}
         with:
-          deliverables: app.yaml
-          project_id: ${{ secrets.GCP_PROJECT }}
-          credentials: ${{ secrets.GCP_CREDENTIALS }}
-
-      - name: Show Output
-        run: echo ${{ steps.deploy.outputs.url }}
+          args: app deploy -q -v test
