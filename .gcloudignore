@@ -20,4 +20,4 @@ __pycache__/
 /setup.cfg
 
 .vscode
-env
+.venv

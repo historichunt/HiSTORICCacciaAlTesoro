@@ -1,6 +1,6 @@
-env
+.venv
 key.py
 lib
-env3
 .flaskenv
 data/
+.env*
