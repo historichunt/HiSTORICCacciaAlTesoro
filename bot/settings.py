@@ -12,6 +12,7 @@ MAX_TEAM_NAME_LENGTH = 30
 WORK_IN_PROGRESS = False
 JUMP_TO_SURVEY_AFTER = False  # 2
 
+# on cloud env file does not exists and this will be ignored
 env_file = f'.env_{ENV_VERSION}' 
 dotenv_path = os.path.join(
     os.path.dirname(os.path.dirname(__file__)), 
@@ -20,10 +21,11 @@ dotenv_path = os.path.join(
 load_dotenv(dotenv_path)
 
 if NGROK:
-    # local testing
+    # local version
     from bot import ngrok 
     APP_BASE_URL = ngrok.get_ngrok_base()
 else:
+    # cloud version
     APP_BASE_URL = 'https://{}-dot-{}.appspot.com'.format(ENV_VERSION, APP_NAME)
 
 TELEGRAM_API_TOKEN = os.environ.get("TELEGRAM_API_TOKEN")
