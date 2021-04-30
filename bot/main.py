@@ -18,7 +18,7 @@ def root():
     """Return a friendly HTTP greeting."""
     return "hiSTORIC!!", 200
 
-@app.route('/new_deploy')
+@app.route('/new_deploy', methods=['POST'])
 def new_deploy():    
     from bot.bot_telegram import report_master
     from bot.settings import APP_VERSION
