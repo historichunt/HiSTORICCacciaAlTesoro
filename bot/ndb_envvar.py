@@ -42,6 +42,12 @@ def set_all():
         ndb.put_multi(new_envvars)
 
 @client_context
+def delete_all():
+    ndb.delete_multi(
+        EnvVar.query().fetch(keys_only=True)
+    )
+
+@client_context
 def get_all(version):    
     envvars = EnvVar.query(
         EnvVar.version == version
@@ -58,5 +64,6 @@ def print_all():
         print()
 
 if __name__ == "__main__":
-    # set_all()
-    print_all()
+    delete_all()
+    set_all()
+    # print_all()

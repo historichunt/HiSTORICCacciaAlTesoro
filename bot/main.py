@@ -1,5 +1,6 @@
 from flask import Flask, request
 from bot import settings
+import json
 
 import logging
 import google.cloud.logging
@@ -18,17 +19,15 @@ def root():
     """Return a friendly HTTP greeting."""
     return "hiSTORIC!!", 200
 
-@app.route('/new_deploy', methods=['POST'])
+@app.route(settings.DEPLOY_NOTIFICATION_WEBHOOK_URL_ROUTING, methods=['POST'])
 def new_deploy():    
     from bot.bot_telegram import report_master
     from bot.settings import APP_VERSION
-    msg = f'🛎️ New Deployed version {APP_VERSION}'
+    payload_json = request.get_json(force=True)
+    payload_json_str = json.dumps(payload_json, indent=3, ensure_ascii=False)
+    msg = f'🛎️ New Version {APP_VERSION}\n{payload_json_str}'
     report_master(msg)
     return msg, 200
-
-@app.route('/postest', methods=['POST'])
-def post_test():
-    return "post test!", 200
 
 @app.errorhandler(404)
 def page_not_found(e):
