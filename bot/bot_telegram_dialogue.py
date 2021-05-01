@@ -632,6 +632,8 @@ def state_SURVEY(p, message_obj=None, **kwargs):
 
 def state_END(p, message_obj=None, **kwargs):    
     give_instruction = message_obj is None
+    settings = p.tmp_variables['SETTINGS']
+    reset_hunt_after_completion = get_str_param_boolean(settings, 'RESET_HUNT_AFTER_COMPLETION')
     if give_instruction:        
         penalty_hms, total_hms_game, ellapsed_hms_game, \
             total_hms_missions, ellapsed_hms_missions = game.get_elapsed_and_penalty_and_total_hms(p)
@@ -641,20 +643,21 @@ def state_END(p, message_obj=None, **kwargs):
         if game.send_notification_to_group(p):
             msg_group = p.ux().MSG_END_NOTIFICATION.format(game.get_group_name(p), penalty_hms, \
                 total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)
-            send_message(settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID, msg_group)                
-        settings = p.tmp_variables['SETTINGS']
-        final_message = settings.get('FINAL_MESSAGE','')
-        reset_hunt_after_completion = get_str_param_boolean(settings, 'RESET_HUNT_AFTER_COMPLETION')
+            send_message(settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID, msg_group)                        
+        final_message = settings.get('FINAL_MESSAGE','')        
         if final_message:
             send_message(p, p.ux().get_var(final_message))     
         game.exit_game(p, save_data=True, reset_current_hunt=reset_hunt_after_completion)   
         if reset_hunt_after_completion:
             restart(p, silent=True)        
     else:
-        msg = p.ux().MSG_HUNT_NOT_TERMINATED
-        send_message(p, msg)
         # thisi only happens if RESET_HUNT_AFTER_COMPLETION is False:
-        # we need to tell them that we will let them know when the games is over
+        # checking reset_hunt flag to prevent msg to be shown 
+        # in case of double click on button on previous state
+        if not reset_hunt_after_completion:        
+            # we need to tell them that we will let them know when the games is over
+            msg = p.ux().MSG_HUNT_NOT_TERMINATED
+            send_message(p, msg)        
         
 
 
