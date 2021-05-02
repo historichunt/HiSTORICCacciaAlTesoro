@@ -82,8 +82,6 @@ def state_INITIAL(p, message_obj=None, silent=False, **kwargs):
                 elif text_input == p.ux().BUTTON_ENGLISH:
                     p.set_language('EN')                
                     repeat_state(p)           
-                else:
-                    assert False
                 return
             if text_input.lower() == '/start':
                 repeat_state(p)
@@ -210,8 +208,6 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 repeat_state(p, next_step=True)
             else:
                 send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VOICE)
-        else:
-            assert False
 
 # ================================
 # MISSION INSTRUCTIONS
@@ -250,8 +246,6 @@ def state_MISSION_INTRO(p, message_obj=None, **kwargs):
             if text_input in bot_ux.BUTTON_CONTINUE_MULTI(p.language):
                 current_indovinello = game.getCurrentIndovinello(p)
                 redirect_to_state(p, state_GPS)
-            else:
-                assert False
         else:
             send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)            
 
@@ -346,8 +340,6 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                     else:
                         remaining = MIN_SEC_INDIZIO_1 - ellapsed
                         send_message(p, p.ux().MSG_TOO_EARLY.format(remaining))
-                else:
-                    assert False
             else:
                 correct_answers_upper = [x.strip() for x in current_indovinello['SOLUZIONI'].upper().split(',')]
                 #correct_answers_upper_word_set = set(flatten([x.split() for x in correct_answers_upper]))
@@ -573,8 +565,6 @@ def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
                 else:
                     # end game
                     redirect_to_state(p, state_END)
-            else:
-                assert False
         else:
             send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)        
 
