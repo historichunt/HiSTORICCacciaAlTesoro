@@ -690,9 +690,8 @@ def deal_with_admin_commands(p, message_obj):
             send_text_document(p, 'tmp_vars.json', game.debug_tmp_vars(p))
             return True
         if text_input == '/version':
-            import os
-            v = os.environ.get('GAE_VERSION', 'None')
-            send_message(p, v)
+            send_message(p, settings.ENV_VERSION)
+            return True
         if text_input == '/test_inline_kb':
             send_message(p, "Test inline keypboard", kb=[[p.ux().BUTTON_YES_CALLBACK('test'), p.ux().BUTTON_NO_CALLBACK('test')]], inline_keyboard=True)
             return True

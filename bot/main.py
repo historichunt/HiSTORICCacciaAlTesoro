@@ -22,10 +22,22 @@ def root():
 @app.route(settings.DEPLOY_NOTIFICATION_WEBHOOK_URL_ROUTING, methods=['POST'])
 def new_deploy():    
     from bot.bot_telegram import report_master
-    from bot.settings import APP_VERSION
+    from bot.settings import APP_VERSION, ENV_VERSION
     payload_json = request.get_json(force=True)
-    payload_json_str = json.dumps(payload_json, indent=3, ensure_ascii=False)
-    msg = f'🛎️ New Version {APP_VERSION}\n{payload_json_str}'
+    # payload has the following struture
+    # {
+    #     "event": "push",
+    #     "repository": "kercos/HiSTORICCacciaAlTesoro",
+    #     "commit": "5a94671388c5dc275aa194f811b5ba5214e27f4e",
+    #     "ref": "refs/heads/refactoring",
+    #     "head": "",
+    #     "workflow": "deploy-app-to-gcp"
+    # }
+    branch = payload_json['ref'].split('/')[-1]
+    # payload_json_str = json.dumps(payload_json, indent=3, ensure_ascii=False)
+    msg = f'🛎️ New {ENV_VERSION} Version {APP_VERSION}' 
+    if ENV_VERSION != 'production':
+        msg += f' ({branch})' # issue #
     report_master(msg)
     return msg, 200
 
