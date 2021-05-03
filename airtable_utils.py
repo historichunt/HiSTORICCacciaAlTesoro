@@ -69,17 +69,27 @@ def get_wrong_answers(hunt_password, output_file):
 
 def process_errori(error_dict, output_file):
     with open(output_file, 'w') as f_out:
-        f_out.write("ERRORI piu' frequenti (Almeno 5 volte)\n")
         for tappa in error_dict:
-            counter = collections.Counter(error_dict[tappa])
+        counter = collections.Counter(d3[tappa])
+        error_dict[tappa] = (error_dict[tappa],{'counter':sum(counter.values())})
+
+        sorted_keys = sorted(error_dict, key=lambda tappa: error_dict[tappa][1]['counter'], reverse=True)
+
+        sorted_dict = OrderedDict()
+        for k in sorted_keys:
+            sorted_dict[k] = error_dict[k]
+    
+        f_out.write("5 ERRORI piu' frequenti\n")
+        for tappa in error_dict:
+            counter = collections.Counter(error_dict[tappa][0])
             f_out.write(f'TAPPA = {tappa}\n')
             f_out.write(f'  ERRORI TOTALI = {sum(counter.values())}\n')
             for (error, freq) in counter.most_common(5):
                 f_out.write(f'   ERRORE = {error}   (con frequenza = {freq})\n')
 
-        f_out.write("\n\nTUTTI GLI ERRORI (anche quelli poco frequenti, ad esempio occorsi solo una volta)")
+        f_out.write("\n\nTUTTI GLI ERRORI")
         for tappa in error_dict:
-            counter = collections.Counter(error_dict[tappa])
+            counter = collections.Counter(error_dict[tappa][0])
             f_out.write(f'TAPPA = {tappa}\n')
             f_out.write(f'  ERRORI TOTALI = {sum(counter.values())}\n')
             for (error, freq) in counter.most_common():
