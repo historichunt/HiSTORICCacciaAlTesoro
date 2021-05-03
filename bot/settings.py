@@ -1,3 +1,4 @@
+import os
 from airtable import Airtable
 from bot import ndb_envvar
 
@@ -6,7 +7,7 @@ APP_VERSION = '0.1.1'
 
 # PARAMS
 NGROK = False # set to True for local testing
-ENV_VERSION = 'test' # test or production
+ENV_VERSION = os.environ.get('GAE_VERSION', 'test') # test or production
 MAX_TEAM_NAME_LENGTH = 30
 WORK_IN_PROGRESS = False
 JUMP_TO_SURVEY_AFTER = False  # 2
