@@ -34,11 +34,11 @@ def new_deploy():
     #     "workflow": "deploy-app-to-gcp"
     # }
     branch = payload_json['ref'].split('/')[-1]
-    payload_json_str = json.dumps(payload_json, indent=3, ensure_ascii=False)
+    # payload_json_str = json.dumps(payload_json, indent=3, ensure_ascii=False)
     msg = f'🛎️ New {ENV_VERSION} Version {APP_VERSION}' 
     if ENV_VERSION != 'production':
         msg += f' ({branch})' # issue #
-    msg += f'\n{payload_json_str}'
+    # msg += f'\n{payload_json_str}'
     report_master(msg)
     return msg, 200
 

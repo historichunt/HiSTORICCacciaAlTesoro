@@ -116,9 +116,11 @@ def report_master(message):
     if len(message)>max_length:
         chunks = (message[0+i:max_length+i] for i in range(0, len(message), max_length))
         for m in chunks:
-            send_message(settings.ADMIN_ID, m, markdown=False)    
+            for id in settings.ADMIN_IDS:
+                send_message(id, m, markdown=False, sleep=True)
     else:
-        send_message(settings.ADMIN_ID, message, markdown=False)
+        for id in settings.ADMIN_IDS:
+            send_message(id, message, markdown=False, sleep=True)
 
 
 # ---------
