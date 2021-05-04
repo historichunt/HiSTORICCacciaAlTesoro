@@ -14,3 +14,4 @@ gcloud app deploy -q -v test/production
 
 ## Activating a game with url start
 `https://t.me/hiSTORICtrentobot?start=secret_password`
+
