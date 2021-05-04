@@ -1,7 +1,9 @@
 name: deploy-app-to-gcp
 on:
   push:
-    branches: [*issue*]
+    branches: [master]
+  pull_request:
+    branches: [master]
 jobs:
   deploy:
     name: Deploy
@@ -14,8 +16,8 @@ jobs:
           PROJECT_ID: ${{secrets.GCLOUD_PROJECT_ID}}
           APPLICATION_CREDENTIALS: ${{secrets.GOOGLE_APPLICATION_CREDENTIALS}}
         with:
-          args: app deploy app.yaml -q -v test
+          args: app deploy app.yaml -q -v production
       - uses: distributhor/workflow-webhook@v1
         env:
-          webhook_url: ${{ secrets.DEPLOY_NOTIFICATION_WEBHOOK_URL }}
-          webhook_secret: ${{ secrets.DEPLOY_NOTIFICATION_WEBHOOK_SECRET }}
+          webhook_url: ${{ secrets.DEPLOY_NOTIFICATION_WEBHOOK_URL_PRODUCTION }}
+          webhook_secret: ''
