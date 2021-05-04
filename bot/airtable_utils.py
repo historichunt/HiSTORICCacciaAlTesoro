@@ -1,15 +1,14 @@
 import collections
 from airtable import Airtable
-from bot import settings
+from bot import settings, game
 
-def download_selfies(hunt_password, output_dir):
-    from bot import game
+def download_media(hunt_password, output_dir, table_name='Results'):    
     import requests
     import os
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
     table_id = game.HUNTS[hunt_password]['Airtable_Game_ID']
-    RESULTS_TABLE = Airtable(table_id, 'Results', api_key=settings.AIRTABLE_API_KEY)
+    RESULTS_TABLE = Airtable(table_id, table_name, api_key=settings.AIRTABLE_API_KEY)
     table_entries = RESULTS_TABLE.get_all()
     for entry in table_entries:
         fields = entry['fields']
@@ -17,7 +16,7 @@ def download_selfies(hunt_password, output_dir):
         if group_name is None:
             print('No group name, skipping')
             continue
-        print('Downloading selfies for group {}'.format(group_name))        
+        print('Downloading media for group {}'.format(group_name))        
         output_dir_group = os.path.join(output_dir, group_name)
         if os.path.exists(output_dir_group):
             print('\t Dir already present, skipping.')
@@ -26,9 +25,9 @@ def download_selfies(hunt_password, output_dir):
             print('\t No media, skipping.')
             continue
         os.mkdir(output_dir_group)        
-        for selfie in fields['GROUP_MEDIA_FILE_IDS']:
-            url = selfie['url']
-            file_name = selfie['filename']
+        for media in fields['GROUP_MEDIA_FILE_IDS']:
+            url = media['url']
+            file_name = media['filename']
             print('\t{}'.format(file_name))        
             output_file = os.path.join(output_dir_group, file_name)
             r = requests.get(url)
@@ -44,12 +43,11 @@ def get_rows(table, filter=None, sort_key=None):
     else:
         return rows
 
-def get_wrong_answers(hunt_password, output_file):
-    from bot import game
+def get_wrong_answers(hunt_password, output_file, table_name='Results'):
     from collections import defaultdict
     import json
     table_id = game.HUNTS[hunt_password]['Airtable_Game_ID']
-    RESULTS_TABLE = Airtable(table_id, 'Results', api_key=settings.AIRTABLE_API_KEY)
+    RESULTS_TABLE = Airtable(table_id, table_name, api_key=settings.AIRTABLE_API_KEY)
     table_entries = RESULTS_TABLE.get_all()
     mission_wrong_ansers = defaultdict(list)
     for entry in table_entries:
@@ -86,8 +84,13 @@ def process_errori(error_dict, output_file):
                 f_out.write(f'   ERRORE = {error}   (con frequenza = {freq})\n')
 
 
-if __name__ == "__main__":
-    password = '' # insert password here (do not commit)
-    download_selfies(password, 'data/selfies')
-    error_dict = get_wrong_answers(password, 'data/errori.txt')
-    process_errori(error_dict, 'data/errori_processed.txt')
+if __name__ == "__main__":    
+    import os
+    password = input('Inserisci password caccia al tesoro: ')
+    assert password in game.HUNTS, 'Incorrect password'
+    hunt_name = game.HUNTS[password]['Name']
+    outputdir = os.path.join('data', hunt_name)
+    os.makedirs(outputdir)
+    download_media(password, os.path.join(outputdir, 'media'))
+    error_dict = get_wrong_answers(password, os.path.join(outputdir, 'errori.txt'))
+    process_errori(error_dict, os.path.join(outputdir, 'errori_processed.txt'))
