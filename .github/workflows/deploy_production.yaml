@@ -14,7 +14,7 @@ jobs:
           PROJECT_ID: ${{secrets.GCLOUD_PROJECT_ID}}
           APPLICATION_CREDENTIALS: ${{secrets.GOOGLE_APPLICATION_CREDENTIALS}}
         with:
-          args: app deploy app.yaml -q -v test
+          args: app deploy app.yaml -q -v production
       - uses: distributhor/workflow-webhook@v1
         env:
           webhook_url: ${{ secrets.DEPLOY_NOTIFICATION_WEBHOOK_URL }}
