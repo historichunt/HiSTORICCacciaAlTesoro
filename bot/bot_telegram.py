@@ -1,18 +1,13 @@
 import telegram
 import telegram.error
-from telegram.error import TelegramError, Unauthorized, BadRequest, TimedOut, ChatMigrated, NetworkError
-# from main_exception import retry_on_network_error
-import key
+from telegram.error import (TelegramError, Unauthorized, 
+    BadRequest, TimedOut, ChatMigrated, NetworkError)
 import logging
-import traceback
 import time
-import ndb_person
-from ndb_person import Person
-from ndb_utils import client_context
-import game
-import utility
+from bot import settings, game, utility
+from bot.ndb_person import Person
 
-BOT = telegram.Bot(token=key.TELEGRAM_API_TOKEN)
+BOT = telegram.Bot(token=settings.TELEGRAM_API_TOKEN)
 
 def get_chat_id_from_str(s):
     if s.startswith('T_'): 
@@ -103,16 +98,16 @@ def send_text_document(p, file_name, file_content):
     chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
     files = [('document', (file_name, file_content, 'text/plain'))]
     data = {'chat_id': chat_id}
-    resp = requests.post(key.TELEGRAM_API_URL + 'sendDocument', data=data, files=files)
+    resp = requests.post(settings.TELEGRAM_API_URL + 'sendDocument', data=data, files=files)
     logging.debug("Sent documnet. Response status code: {}".format(resp.status_code))
 
 def get_photo_url_from_telegram(file_id):
     import requests    
-    r = requests.post(key.TELEGRAM_API_URL + 'getFile', data={'file_id': file_id})
+    r = requests.post(settings.TELEGRAM_API_URL + 'getFile', data={'file_id': file_id})
     r_json = r.json()
     r_result = r_json['result']
     file_path = r_result['file_path']
-    url = key.TELEGRAM_BASE_URL_FILE + file_path
+    url = settings.TELEGRAM_BASE_URL_FILE + file_path
     return url
 
 def report_master(message):
@@ -121,9 +116,9 @@ def report_master(message):
     if len(message)>max_length:
         chunks = (message[0+i:max_length+i] for i in range(0, len(message), max_length))
         for m in chunks:
-            send_message(key.ADMIN_ID, m, markdown=False)    
+            send_message(settings.ADMIN_ID, m, markdown=False)    
     else:
-        send_message(key.ADMIN_ID, message, markdown=False)
+        send_message(settings.ADMIN_ID, message, markdown=False)
 
 
 # ---------
@@ -140,7 +135,6 @@ BROADCAST_COUNT_REPORT = utility.unindent(
 
 def broadcast(sender, msg, qry = None, blackList_sender=False, sendNotification=True, test=False):
 
-    from bot_telegram_dialogue import restart
     if qry is None:
         qry = Person.query()
     qry = qry.order(Person._key) #_MultiQuery with cursors requires __key__ order
@@ -176,7 +170,7 @@ def broadcast(sender, msg, qry = None, blackList_sender=False, sendNotification=
 # ---------
 
 def reset_all_users(qry = None, message=None):
-    from bot_telegram_dialogue import restart
+    from bot.bot_telegram_dialogue import restart
     if qry is None:
         qry = Person.query()
     qry = qry.order(Person._key)  # _MultiQuery with cursors requires __key__ order
@@ -188,7 +182,7 @@ def reset_all_users(qry = None, message=None):
     while more:
         users, cursor, more = qry.fetch_page(100, start_cursor=cursor)
         for p in users:
-            if p.get_id() == key.HISTORIC_GROUP_CHAT_ID:
+            if p.get_id() == settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID:
                 continue
             if p.state == 'state_INITIAL':
                 continue
@@ -207,7 +201,7 @@ def reset_all_users(qry = None, message=None):
     report_master(msg_admin)
 
 def remove_keyboard_from_notification_group():
-    send_message(key.HISTORIC_GROUP_CHAT_ID, 'Removing Keyboard', remove_keyboard=True)
+    send_message(settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID, 'Removing Keyboard', remove_keyboard=True)
 
 # ================================
 # UTILIITY TELL FUNCTIONS

@@ -1,9 +1,6 @@
-from google.cloud import datastore
-import datetime
-from google.cloud import ndb #https://googleapis.github.io/python-ndb/latest/
-from ndb_utils import client_context
-import utility
-import bot_ux
+from google.cloud import ndb
+from bot.ndb_utils import client_context
+from bot import utility, bot_ux, settings
 
 class Person(ndb.Model):
     chat_id = ndb.StringProperty()
@@ -44,12 +41,10 @@ class Person(ndb.Model):
         return self.key.id()
 
     def is_admin(self):
-        import key
-        return self.get_id() == key.ADMIN_ID
+        return self.get_id() == settings.ADMIN_ID
 
     def is_manager(self):
-        import key
-        return self.get_id() in key.MANAGER_IDS
+        return self.get_id() in settings.MANAGER_IDS
 
     def get_first_name(self, escape_markdown=True):
         return utility.escape_markdown(self.name) if escape_markdown else self.name
@@ -177,7 +172,7 @@ def reset_person_tmp_var(uid):
     p.put()
 
 def get_people_on_hunt_stats(hunt):
-    import game
+    from bot import game
     people_on_hunt = Person.query(Person.current_hunt==hunt).fetch()    
     stats = '\n'.join(
         [game.get_game_stats(p) for p in people_on_hunt])    #  if p.tmp_variables['GROUP_NAME']

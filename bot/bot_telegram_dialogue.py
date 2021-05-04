@@ -1,29 +1,16 @@
 import logging
-import bot_telegram
-from bot_telegram import BOT, send_message, send_location, send_typing_action, \
-    report_master, send_text_document, send_media_url, \
-    broadcast, report_master, reset_all_users
-import utility
-from utility import flatten, get_str_param_boolean
 import telegram
-import ndb_person
-from ndb_person import Person
-from ndb_person import client_context
-import bot_ux
-import game
-import params
-import geoUtils
-import date_time_util as dtu
 import json
 import random
-import key
-
-# ================================
-# CONFIG
-# ================================
-WORK_IN_PROGRESS = False
-JUMP_TO_SURVEY_AFTER = False  # 2
-
+from bot import bot_telegram, utility, ndb_person, bot_ux, game, geoUtils, settings
+from bot import date_time_util as dtu
+from bot.bot_telegram import BOT, send_message, send_location, send_typing_action, \
+    report_master, send_text_document, send_media_url, \
+    broadcast, report_master, reset_all_users
+from bot.settings import WORK_IN_PROGRESS, JUMP_TO_SURVEY_AFTER
+from bot.utility import flatten, get_str_param_boolean
+from bot.ndb_person import Person
+from bot.ndb_utils import client_context
 
 # ================================
 # RESTART
@@ -95,8 +82,6 @@ def state_INITIAL(p, message_obj=None, silent=False, **kwargs):
                 elif text_input == p.ux().BUTTON_ENGLISH:
                     p.set_language('EN')                
                     repeat_state(p)           
-                else:
-                    assert False
                 return
             if text_input.lower() == '/start':
                 repeat_state(p)
@@ -173,8 +158,8 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 send_message(p, p.ux().MSG_EMAIL_WRONG)
         elif input_type == 'TEAM_NAME':
             if text_input:
-                if len(text_input) > params.MAX_TEAM_NAME_LENGTH:
-                    send_message(p, p.ux().MSG_GROUP_NAME_TOO_LONG.format(params.MAX_TEAM_NAME_LENGTH))
+                if len(text_input) > settings.MAX_TEAM_NAME_LENGTH:
+                    send_message(p, p.ux().MSG_GROUP_NAME_TOO_LONG.format(settings.MAX_TEAM_NAME_LENGTH))
                     return
                 if not utility.hasOnlyLettersAndSpaces(text_input):
                     send_message(p, p.ux().MSG_GROUP_NAME_INVALID)
@@ -182,7 +167,7 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 game.set_group_name(p, text_input)
                 # send_message(p, p.ux().MSG_GROUP_NAME_OK.format(text_input))
                 if game.send_notification_to_group(p):
-                    send_message(key.HISTORIC_GROUP_CHAT_ID, "Nuova squadra registrata: {}".format(text_input))
+                    send_message(settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID, "Nuova squadra registrata: {}".format(text_input))
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:
@@ -209,7 +194,7 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 game.append_group_media_input_file_id(p, photo_file_id)
                 send_typing_action(p, sleep_time=1)                            
                 if game.send_notification_to_group(p):
-                    BOT.send_photo(key.HISTORIC_GROUP_CHAT_ID, photo=photo_file_id, caption='Selfie iniziale {}'.format(game.get_group_name(p)))
+                    BOT.send_photo(settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID, photo=photo_file_id, caption='Selfie iniziale {}'.format(game.get_group_name(p)))
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:
@@ -223,8 +208,6 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 repeat_state(p, next_step=True)
             else:
                 send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VOICE)
-        else:
-            assert False
 
 # ================================
 # MISSION INSTRUCTIONS
@@ -263,8 +246,6 @@ def state_MISSION_INTRO(p, message_obj=None, **kwargs):
             if text_input in bot_ux.BUTTON_CONTINUE_MULTI(p.language):
                 current_indovinello = game.getCurrentIndovinello(p)
                 redirect_to_state(p, state_GPS)
-            else:
-                assert False
         else:
             send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)            
 
@@ -359,8 +340,6 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                     else:
                         remaining = MIN_SEC_INDIZIO_1 - ellapsed
                         send_message(p, p.ux().MSG_TOO_EARLY.format(remaining))
-                else:
-                    assert False
             else:
                 correct_answers_upper = [x.strip() for x in current_indovinello['SOLUZIONI'].upper().split(',')]
                 #correct_answers_upper_word_set = set(flatten([x.split() for x in correct_answers_upper]))
@@ -496,10 +475,10 @@ def approve_media_input_indovinello(p, approved, signature):
             indovinello_name = current_indovinello['NOME']            
             if input_type=='PHOTO':
                 caption = 'Selfie indovinello {} squadra {} per indovinello {}'.format(indovinello_number, squadra_name, indovinello_name)
-                BOT.send_photo(key.HISTORIC_GROUP_CHAT_ID, photo=file_id, caption=caption)
+                BOT.send_photo(settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID, photo=file_id, caption=caption)
             else: #elif input_type=='VOICE':
                 caption = 'Registrazione indovinello {} squadra {} per indovinello {}'.format(indovinello_number, squadra_name, indovinello_name)
-                BOT.send_voice(key.HISTORIC_GROUP_CHAT_ID, voice=file_id, caption=caption)
+                BOT.send_voice(settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID, voice=file_id, caption=caption)
         game.append_group_media_input_file_id(p, file_id)        
         if 'POST_INPUT' in current_indovinello:                        
             msg = current_indovinello['POST_INPUT']
@@ -549,8 +528,12 @@ def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
     give_instruction = message_obj is None        
     if give_instruction:
         game.setCurrentIndovinelloAsCompleted(p)
-        survery_time = game.remainingIndovinelloNumber(p) == 0 or \
-            JUMP_TO_SURVEY_AFTER and game.completed_indovinello_number(p) == JUMP_TO_SURVEY_AFTER
+        survery_time = (
+            game.remainingIndovinelloNumber(p) == 0 or (
+                JUMP_TO_SURVEY_AFTER and
+                game.completed_indovinello_number(p) == JUMP_TO_SURVEY_AFTER
+            )
+        )
         game.set_mission_end_time(p)
         if survery_time:            
             game.set_game_end_time(p, finished=True)
@@ -582,8 +565,6 @@ def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
                 else:
                     # end game
                     redirect_to_state(p, state_END)
-            else:
-                assert False
         else:
             send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)        
 
@@ -641,6 +622,8 @@ def state_SURVEY(p, message_obj=None, **kwargs):
 
 def state_END(p, message_obj=None, **kwargs):    
     give_instruction = message_obj is None
+    settings = p.tmp_variables['SETTINGS']
+    reset_hunt_after_completion = get_str_param_boolean(settings, 'RESET_HUNT_AFTER_COMPLETION')
     if give_instruction:        
         penalty_hms, total_hms_game, ellapsed_hms_game, \
             total_hms_missions, ellapsed_hms_missions = game.get_elapsed_and_penalty_and_total_hms(p)
@@ -650,20 +633,21 @@ def state_END(p, message_obj=None, **kwargs):
         if game.send_notification_to_group(p):
             msg_group = p.ux().MSG_END_NOTIFICATION.format(game.get_group_name(p), penalty_hms, \
                 total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)
-            send_message(key.HISTORIC_GROUP_CHAT_ID, msg_group)                
-        settings = p.tmp_variables['SETTINGS']
-        final_message = settings.get('FINAL_MESSAGE','')
-        reset_hunt_after_completion = get_str_param_boolean(settings, 'RESET_HUNT_AFTER_COMPLETION')
+            send_message(settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID, msg_group)                        
+        final_message = settings.get('FINAL_MESSAGE','')        
         if final_message:
             send_message(p, p.ux().get_var(final_message))     
         game.exit_game(p, save_data=True, reset_current_hunt=reset_hunt_after_completion)   
         if reset_hunt_after_completion:
             restart(p, silent=True)        
     else:
-        msg = p.ux().MSG_HUNT_NOT_TERMINATED
-        send_message(p, msg)
         # thisi only happens if RESET_HUNT_AFTER_COMPLETION is False:
-        # we need to tell them that we will let them know when the games is over
+        # checking reset_hunt flag to prevent msg to be shown 
+        # in case of double click on button on previous state
+        if not reset_hunt_after_completion:        
+            # we need to tell them that we will let them know when the games is over
+            msg = p.ux().MSG_HUNT_NOT_TERMINATED
+            send_message(p, msg)        
         
 
 
@@ -705,7 +689,11 @@ def deal_with_admin_commands(p, message_obj):
             #send_message(p, game.debug_tmp_vars(p), markdown=False)
             send_text_document(p, 'tmp_vars.json', game.debug_tmp_vars(p))
             return True
-        if text_input == '/testInlineKb':
+        if text_input == '/version':
+            msg = f'{settings.ENV_VERSION} {settings.APP_VERSION}'
+            send_message(p, msg)
+            return True
+        if text_input == '/test_inline_kb':
             send_message(p, "Test inline keypboard", kb=[[p.ux().BUTTON_YES_CALLBACK('test'), p.ux().BUTTON_NO_CALLBACK('test')]], inline_keyboard=True)
             return True
         if text_input == '/random':

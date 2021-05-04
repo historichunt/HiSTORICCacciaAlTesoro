@@ -1,4 +1,4 @@
-from google.cloud import ndb #https://googleapis.github.io/python-ndb/latest/
+from google.cloud import ndb
 
 client = ndb.Client()
 

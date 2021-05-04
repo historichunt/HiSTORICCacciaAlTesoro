@@ -1,7 +1,6 @@
-import key
-from airtable import Airtable
-import airtable_utils
 import re
+from airtable import Airtable
+from bot import settings, airtable_utils
 
 def check_curly_bracket(s):
     return len(re.findall(r'\{\d*\}',s)) == s.count('{') == s.count('}')
@@ -21,7 +20,7 @@ def check_back_apostrophe(s):
 
 def check_ux():
     print('Checking UX')
-    ux_table = Airtable(key.AIRTABLE_CONFIG_ID, 'UX', api_key=key.AIRTABLE_API_KEY)
+    ux_table = Airtable(settings.AIRTABLE_CONFIG_ID, 'UX', api_key=settings.AIRTABLE_API_KEY)
     row_dict_list = airtable_utils.get_rows(ux_table)
     for row_dict in row_dict_list:
         for k,v in row_dict.items():
@@ -36,12 +35,12 @@ def check_ux():
                 'Error BACK APOSTROPHE in ux table in var "{}" column {}'.format(row_dict['VAR'], k)
 
 def check_hunts():
-    from game import HUNTS
+    from bot.game import HUNTS
     for hunt_config_dict in HUNTS.values():
         hunt_name = hunt_config_dict['Name']        
         print('Checking {}'.format(hunt_name))
         game_id = hunt_config_dict['Airtable_Game_ID']
-        hunt_missioni_table = Airtable(game_id, 'Missioni', api_key=key.AIRTABLE_API_KEY)
+        hunt_missioni_table = Airtable(game_id, 'Missioni', api_key=settings.AIRTABLE_API_KEY)
         missioni_row_dict_list = airtable_utils.get_rows(hunt_missioni_table)
         for row_dict in missioni_row_dict_list:
             for k,v in row_dict.items():
