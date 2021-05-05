@@ -138,7 +138,11 @@ def save_game_data_in_airtable(p):
     game_data = p.tmp_variables
     airtable_game_id = game_data['HUNT_INFO']['Airtable_Game_ID']
 
-    RESULTS_GAME_TABLE = Airtable(airtable_game_id, 'Results', api_key=settings.AIRTABLE_API_KEY)    
+    RESULTS_GAME_TABLE = Airtable(
+        airtable_game_id, 
+        'Results', 
+        api_key=settings.AIRTABLE_API_KEY
+    )    
 
     games_row = {}
     for h in RESULTS_GAME_TABLE_HEADERS:
@@ -172,12 +176,12 @@ def reset_game(p, hunt_password):
 
     hunt_info = HUNTS[hunt_password]
     airtable_game_id = hunt_info['Airtable_Game_ID']
-    settings = get_settings(p, airtable_game_id)
+    hunt_settings = get_settings(p, airtable_game_id)
     instructions_table = Airtable(airtable_game_id, 'Instructions', api_key=settings.AIRTABLE_API_KEY)    
     survey_table = Airtable(airtable_game_id, 'Survey', api_key=settings.AIRTABLE_API_KEY)        
     p.current_hunt = hunt_password         
-    initial_cat = settings.get('INITIAL_CAT', None)
-    multilingual =  utility.get_str_param_boolean(settings, 'MULTILINGUAL')
+    initial_cat = hunt_settings.get('INITIAL_CAT', None)
+    multilingual =  utility.get_str_param_boolean(hunt_settings, 'MULTILINGUAL')
     mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni'
     missioni = get_random_missioni(p, airtable_game_id, mission_tab_name, initial_cat)
     instructions_steps = airtable_utils.get_rows(
@@ -186,7 +190,7 @@ def reset_game(p, hunt_password):
     )
     survey = airtable_utils.get_rows(survey_table, sort_key=lambda r: r['QN'])
     tvar = p.tmp_variables = {}  
-    tvar['SETTINGS'] = settings      
+    tvar['SETTINGS'] = hunt_settings      
     tvar['HUNT_INFO'] = hunt_info
     tvar['Notify_Group'] = hunt_info.get('Notify_Group', False)
     tvar['Validator_ID'] = hunt_info.get('Validator_ID', None)

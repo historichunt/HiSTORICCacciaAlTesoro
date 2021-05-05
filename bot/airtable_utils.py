@@ -39,7 +39,7 @@ def get_rows(table, filter=None, sort_key=None):
     if filter:
         rows = [r for r in rows if filter(r)]
     if sort_key:
-        return sorted(rows, settings=sort_key)
+        return sorted(rows, key=sort_key)
     else:
         return rows
 
