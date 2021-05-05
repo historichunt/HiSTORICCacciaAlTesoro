@@ -15,3 +15,5 @@ gcloud app deploy -q -v test/production
 ## Activating a game with url start
 `https://t.me/hiSTORICtrentobot?start=secret_password`
 
+## pyngrok cert problem
+see https://stackoverflow.com/a/61294657/5489042

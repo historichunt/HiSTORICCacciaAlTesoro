@@ -3,25 +3,51 @@ from airtable import Airtable
 from bot import ndb_envvar
 
 APP_NAME = 'historictrentobot'
-APP_VERSION = '0.1.1'
+APP_VERSION = '0.1.2'
+CLOUD_ENVS = ['test', 'production']
+GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
 
 # PARAMS
-NGROK = False # set to True for local testing
-ENV_VERSION = os.environ.get('GAE_VERSION', 'test') # test or production
 MAX_TEAM_NAME_LENGTH = 30
 WORK_IN_PROGRESS = False
 JUMP_TO_SURVEY_AFTER = False  # 2
 
-if NGROK:
+if GAE_SERVER:
+    # cloud version
+    ENV_VERSION = os.environ.get('GAE_VERSION') # test or production
+    APP_BASE_URL = 'https://{}-dot-{}.appspot.com'.format(ENV_VERSION, APP_NAME)    
+    ENV_VARS = ndb_envvar.get_all(ENV_VERSION)
+else:
     # local version
     from bot import ngrok 
-    APP_BASE_URL = ngrok.get_ngrok_base()
-else:
-    # cloud version
-    APP_BASE_URL = 'https://{}-dot-{}.appspot.com'.format(ENV_VERSION, APP_NAME)
+    # APP_BASE_URL = ngrok.get_ngrok_base()
+    APP_BASE_URL = ngrok.start_pyngrok()    
+    print(f'Running local version: {APP_BASE_URL}')
 
-# ENVIRONMENT VARIABLES (SECRETS IN DB)
-ENV_VARS = ndb_envvar.get_all(ENV_VERSION)
+    # check local environments
+    dotenv_dir = os.path.dirname(os.path.dirname(__file__))
+    LOCAL_ENV_FILES = [
+        f for f in os.listdir(dotenv_dir) 
+        if (
+            f.startswith('.env') and
+            not any(f.endswith(x) for x in CLOUD_ENVS)
+        )
+    ]
+
+    if LOCAL_ENV_FILES:
+        # use settings in .env_
+        from dotenv import dotenv_values
+        LOCAL_ENV = os.path.join(dotenv_dir, LOCAL_ENV_FILES[0])
+        ENV_VERSION = LOCAL_ENV.split('.env_')[1] # what follows '.env_'
+        print(f'Using settings specified in {LOCAL_ENV}')
+        ENV_VARS = dotenv_values(LOCAL_ENV)
+    else:
+        ENV_VERSION = 'test'
+        print(f'Using test bot')
+        ENV_VARS = ndb_envvar.get_all(ENV_VERSION)
+
+
+# ENVIRONMENT VARIABLES (SECRETS IN DB/.env_ file)
 TELEGRAM_API_TOKEN = ENV_VARS.get("TELEGRAM_API_TOKEN")
 AIRTABLE_API_KEY = ENV_VARS.get("AIRTABLE_API_KEY")
 AIRTABLE_CONFIG_ID = ENV_VARS.get("AIRTABLE_CONFIG_ID")

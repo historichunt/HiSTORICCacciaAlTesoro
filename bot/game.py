@@ -1,14 +1,18 @@
 
 from airtable import Airtable
 from random import shuffle, choice
-from bot import utility, settings, airtable_utils
+from bot import settings, utility, airtable_utils
 import bot.date_time_util as dtu
 
 #################
 # GAMES CONFIG
 #################
 
-HUNTS_CONFIG_TABLE = Airtable(settings.AIRTABLE_CONFIG_ID, 'Hunts', api_key=settings.AIRTABLE_API_KEY)
+HUNTS_CONFIG_TABLE = Airtable(
+    settings.AIRTABLE_CONFIG_ID, 
+    'Hunts', 
+    api_key=settings.AIRTABLE_API_KEY
+)
 
 HUNTS = {} # pw -> hunt_details (all)
 

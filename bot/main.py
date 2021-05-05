@@ -1,6 +1,8 @@
+import atexit
 from flask import Flask, request
 from bot import settings
 import json
+
 
 import logging
 import google.cloud.logging
@@ -12,6 +14,13 @@ client.setup_logging(log_level=logging.DEBUG)
 # If `entrypoint` is not defined in app.yaml, App Engine will look for an app
 # called `app` in `main.py`.
 app = Flask(__name__)
+
+with app.app_context():
+    from bot import bot_telegram_admin
+    bot_telegram_admin.set_webhook()
+    # if not settings.GAE_SERVER:
+    #     from bot import ngrok
+    #     atexit.register(ngrok.stop_pyngrok)
 
 @app.route('/')
 def root():
@@ -57,7 +66,7 @@ def telegram_webhook_handler():
     from bot.main_exception import run_new_thread_and_report_exception
     from bot.bot_telegram_dialogue import deal_with_request    
     import json
-    
+
     request_json = request.get_json(force=True)
 
     logging.debug("TELEGRAM POST REQUEST: {}".format(json.dumps(request_json)))
