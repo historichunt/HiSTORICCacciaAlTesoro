@@ -3,7 +3,7 @@ from airtable import Airtable
 from bot import ndb_envvar
 
 APP_NAME = 'historictrentobot'
-APP_VERSION = '0.1.2'
+APP_VERSION = '0.1.3'
 CLOUD_ENVS = ['test', 'production']
 GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
 
