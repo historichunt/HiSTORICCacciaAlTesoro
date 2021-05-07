@@ -16,7 +16,7 @@ HUNTS_CONFIG_TABLE = Airtable(
 
 HUNTS = {} # pw -> hunt_details (all)
 
-def reload_config():
+def reload_config_hunt():
     global HUNTS
     HUNTS = {
         r['Password'].lower(): r
@@ -28,7 +28,7 @@ def reload_config():
     }
     # ACTIVE_HUNTS = {k:v for k,v in HUNTS.items() if v.get('Active',False)}
 
-reload_config()
+reload_config_hunt()
 
 
 #################

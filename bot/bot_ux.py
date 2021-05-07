@@ -7,16 +7,11 @@ from bot import settings
 
 UX_DIR = os.path.join(settings.ROOT_DIR, 'ux')
 
-UX_DICT = None # lang -> var -> string
-
-def reload_ux():
-    global UX_DICT
-    UX_DICT = {
-        lang: json.load(open(os.path.join(UX_DIR, f'{lang}.json')))
-        for lang in settings.LANGUAGES
-    }
-
-reload_ux()
+# lang -> var -> string
+UX_DICT = {
+    lang: json.load(open(os.path.join(UX_DIR, f'{lang}.json')))
+    for lang in settings.LANGUAGES
+}
 
 class UX_LANG:
     

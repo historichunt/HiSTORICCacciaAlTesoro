@@ -116,8 +116,9 @@ def state_INITIAL(p, message_obj=None, silent=False, **kwargs):
 def state_ADMIN(p, message_obj=None, **kwargs):    
     if message_obj is None:
         kb = [
-            [p.ux().BUTTON_VERSION],
-            [p.ux().BUTTON_BACK],
+            [p.ux().BUTTON_UPDATE_HUNTS_CONFIG],
+            [p.ux().BUTTON_STATS, p.ux().BUTTON_TERMINATE],
+            [p.ux().BUTTON_VERSION, p.ux().BUTTON_BACK],
         ]     
         send_message(p, p.ux().MSG_ADMIN, kb)
     else: 
@@ -130,6 +131,12 @@ def state_ADMIN(p, message_obj=None, **kwargs):
                     send_message(p, msg)
                 elif text_input == p.ux().BUTTON_BACK:
                     redirect_to_state(p, state_INITIAL)
+                elif text_input == p.ux().BUTTON_UPDATE_HUNTS_CONFIG:
+                    update_config_hunt(p)
+                elif text_input == p.ux().BUTTON_STATS:
+                    stats(p)
+                elif text_input == p.ux().BUTTON_TERMINATE:
+                    terminate(p)
             else:
                 send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)     
         else:
@@ -784,22 +791,34 @@ def deal_with_admin_commands(p, message_obj):
             return True
     return False
 
+def update_config_hunt(p):
+    game.reload_config_hunt()
+    send_message(p, p.ux().MSG_RELOADED_HUNTS_CONFIG)
+
+def stats(p):
+    stats_list_str = '\n'.join(["- {} /stats_{}".format(k, k) for k in game.HUNTS.keys()])
+    msg = "Statistiche disponibili:\n{}".format(stats_list_str)
+    send_message(p, msg, markdown=False)
+
+def terminate(p):
+    terminate_list_str = '\n'.join(["- {} /terminate_{}".format(k,k) for k in game.HUNTS.keys()])
+    msg = "Available games to terminate:\n{}".format(terminate_list_str)
+    send_message(p, msg, markdown=False)
+
 def deal_with_manager_commands(p, message_obj):
     text_input = message_obj.text
     # logging.debug("In deal_with_manager_commands with user:{} ismanager:{}".format(p.get_id(), p.is_manager()))
     if p.is_manager():
         if text_input == '/admin':
             msg = "Comandi disponibili:\n"
-            msg += "- /update: refresh configuarzione cacce al tesoro\n"                        
+            msg += "- /update_config_hunt: refresh configuarzione cacce al tesoro\n"                        
             msg += "- /info: info cacce al tesoro attive\n"
             msg += "- /stats: statistiche delle cacce al tesoro\n"
             msg += "- /terminate: termina una caccia al tesoro"
             send_message(p, msg, markdown=False)
             return True
-        if text_input == '/update':
-            bot_ux.reload_ux()
-            game.reload_config()
-            send_message(p, p.ux().MSG_RELOADED_CONFIG_TABLE)
+        if text_input == '/update_config_hunt':
+            update_config_hunt(p)
             return True
         if text_input == '/info':
             info_cacce = '\n'.join(["- {} 🔐{}".format(v['Name'], k) for k,v in game.HUNTS.items()])
@@ -807,9 +826,7 @@ def deal_with_manager_commands(p, message_obj):
             send_message(p, msg, markdown=False)
             return True
         if text_input == '/stats':
-            stats_list_str = '\n'.join(["- {} /stats_{}".format(k, k) for k in game.HUNTS.keys()])
-            msg = "Statistiche disponibili:\n{}".format(stats_list_str)
-            send_message(p, msg, markdown=False)
+            stats(p)
             return True
         if text_input.startswith('/stats_'):
             hunt_pw = text_input.split('_', 1)[1]
@@ -825,9 +842,7 @@ def deal_with_manager_commands(p, message_obj):
                 send_message(p, msg, markdown=False)
             return True        
         if text_input == '/terminate':            
-            terminate_list_str = '\n'.join(["- {} /terminate_{}".format(k,k) for k in game.HUNTS.keys()])
-            msg = "Available games to terminate:\n{}".format(terminate_list_str)
-            send_message(p, msg, markdown=False)
+            terminate(p)            
             return True
         if text_input.startswith('/terminate_'):            
             hunt_pw = text_input.split('_', 1)[1]
