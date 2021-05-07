@@ -2,7 +2,7 @@ import logging
 import traceback
 import telegram
 import time
-from bot.bot_telegram import report_master
+from bot.bot_telegram import report_admins
 
 def exception_reporter(func, *args, **kwargs):    
     def exception_reporter_wrapper(*args, **kwargs):
@@ -12,7 +12,7 @@ def exception_reporter(func, *args, **kwargs):
             report_string = '❗️ Exception {}'.format(traceback.format_exc()) #.splitlines()
             logging.error(report_string) 
             try:  
-                report_master(report_string)
+                report_admins(report_string)
             except Exception:
                 report_string = '❗️ Exception {}'.format(traceback.format_exc())
                 logging.error(report_string)          
@@ -40,9 +40,9 @@ def retry_on_network_error(func):
                 sleep_secs = pow(2,retry_num)
                 report_string = '⚠️️ Caught network error, on {} attemp. Retrying after {} secs...'.format(retry_num,sleep_secs)
                 logging.warning(report_string)                 
-                report_master(report_string)
+                report_admins(report_string)
                 time.sleep(sleep_secs)
         report_string = '❗️ Exception: persistent network error'
         logging.error(report_string)            
-        report_master(report_string)            
+        report_admins(report_string)            
     return retry_on_network_error_wrapper

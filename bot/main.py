@@ -30,7 +30,7 @@ def root():
 
 @app.route(settings.DEPLOY_NOTIFICATION_WEBHOOK_URL_ROUTING, methods=['POST'])
 def new_deploy():    
-    from bot.bot_telegram import report_master
+    from bot.bot_telegram import report_admins
     from bot.settings import APP_VERSION, ENV_VERSION
     payload_json = request.get_json(force=True)
     # payload has the following struture
@@ -48,7 +48,7 @@ def new_deploy():
     if ENV_VERSION != 'production':
         msg += f' ({branch})' # issue #
     # msg += f'\n{payload_json_str}'
-    report_master(msg)
+    report_admins(msg)
     return msg, 200
 
 @app.errorhandler(404)

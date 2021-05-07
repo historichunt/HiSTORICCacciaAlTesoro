@@ -5,8 +5,8 @@ import random
 from bot import bot_telegram, utility, ndb_person, bot_ux, game, geoUtils, settings
 from bot import date_time_util as dtu
 from bot.bot_telegram import BOT, send_message, send_location, send_typing_action, \
-    report_master, send_text_document, send_media_url, \
-    broadcast, report_master, reset_all_users
+    report_admins, send_text_document, send_media_url, \
+    broadcast, report_admins, reset_all_users
 from bot.settings import WORK_IN_PROGRESS, JUMP_TO_SURVEY_AFTER
 from bot.utility import flatten, get_str_param_boolean
 from bot.ndb_person import Person
@@ -49,7 +49,7 @@ def repeat_state(user, message_obj=None, **kwargs):
     method = possibles.get(state)
     if not method:
         msg = "⚠️ User {} sent to unknown method state: {}".format(user.chat_id, state)
-        report_master(msg)
+        report_admins(msg)
         restart(user)
     else:
         method(user, message_obj, **kwargs)
@@ -65,7 +65,9 @@ def state_INITIAL(p, message_obj=None, silent=False, **kwargs):
             kb = [
                 [switch_language_button],
                 [p.ux().BUTTON_INFO]
-            ]            
+            ]     
+            if p.is_manager():
+                kb[-1].append(p.ux().BUTTON_ADMIN)       
             send_message(p, p.ux().MSG_WELCOME_START, kb)
     else: 
         text_input = message_obj.text
@@ -81,7 +83,9 @@ def state_INITIAL(p, message_obj=None, silent=False, **kwargs):
                     repeat_state(p)
                 elif text_input == p.ux().BUTTON_ENGLISH:
                     p.set_language('EN')                
-                    repeat_state(p)           
+                    repeat_state(p)          
+                elif text_input == p.ux().BUTTON_ADMIN:
+                    redirect_to_state(p, state_ADMIN)
                 return
             if text_input.lower() == '/start':
                 repeat_state(p)
@@ -106,6 +110,28 @@ def state_INITIAL(p, message_obj=None, silent=False, **kwargs):
                     send_message(p, p.ux().MSG_HUNT_DISABLED)
             else:
                 send_message(p, p.ux().MSG_WRONG_PASSWORD)
+        else:
+            send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)
+
+def state_ADMIN(p, message_obj=None, **kwargs):    
+    if message_obj is None:
+        kb = [
+            [p.ux().BUTTON_VERSION],
+            [p.ux().BUTTON_BACK],
+        ]     
+        send_message(p, p.ux().MSG_ADMIN, kb)
+    else: 
+        text_input = message_obj.text
+        kb = p.get_keyboard()
+        if text_input:
+            if text_input in flatten(kb):
+                if text_input == p.ux().BUTTON_VERSION:
+                    msg = p.ux().MSG_VERSION.format(settings.APP_VERSION)
+                    send_message(p, msg)
+                elif text_input == p.ux().BUTTON_BACK:
+                    redirect_to_state(p, state_INITIAL)
+            else:
+                send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)     
         else:
             send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
@@ -731,10 +757,10 @@ def deal_with_admin_commands(p, message_obj):
             p = Person.get_by_id(p_id)
             if send_message(p, text, kb=p.get_keyboard()):
                 msg_admin = 'Message sent successfully to {}'.format(p.get_first_last_username())
-                report_master(msg_admin)
+                report_admins(msg_admin)
             else:
                 msg_admin = 'Problems sending message to {}'.format(p.get_first_last_username())
-                report_master(msg_admin)
+                report_admins(msg_admin)
             return True
         if text_input.startswith('/restartUser '):
             p_id = ' '.join(text_input.split(' ')[1:])
@@ -745,10 +771,10 @@ def deal_with_admin_commands(p, message_obj):
                     send_message(p, p.ux().MSG_EXITED_FROM_GAME, remove_keyboard=True)
                 restart(p)
                 msg_admin = 'User restarted: {}'.format(p.get_first_last_username())
-                report_master(msg_admin)                
+                report_admins(msg_admin)                
             else:
                 msg_admin = 'No user found: {}'.format(p_id)
-                report_master(msg_admin)
+                report_admins(msg_admin)
             return True
         if text_input == '/remove_keyboard_from_notification_group':
             bot_telegram.remove_keyboard_from_notification_group()
@@ -891,7 +917,7 @@ def deal_with_request(request_json):
 
     if p == None:
         p = ndb_person.add_person(chat_id, name, last_name, username, 'telegram')
-        report_master('New user: {}'.format(p.get_first_last_username()))
+        report_admins('New user: {}'.format(p.get_first_last_username()))
     else:
         _, was_disabled = p.update_info(name, last_name, username)
         if was_disabled:

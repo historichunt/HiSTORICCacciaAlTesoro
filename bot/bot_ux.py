@@ -6,7 +6,6 @@ from airtable import Airtable
 from bot import settings
 
 UX_DIR = os.path.join(settings.ROOT_DIR, 'ux')
-LANGS = ['IT','EN']
 
 UX_DICT = None # lang -> var -> string
 
@@ -14,7 +13,7 @@ def reload_ux():
     global UX_DICT
     UX_DICT = {
         lang: json.load(open(os.path.join(UX_DIR, f'{lang}.json')))
-        for lang in LANGS
+        for lang in settings.LANGUAGES
     }
 
 reload_ux()
@@ -22,7 +21,7 @@ reload_ux()
 class UX_LANG:
     
     def __init__(self, lang):
-        assert lang in LANGS
+        assert lang in settings.LANGUAGES
         self.lang = lang
 
     def get_var(self, var):
@@ -81,21 +80,3 @@ BUTTON_NO_CALLBACK = lambda x: telegram.InlineKeyboardButton(
     text = UX_LANG('IT').BUTTON_NO,
     callback_data = x
 )
-
-def export_airtable_UX_to_file():
-    for lang in LANGS: 
-        out_file = os.path.join(UX_DIR, f'{lang}.json')
-        lang_key_values = {k:v[lang] for k,v in UX_DICT.items()}
-        with open(out_file, 'w') as f_out:
-            json.dump(
-                lang_key_values, 
-                f_out, 
-                indent=3, 
-                ensure_ascii=False, 
-                sort_keys=lambda x: x[0]
-            )
-        
-
-
-if __name__ == "__main__":
-    export_airtable_UX_to_file()
