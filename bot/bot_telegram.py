@@ -46,11 +46,11 @@ def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
         )
     except Unauthorized:
         logging.debug('User has blocked Bot: {}'.format(p.chat_id))
-        p.switch_notifications()
+        if kwargs.get('switch_notifications', True):
+            p.switch_notifications()
         return False
     except TelegramError as e:
         logging.debug('Exception in reaching user {}: {}'.format(p.chat_id, e))
-        p.switch_notifications()
         return False
     if sleep:
         time.sleep(0.1)
@@ -110,17 +110,17 @@ def get_photo_url_from_telegram(file_id):
     url = settings.TELEGRAM_BASE_URL_FILE + file_path
     return url
 
-def report_master(message):
+def report_admins(message):
     logging.debug('Reporting to master: {}'.format(message))
     max_length = 2000
     if len(message)>max_length:
         chunks = (message[0+i:max_length+i] for i in range(0, len(message), max_length))
         for m in chunks:
             for id in settings.ADMIN_IDS:
-                send_message(id, m, markdown=False, sleep=True)
+                send_message(id, m, markdown=False, sleep=True, switch_notifications=False)
     else:
         for id in settings.ADMIN_IDS:
-            send_message(id, message, markdown=False, sleep=True)
+            send_message(id, message, markdown=False, sleep=True, switch_notifications=False)
 
 
 # ---------
@@ -200,7 +200,7 @@ def reset_all_users(qry = None, message=None):
                 time.sleep(0.2)
 
     msg_admin = 'Resetted {} users.'.format(total)
-    report_master(msg_admin)
+    report_admins(msg_admin)
 
 def remove_keyboard_from_notification_group():
     send_message(settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID, 'Removing Keyboard', remove_keyboard=True)

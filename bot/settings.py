@@ -3,7 +3,7 @@ from airtable import Airtable
 from bot import ndb_envvar
 
 APP_NAME = 'historictrentobot'
-APP_VERSION = '0.2.1'
+APP_VERSION = '0.2.2'
 CLOUD_ENVS = ['test', 'production']
 LANGUAGES = ['IT','EN']
 GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
@@ -39,13 +39,13 @@ else:
         # use settings in .env_
         from dotenv import dotenv_values
         LOCAL_ENV = os.path.join(ROOT_DIR, LOCAL_ENV_FILES[0])
-        ENV_VERSION = LOCAL_ENV.split('.env_')[1] # what follows '.env_'
-        print(f'Using settings specified in {LOCAL_ENV}')
+        ENV_VERSION = LOCAL_ENV.split('.env_')[1] # what follows '.env_'        
         ENV_VARS = dotenv_values(LOCAL_ENV)
     else:
         ENV_VERSION = 'test'
         print(f'Using test bot')
         ENV_VARS = ndb_envvar.get_all(ENV_VERSION)
+    print(f'Using settings: {ENV_VERSION}')
 
 
 # ENVIRONMENT VARIABLES (SECRETS IN DB/.env_ file)
