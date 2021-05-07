@@ -3,9 +3,11 @@ from airtable import Airtable
 from bot import ndb_envvar
 
 APP_NAME = 'historictrentobot'
-APP_VERSION = '0.1.3'
+APP_VERSION = '0.2.1'
 CLOUD_ENVS = ['test', 'production']
+LANGUAGES = ['IT','EN']
 GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
+ROOT_DIR = os.path.dirname(os.path.dirname(__file__)) # base dir (works both in flask and gunicorn)
 
 # PARAMS
 MAX_TEAM_NAME_LENGTH = 30
@@ -24,10 +26,9 @@ else:
     APP_BASE_URL = ngrok.start_pyngrok()    
     print(f'Running local version: {APP_BASE_URL}')
 
-    # check local environments
-    dotenv_dir = os.path.dirname(os.path.dirname(__file__))
+    # check local environments    
     LOCAL_ENV_FILES = [
-        f for f in os.listdir(dotenv_dir) 
+        f for f in os.listdir(ROOT_DIR) 
         if (
             f.startswith('.env') and
             not any(f.endswith(x) for x in CLOUD_ENVS)
@@ -37,7 +38,7 @@ else:
     if LOCAL_ENV_FILES:
         # use settings in .env_
         from dotenv import dotenv_values
-        LOCAL_ENV = os.path.join(dotenv_dir, LOCAL_ENV_FILES[0])
+        LOCAL_ENV = os.path.join(ROOT_DIR, LOCAL_ENV_FILES[0])
         ENV_VERSION = LOCAL_ENV.split('.env_')[1] # what follows '.env_'
         print(f'Using settings specified in {LOCAL_ENV}')
         ENV_VARS = dotenv_values(LOCAL_ENV)

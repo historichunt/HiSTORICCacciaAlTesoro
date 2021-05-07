@@ -1,24 +1,20 @@
+import os
+import json
 import telegram
 import random
 from airtable import Airtable
 from bot import settings
 
-UX_TABLE = Airtable(settings.AIRTABLE_CONFIG_ID, 'UX', api_key=settings.AIRTABLE_API_KEY)
-UX_DICT = None
+UX_DIR = os.path.join(settings.ROOT_DIR, 'ux')
+LANGS = ['IT','EN']
+
+UX_DICT = None # lang -> var -> string
 
 def reload_ux():
     global UX_DICT
     UX_DICT = {
-        r['VAR']: {
-            lang: v.strip()
-            for lang,v in r.items() if lang!='VAR'
-            # 'IT': ...
-            # 'EN': ...
-        }
-        for r in [
-            row['fields'] 
-            for row in UX_TABLE.get_all() 
-        ]
+        lang: json.load(open(os.path.join(UX_DIR, f'{lang}.json')))
+        for lang in LANGS
     }
 
 reload_ux()
@@ -26,14 +22,14 @@ reload_ux()
 class UX_LANG:
     
     def __init__(self, lang):
-        assert lang in ['IT','EN']
+        assert lang in LANGS
         self.lang = lang
 
     def get_var(self, var):
-        return UX_DICT.get(var, {self.lang: None})[self.lang]
+        return UX_DICT[self.lang].get(var, None)
 
     def __getattr__(self, attr):
-        return UX_DICT.get(attr, {self.lang: None})[self.lang]
+        return UX_DICT[self.lang].get(attr, None)
 
 ux = lambda l: UX_LANG(l)
 
@@ -85,3 +81,21 @@ BUTTON_NO_CALLBACK = lambda x: telegram.InlineKeyboardButton(
     text = UX_LANG('IT').BUTTON_NO,
     callback_data = x
 )
+
+def export_airtable_UX_to_file():
+    for lang in LANGS: 
+        out_file = os.path.join(UX_DIR, f'{lang}.json')
+        lang_key_values = {k:v[lang] for k,v in UX_DICT.items()}
+        with open(out_file, 'w') as f_out:
+            json.dump(
+                lang_key_values, 
+                f_out, 
+                indent=3, 
+                ensure_ascii=False, 
+                sort_keys=lambda x: x[0]
+            )
+        
+
+
+if __name__ == "__main__":
+    export_airtable_UX_to_file()
