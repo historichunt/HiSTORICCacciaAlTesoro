@@ -95,8 +95,8 @@ def state_INITIAL(p, message_obj=None, silent=False, **kwargs):
                     game.reset_game(p, hunt_password)
                     # game_name = game.HUNTS[hunt_password]['Name']
                     # send_message(p, p.ux().MSG_WELCOME.format(game_name), remove_keyboard=True)
-                    settings = p.tmp_variables['SETTINGS']
-                    skip_instructions = get_str_param_boolean(settings, 'SKIP_INSTRUCTIONS')
+                    hunt_settings = p.tmp_variables['SETTINGS']
+                    skip_instructions = get_str_param_boolean(hunt_settings, 'SKIP_INSTRUCTIONS')
                     if not skip_instructions:
                         redirect_to_state(p, state_INSTRUCTIONS)
                     else:
@@ -622,8 +622,9 @@ def state_SURVEY(p, message_obj=None, **kwargs):
 
 def state_END(p, message_obj=None, **kwargs):    
     give_instruction = message_obj is None
-    settings = p.tmp_variables['SETTINGS']
-    reset_hunt_after_completion = get_str_param_boolean(settings, 'RESET_HUNT_AFTER_COMPLETION')
+    hunt_settings = p.tmp_variables['SETTINGS']
+    hunt_ux = p.tmp_variables['UX']
+    reset_hunt_after_completion = get_str_param_boolean(hunt_settings, 'RESET_HUNT_AFTER_COMPLETION')
     if give_instruction:        
         penalty_hms, total_hms_game, ellapsed_hms_game, \
             total_hms_missions, ellapsed_hms_missions = game.get_elapsed_and_penalty_and_total_hms(p)
@@ -634,7 +635,7 @@ def state_END(p, message_obj=None, **kwargs):
             msg_group = p.ux().MSG_END_NOTIFICATION.format(game.get_group_name(p), penalty_hms, \
                 total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)
             send_message(settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID, msg_group)                        
-        final_message = settings.get('FINAL_MESSAGE','')        
+        final_message = hunt_ux[p.language].get('FINAL_MESSAGE','')        
         if final_message:
             send_message(p, p.ux().get_var(final_message))     
         game.exit_game(p, save_data=True, reset_current_hunt=reset_hunt_after_completion)   
@@ -807,9 +808,7 @@ def deal_with_manager_commands(p, message_obj):
             if hunt_pw in game.HUNTS:
                 qry = Person.query(Person.current_hunt==hunt_pw)
                 remaining_people = qry.fetch()
-                if remaining_people:
-                    first = remaining_people[0]
-                    msg_var = first.tmp_variables['SETTINGS']['TERMINATE_MESSAGE']
+                if remaining_people:                                        
                     for u in remaining_people:                     
                         if not p.tmp_variables.get('FINISHED', False):                   
                             game.exit_game(u, save_data=True, reset_current_hunt=True)
@@ -818,7 +817,8 @@ def deal_with_manager_commands(p, message_obj):
                             # people who have completed needs to be informed too
                             # we already saved the data but current hunt wasn't reset
                             u.reset_current_hunt()
-                        send_message(u, p.ux().get_var(msg_var), remove_keyboard=True, sleep=True)
+                        msg_var = u.tmp_variables['UX']['TERMINATE_MESSAGE'][p.language]
+                        send_message(u, msg_var, remove_keyboard=True, sleep=True)
                         # send_typing_action(p, sleep_time=4)
                         # restart(p)
                 send_message(p, "Mandato messagio di termine a {} squadre.".format(len(remaining_people)))

@@ -5,6 +5,7 @@ from bot import ndb_envvar
 APP_NAME = 'historictrentobot'
 APP_VERSION = '0.2.1'
 CLOUD_ENVS = ['test', 'production']
+LANGUAGES = ['IT','EN']
 GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
 ROOT_DIR = os.path.dirname(os.path.dirname(__file__)) # base dir (works both in flask and gunicorn)
 
