@@ -8,13 +8,22 @@ from bot import settings
 UX_DIR = os.path.join(settings.ROOT_DIR, 'ux')
 LANGS = ['IT','EN']
 
-UX_DICT = None # lang -> var -> string
+UX_TABLE = Airtable(settings.AIRTABLE_CONFIG_ID, 'UX', api_key=settings.AIRTABLE_API_KEY)
+UX_DICT = None
 
 def reload_ux():
     global UX_DICT
     UX_DICT = {
-        lang: json.load(open(os.path.join(UX_DIR, f'{lang}.json')))
-        for lang in LANGS
+        r['VAR']: {
+            lang: v.strip()
+            for lang,v in r.items() if lang!='VAR'
+            # 'IT': ...
+            # 'EN': ...
+        }
+        for r in [
+            row['fields'] 
+            for row in UX_TABLE.get_all() 
+        ]
     }
 
 reload_ux()
@@ -22,14 +31,14 @@ reload_ux()
 class UX_LANG:
     
     def __init__(self, lang):
-        assert lang in LANGS
+        assert lang in ['IT','EN']
         self.lang = lang
 
     def get_var(self, var):
-        return UX_DICT[self.lang].get(var, None)
+        return UX_DICT.get(var, {self.lang: None})[self.lang]
 
     def __getattr__(self, attr):
-        return UX_DICT[self.lang].get(attr, None)
+        return UX_DICT.get(attr, {self.lang: None})[self.lang]
 
 ux = lambda l: UX_LANG(l)
 
