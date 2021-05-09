@@ -74,7 +74,8 @@ class Person(ndb.Model):
         return self.state
 
     def ux(self):
-        return bot_ux.UX_LANG(self.language)
+        ux_custom_dict = self.tmp_variables.get('UX', None)
+        return bot_ux.UX_LANG(self.language, ux_custom_dict)
 
     def set_language(self, l, put=False):
         self.language = l

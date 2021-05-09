@@ -1,18 +1,12 @@
 import os
 from airtable import Airtable
 from bot import ndb_envvar
+from bot.params import ROOT_DIR
 
 APP_NAME = 'historictrentobot'
-APP_VERSION = '0.2.2'
+APP_VERSION = '0.3.1'
 CLOUD_ENVS = ['test', 'production']
-LANGUAGES = ['IT','EN']
 GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
-ROOT_DIR = os.path.dirname(os.path.dirname(__file__)) # base dir (works both in flask and gunicorn)
-
-# PARAMS
-MAX_TEAM_NAME_LENGTH = 30
-WORK_IN_PROGRESS = False
-JUMP_TO_SURVEY_AFTER = False  # 2
 
 if GAE_SERVER:
     # cloud version

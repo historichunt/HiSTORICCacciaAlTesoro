@@ -1,7 +1,7 @@
 
 from airtable import Airtable
 from random import shuffle, choice
-from bot import settings, utility, airtable_utils
+from bot import params, settings, utility, airtable_utils
 import bot.date_time_util as dtu
 
 #################
@@ -65,7 +65,7 @@ def get_hunt_ux(p, airtable_game_id):
             r['VAR']: r[lang].strip()
             for r in table_rows
         }        
-        for lang in settings.LANGUAGES
+        for lang in params.LANGUAGES
     }
     return UX
 
