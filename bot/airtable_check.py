@@ -35,8 +35,8 @@ def check_ux():
                 'Error BACK APOSTROPHE in ux table in var "{}" column {}'.format(row_dict['VAR'], k)
 
 def check_hunts():
-    from bot.game import HUNTS
-    for hunt_config_dict in HUNTS.values():
+    from bot.game import HUNTS_PW
+    for hunt_config_dict in HUNTS_PW.values():
         hunt_name = hunt_config_dict['Name']        
         print('Checking {}'.format(hunt_name))
         game_id = hunt_config_dict['Airtable_Game_ID']

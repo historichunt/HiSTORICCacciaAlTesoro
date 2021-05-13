@@ -7,7 +7,7 @@ def download_media(hunt_password, output_dir, table_name='Results'):
     import os
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
-    table_id = game.HUNTS[hunt_password]['Airtable_Game_ID']
+    table_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
     RESULTS_TABLE = Airtable(table_id, table_name, api_key=settings.AIRTABLE_API_KEY)
     table_entries = RESULTS_TABLE.get_all()
     for entry in table_entries:
@@ -46,7 +46,7 @@ def get_rows(table, filter=None, sort_key=None):
 def get_wrong_answers(hunt_password, output_file, table_name='Results'):
     from collections import defaultdict
     import json
-    table_id = game.HUNTS[hunt_password]['Airtable_Game_ID']
+    table_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
     RESULTS_TABLE = Airtable(table_id, table_name, api_key=settings.AIRTABLE_API_KEY)
     table_entries = RESULTS_TABLE.get_all()
     mission_wrong_ansers = defaultdict(list)
@@ -87,8 +87,8 @@ def process_errori(error_dict, output_file):
 if __name__ == "__main__":    
     import os
     password = input('Inserisci password caccia al tesoro: ')
-    assert password in game.HUNTS, 'Incorrect password'
-    hunt_name = game.HUNTS[password]['Name']
+    assert password in game.HUNTS_PW, 'Incorrect password'
+    hunt_name = game.HUNTS_PW[password]['Name']
     outputdir = os.path.join('data', hunt_name)
     os.makedirs(outputdir)
     download_media(password, os.path.join(outputdir, 'media'))

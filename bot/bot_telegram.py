@@ -116,10 +116,10 @@ def report_admins(message):
     if len(message)>max_length:
         chunks = (message[0+i:max_length+i] for i in range(0, len(message), max_length))
         for m in chunks:
-            for id in settings.ADMIN_IDS:
+            for id in settings.ERROR_REPORTERS_IDS:
                 send_message(id, m, markdown=False, sleep=True, switch_notifications=False)
     else:
-        for id in settings.ADMIN_IDS:
+        for id in settings.ERROR_REPORTERS_IDS:
             send_message(id, message, markdown=False, sleep=True, switch_notifications=False)
 
 
@@ -152,7 +152,7 @@ def broadcast(sender, msg, qry = None, blackList_sender=False, sendNotification=
                 continue
             if p.chat_id[0] == '-': # negative id for groups
                 continue
-            if test and not p.is_manager():
+            if test and not p.is_global_admin():
                 continue
             if blackList_sender and sender and p.get_id() == sender.get_id():
                 continue

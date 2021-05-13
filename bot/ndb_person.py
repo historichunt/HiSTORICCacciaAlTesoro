@@ -40,11 +40,22 @@ class Person(ndb.Model):
     def get_id(self):
         return self.key.id()
 
-    def is_admin(self):
-        return self.get_id() in settings.ADMIN_IDS
+    def is_error_reporter(self):
+        return self.get_id() in settings.ERROR_REPORTERS_IDS
 
-    def is_manager(self):
-        return self.get_id() in settings.MANAGER_IDS
+    def is_global_admin(self):
+        return self.get_id() in settings.GLOBAL_ADMIN_IDS
+
+    def is_hunt_admin(self):
+        return self.get_id() in settings.HUNT_ADMIN_IDS
+
+    def is_admin_current_hunt(self):
+        from bot import game
+        return (
+            self.current_hunt!=None 
+            and 
+            game.is_person_hunt_admin(self.get_id(), self.current_hunt)
+        )
 
     def get_first_name(self, escape_markdown=True):
         return utility.escape_markdown(self.name) if escape_markdown else self.name

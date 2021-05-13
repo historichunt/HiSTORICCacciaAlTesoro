@@ -4,7 +4,7 @@ from bot import ndb_envvar
 from bot.params import ROOT_DIR
 
 APP_NAME = 'historictrentobot'
-APP_VERSION = '0.3.1'
+APP_VERSION = '0.4.0'
 CLOUD_ENVS = ['test', 'production']
 GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
 
@@ -13,10 +13,10 @@ if GAE_SERVER:
     ENV_VERSION = os.environ.get('GAE_VERSION') # test or production
     APP_BASE_URL = 'https://{}-dot-{}.appspot.com'.format(ENV_VERSION, APP_NAME)    
     ENV_VARS = ndb_envvar.get_all(ENV_VERSION)
+    LOCAL_ENV_FILES = None
 else:
     # local version
     from bot import ngrok 
-    # APP_BASE_URL = ngrok.get_ngrok_base()
     APP_BASE_URL = ngrok.start_pyngrok()    
     print(f'Running local version: {APP_BASE_URL}')
 
@@ -55,20 +55,41 @@ WEBHOOK_TELEGRAM_BASE = APP_BASE_URL + WEBHOOK_TELEGRAM_ROUTING
 TELEGRAM_API_URL = f'https://api.telegram.org/bot{TELEGRAM_API_TOKEN}/'
 TELEGRAM_BASE_URL_FILE = f'https://api.telegram.org/file/bot{TELEGRAM_API_TOKEN}/'
 
-MANAGERS_CONFIG_TABLE = Airtable(
+PEOPLE_TABLE = Airtable(
     AIRTABLE_CONFIG_ID, 
-    'Managers', 
+    'People', 
     api_key=AIRTABLE_API_KEY
 )
 
-MANAGER_IDS = [
+GLOBAL_ADMIN_IDS = [
     row['fields']['ID']
-    for row in MANAGERS_CONFIG_TABLE.get_all()
-    if not row['fields'].get('Disabled', False)
+    for row in PEOPLE_TABLE.get_all()
+    if (
+        row['fields'].get('Global Admin', False)
+        and
+        not row['fields'].get('Disabled', False)
+    )
 ]
 
-ADMIN_IDS = [
+HUNT_ADMIN_IDS = set([
     row['fields']['ID']
-    for row in MANAGERS_CONFIG_TABLE.get_all()
-    if row['fields'].get('Admin', False) and not row['fields'].get('Disabled', False)
-]
+    for row in PEOPLE_TABLE.get_all()
+    if (
+        len(row['fields'].get('Admin of Hunts', [])) > 0
+        and
+        not row['fields'].get('Disabled', False)
+    )
+])
+
+if LOCAL_ENV_FILES:
+    ERROR_REPORTERS_IDS = [ENV_VARS['ERROR_REPORTERS_ID']]
+else:    
+    ERROR_REPORTERS_IDS = [
+        row['fields']['ID']
+        for row in PEOPLE_TABLE.get_all()
+        if (
+            row['fields'].get('Report Errors', False) 
+            and 
+            not row['fields'].get('Disabled', False)
+        )
+    ]
