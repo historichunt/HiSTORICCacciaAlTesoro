@@ -54,7 +54,7 @@ class Person(ndb.Model):
         return (
             self.current_hunt!=None 
             and 
-            game.is_person_hunt_admin(self.get_id(), self.current_hunt)
+            game.is_person_hunt_admin(self, self.current_hunt)
         )
 
     def get_first_name(self, escape_markdown=True):
