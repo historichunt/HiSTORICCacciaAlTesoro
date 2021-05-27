@@ -2,12 +2,12 @@ import logging
 import telegram
 import json
 import random
-from bot import bot_telegram, utility, ndb_person, bot_ux, game, geoUtils, settings
+from bot import bot_telegram, utility, ndb_person, bot_ux, game, geoUtils, params, settings
 from bot import date_time_util as dtu
 from bot.bot_telegram import BOT, send_message, send_location, send_typing_action, \
     report_admins, send_text_document, send_media_url, \
     broadcast, report_admins, reset_all_users
-from bot.settings import WORK_IN_PROGRESS, JUMP_TO_SURVEY_AFTER
+from bot import params
 from bot.utility import flatten, get_str_param_boolean
 from bot.ndb_person import Person
 from bot.ndb_utils import client_context
@@ -191,8 +191,8 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 send_message(p, p.ux().MSG_EMAIL_WRONG)
         elif input_type == 'TEAM_NAME':
             if text_input:
-                if len(text_input) > settings.MAX_TEAM_NAME_LENGTH:
-                    send_message(p, p.ux().MSG_GROUP_NAME_TOO_LONG.format(settings.MAX_TEAM_NAME_LENGTH))
+                if len(text_input) > params.MAX_TEAM_NAME_LENGTH:
+                    send_message(p, p.ux().MSG_GROUP_NAME_TOO_LONG.format(params.MAX_TEAM_NAME_LENGTH))
                     return
                 if not utility.hasOnlyLettersAndSpaces(text_input):
                     send_message(p, p.ux().MSG_GROUP_NAME_INVALID)
@@ -563,8 +563,8 @@ def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
         game.setCurrentIndovinelloAsCompleted(p)
         survery_time = (
             game.remainingIndovinelloNumber(p) == 0 or (
-                JUMP_TO_SURVEY_AFTER and
-                game.completed_indovinello_number(p) == JUMP_TO_SURVEY_AFTER
+                params.JUMP_TO_SURVEY_AFTER and
+                game.completed_indovinello_number(p) == params.JUMP_TO_SURVEY_AFTER
             )
         )
         game.set_mission_end_time(p)
@@ -656,7 +656,6 @@ def state_SURVEY(p, message_obj=None, **kwargs):
 def state_END(p, message_obj=None, **kwargs):    
     give_instruction = message_obj is None
     hunt_settings = p.tmp_variables['SETTINGS']
-    hunt_ux = p.tmp_variables['UX']
     reset_hunt_after_completion = get_str_param_boolean(hunt_settings, 'RESET_HUNT_AFTER_COMPLETION')
     if give_instruction:        
         penalty_hms, total_hms_game, ellapsed_hms_game, \
@@ -668,9 +667,8 @@ def state_END(p, message_obj=None, **kwargs):
             msg_group = p.ux().MSG_END_NOTIFICATION.format(game.get_group_name(p), penalty_hms, \
                 total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)
             send_message(settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID, msg_group)                        
-        final_message = hunt_ux[p.language].get('FINAL_MESSAGE','')        
-        if final_message:
-            send_message(p, p.ux().get_var(final_message))     
+        final_message_key = 'MSG_FINAL_RESET_ON' if reset_hunt_after_completion else 'MSG_FINAL_RESET_OFF'
+        send_message(p, p.ux().get_var(final_message_key))     
         game.exit_game(p, save_data=True, reset_current_hunt=reset_hunt_after_completion)   
         if reset_hunt_after_completion:
             restart(p, silent=True)        
@@ -849,7 +847,7 @@ def deal_with_manager_commands(p, message_obj):
             if hunt_pw in game.HUNTS:
                 qry = Person.query(Person.current_hunt==hunt_pw)
                 remaining_people = qry.fetch()
-                if remaining_people:                                        
+                if remaining_people:                                                            
                     for u in remaining_people:                     
                         if not p.tmp_variables.get('FINISHED', False):                   
                             game.exit_game(u, save_data=True, reset_current_hunt=True)
@@ -858,10 +856,9 @@ def deal_with_manager_commands(p, message_obj):
                             # people who have completed needs to be informed too
                             # we already saved the data but current hunt wasn't reset
                             u.reset_current_hunt()
-                        msg_var = u.tmp_variables['UX']['TERMINATE_MESSAGE'][p.language]
-                        send_message(u, msg_var, remove_keyboard=True, sleep=True)
-                        # send_typing_action(p, sleep_time=4)
-                        # restart(p)
+                        reset_hunt_after_completion = get_str_param_boolean(u.tmp_variables['SETTINGS'], 'RESET_HUNT_AFTER_COMPLETION')
+                        terminate_message_key = 'MSG_HUNT_TERMINATED_RESET_ON' if reset_hunt_after_completion else 'MSG_HUNT_TERMINATED_RESET_OFF'
+                        send_message(u, p.ux().get_var(terminate_message_key), remove_keyboard=True, sleep=True)
                 send_message(p, "Mandato messagio di termine a {} squadre.".format(len(remaining_people)))
                 return True
         return False
@@ -947,7 +944,7 @@ def deal_with_request(request_json):
     if text:
         text_input = message_obj.text        
         logging.debug('Message from @{} in state {} with text {}'.format(chat_id, p.state, text_input))
-        if WORK_IN_PROGRESS and not p.is_manager():
+        if params.WORK_IN_PROGRESS and not p.is_manager():
             send_message(p, p.ux().MSG_WORK_IN_PROGRESS)    
             return
         if deal_with_admin_commands(p, message_obj):
