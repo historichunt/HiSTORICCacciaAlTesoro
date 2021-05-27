@@ -44,7 +44,7 @@
     "MSG_END": "🏆 Bravi! Che soddisfazione!\n\n🏁 Avete completato la caccia al tesoro in *{1}*!!\n({2} tempo + {0} penalità)\n\n🏁 Avete completato le missioni in *{3}*!!\n({4} tempo + {0} penalità)",
     "MSG_END_NOTIFICATION": "🏁 La squadra *{0}* ha completato la caccia al tesoro in *{2}* ({3} tempo + {1} penalità).\nHa completato le missioni in *{4}*!! ({5} tempo + {1} penalità).",
     "MSG_EXITED_FROM_GAME": "🚪 Sei uscito/a dalla caccia al tesoro!",
-    "MSG_FINAL_RESET_OFF": "🔔 Verrete avvisati quando ritonare al punto di partenza per la premiazione!",
+    "MSG_FINAL_RESET_OFF": "🔔 Verrete avvisati quando ritornare al punto di partenza per la premiazione!",
     "MSG_FINAL_RESET_ON": "📜 Pubblicheremo i risultati sulla nostra [pagina Facebook](https://www.facebook.com/historictrento).\n\n🏆",
     "MSG_GO": "🏃‍♂️🏃‍♀️ Si parte!",
     "MSG_GO_TO_PLACE": "📍 Recatevi nel seguente luogo e quando siete arrivati mandatemi la vostra posizione!",
