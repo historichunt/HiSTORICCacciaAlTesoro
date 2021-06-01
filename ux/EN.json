@@ -57,7 +57,7 @@
     "MSG_HUNT_ADMIN_SELECTED": "👉 ADMIN HUNT: {}",
     "MSG_HUNT_DISABLED": "📆 The treasure hunt is not active yet. Wait for the day and time when the hunt is supposed to start!",
     "MSG_HUNT_NOT_TERMINATED": "⌛ Please wait for a message to indicate that the game is over.",
-    "MSG_HUNT_TERMINATE_CONFIRM": "🤔 Are you really sure you want to terminate the hunt: {}?",
+    "MSG_HUNT_TERMINATE_CONFIRM": "🤔 Are you really sure you want to terminate the hunt: {}? YOU CAN'T UNDO THIS COMMAND. ALL PLAYERS IN THE HUNT WILL BE KICKED OUT.",
     "MSG_HUNT_TERMINATED_RESET_OFF": "⏰ Time is up!\n🏘Go back to the starting point for the awarding!",
     "MSG_HUNT_TERMINATED_RESET_ON": "⏰ Time is up!\n\n📜 We will publish the result on our [FB page](https://www.facebook.com/historictrento).",
     "MSG_MEDIA_INPUT_ABORTED": "❌ Submission cancelled.",
