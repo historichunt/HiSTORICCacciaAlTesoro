@@ -135,7 +135,8 @@ def state_ADMIN(p, message_obj=None, **kwargs):
             hunts_dict_list = game.get_hunts_that_person_admins(p)
             hunt_names_buttons = sorted([[d['Name']] for d in hunts_dict_list])
             kb.extend(hunt_names_buttons)
-        kb.append([p.ux().BUTTON_BACK])
+        if len(kb)>3:
+            kb.append([p.ux().BUTTON_BACK])
         send_message(p, p.ux().MSG_ADMIN, kb)
     else: 
         text_input = message_obj.text
@@ -229,7 +230,7 @@ def state_TERMINATE_HUNT_CONFIRM(p, message_obj=None, **kwargs):
                             reset_hunt_after_completion = get_str_param_boolean(u.tmp_variables['SETTINGS'], 'RESET_HUNT_AFTER_COMPLETION')
                             terminate_message_key = 'MSG_HUNT_TERMINATED_RESET_ON' if reset_hunt_after_completion else 'MSG_HUNT_TERMINATED_RESET_OFF'
                             send_message(u, p.ux().get_var(terminate_message_key), remove_keyboard=True, sleep=True)
-                    msg = "Mandato messagio di termine a {} squadre.".format(len(remaining_people))
+                    msg = "Mandato messaggio di termine a {} squadre.".format(len(remaining_people))
                     send_message(p, msg, remove_keyboard=True)
                     send_typing_action(p, sleep_time=1)
                     restart(p)
