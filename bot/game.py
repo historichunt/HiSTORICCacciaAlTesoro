@@ -14,19 +14,34 @@ HUNTS_CONFIG_TABLE = Airtable(
     api_key=settings.AIRTABLE_API_KEY
 )
 
-HUNTS = {} # pw -> hunt_details (all)
+HUNTS_PW = None # pw -> hunt_details (all)
+HUNTS_NAME = None # name -> hunt_details (all)
 
 def reload_config_hunt():
-    global HUNTS
-    HUNTS = {
-        r['Password'].lower(): r
-        for r in [
-            row['fields'] 
-            for row in HUNTS_CONFIG_TABLE.get_all() 
-            if 'Password' in row['fields']
-        ]
+    global HUNTS_PW, HUNTS_NAME
+    hunts = [
+        row['fields'] 
+        for row in HUNTS_CONFIG_TABLE.get_all() 
+        if 'Password' in row['fields']
+    ]
+    HUNTS_PW = {
+        d['Password'].lower(): d
+        for d in hunts
     }
-    # ACTIVE_HUNTS = {k:v for k,v in HUNTS.items() if v.get('Active',False)}
+    HUNTS_NAME = {
+        d['Name']: d
+        for d in hunts
+    }
+    
+
+def is_person_hunt_admin(p, hunt_pw):
+    if hunt_pw not in HUNTS_PW:
+        return False
+    hunt_admin_ids = HUNTS_PW[hunt_pw].get('Admins IDs',[])
+    return p.get_id() in hunt_admin_ids
+
+def get_hunts_that_person_admins(p):
+    return [d for d in HUNTS_PW.values() if p.get_id() in d['Admins IDs']]
 
 reload_config_hunt()
 
@@ -132,7 +147,7 @@ def get_random_missioni(p, airtable_game_id, mission_tab_name, initial_cat):
     if missione_finale:
         missioni_random.append(missione_finale)
     # debug
-    if p.is_manager(): 
+    if p.is_admin_current_hunt(): 
         from bot.bot_telegram import send_message   
         random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_random,1)])
         send_message(p, "DEBUG Random missioni:\n{}".format(random_missioni_names))
@@ -189,7 +204,7 @@ def reset_game(p, hunt_password):
     Save current game info user tmp_variable
     '''    
 
-    hunt_info = HUNTS[hunt_password]
+    hunt_info = HUNTS_PW[hunt_password]
     airtable_game_id = hunt_info['Airtable_Game_ID']
     hunt_settings = get_hunt_settings(p, airtable_game_id)
     hunt_ux = get_hunt_ux(p, airtable_game_id)
@@ -210,7 +225,7 @@ def reset_game(p, hunt_password):
     tvar['UX'] = hunt_ux    
     tvar['HUNT_INFO'] = hunt_info
     tvar['Notify_Group'] = hunt_info.get('Notify_Group', False)
-    tvar['Validator_ID'] = hunt_info.get('Validator_ID', None)
+    tvar['Validators IDs'] = hunt_info.get('Validators IDs', None)
     tvar['ID'] = p.get_id()
     tvar['NOME'] = p.get_first_name(escape_markdown=False)
     tvar['COGNOME'] = p.get_last_name(escape_markdown=False)
@@ -266,10 +281,10 @@ def send_notification_to_group(p):
     return p.tmp_variables['Notify_Group']
 
 def manual_validation(p):
-    return p.tmp_variables['Validator_ID'] != None
+    return p.tmp_variables['Validators IDs'] != None
 
 def get_validator_chat_id(p):
-    validator_id = p.tmp_variables['Validator_ID']
+    validator_id = p.tmp_variables['Validators IDs']
     if validator_id:
         return validator_id[0].split('_')[1]
     return None

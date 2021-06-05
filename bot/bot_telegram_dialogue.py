@@ -66,7 +66,7 @@ def state_INITIAL(p, message_obj=None, silent=False, **kwargs):
                 [switch_language_button],
                 [p.ux().BUTTON_INFO]
             ]     
-            if p.is_manager():
+            if p.is_global_admin() or p.is_hunt_admin():
                 kb[-1].append(p.ux().BUTTON_ADMIN)       
             send_message(p, p.ux().MSG_WELCOME_START, kb)
     else: 
@@ -94,10 +94,14 @@ def state_INITIAL(p, message_obj=None, silent=False, **kwargs):
                 hunt_password = text_input.lower().split()[1]
             else: 
                 hunt_password = text_input.lower()
-            if hunt_password in game.HUNTS:   
-                if game.HUNTS[hunt_password].get('Active', False) or p.is_manager():
+            if hunt_password in game.HUNTS_PW:   
+                if (
+                    game.HUNTS_PW[hunt_password].get('Active', False) 
+                    or 
+                    game.is_person_hunt_admin(p, hunt_password)
+                ):
                     game.reset_game(p, hunt_password)
-                    # game_name = game.HUNTS[hunt_password]['Name']
+                    # game_name = game.HUNTS_PW[hunt_password]['Name']
                     # send_message(p, p.ux().MSG_WELCOME.format(game_name), remove_keyboard=True)
                     hunt_settings = p.tmp_variables['SETTINGS']
                     skip_instructions = get_str_param_boolean(hunt_settings, 'SKIP_INSTRUCTIONS')
@@ -113,13 +117,26 @@ def state_INITIAL(p, message_obj=None, silent=False, **kwargs):
         else:
             send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
+
+# ================================
+# Admin State
+# ================================
+
 def state_ADMIN(p, message_obj=None, **kwargs):    
     if message_obj is None:
         kb = [
-            [p.ux().BUTTON_UPDATE_HUNTS_CONFIG],
-            [p.ux().BUTTON_STATS, p.ux().BUTTON_TERMINATE],
-            [p.ux().BUTTON_VERSION, p.ux().BUTTON_BACK],
-        ]     
+            [p.ux().BUTTON_BACK]
+        ]
+        if p.is_global_admin():
+            kb.extend([
+                [p.ux().BUTTON_VERSION, p.ux().BUTTON_UPDATE_HUNTS_CONFIG],
+            ])
+        if p.is_hunt_admin():
+            hunts_dict_list = game.get_hunts_that_person_admins(p)
+            hunt_names_buttons = sorted([[d['Name']] for d in hunts_dict_list])
+            kb.extend(hunt_names_buttons)
+        if len(kb)>3:
+            kb.append([p.ux().BUTTON_BACK])
         send_message(p, p.ux().MSG_ADMIN, kb)
     else: 
         text_input = message_obj.text
@@ -132,15 +149,96 @@ def state_ADMIN(p, message_obj=None, **kwargs):
                 elif text_input == p.ux().BUTTON_BACK:
                     redirect_to_state(p, state_INITIAL)
                 elif text_input == p.ux().BUTTON_UPDATE_HUNTS_CONFIG:
-                    update_config_hunt(p)
+                    game.reload_config_hunt()
+                    send_message(p, p.ux().MSG_RELOADED_HUNTS_CONFIG)
+                else:
+                    p.set_tmp_variable('ADMIN_HUNT_NAME', text_input)
+                    redirect_to_state(p, state_HUNT_ADMIN)
+        else:
+            send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)
+
+
+# ================================
+# Hunt Admin State
+# ================================
+
+def state_HUNT_ADMIN(p, message_obj=None, **kwargs):    
+    hunt_name = p.get_tmp_variable('ADMIN_HUNT_NAME')
+    hunt_pw = game.HUNTS_NAME[hunt_name]['Password']
+    if message_obj is None:
+        kb = [
+            [p.ux().BUTTON_STATS],
+            [p.ux().BUTTON_TERMINATE],
+            [p.ux().BUTTON_BACK]
+        ]
+        msg = p.ux().MSG_HUNT_ADMIN_SELECTED.format(hunt_name)
+        send_message(p, msg, kb)
+    else: 
+        text_input = message_obj.text
+        kb = p.get_keyboard()
+        if text_input:
+            if text_input in flatten(kb):
+                if text_input == p.ux().BUTTON_BACK:
+                    redirect_to_state(p, state_ADMIN)
                 elif text_input == p.ux().BUTTON_STATS:
-                    stats(p)
+                    hunt_stats = ndb_person.get_people_on_hunt_stats(hunt_pw)
+                    if hunt_stats:
+                        msg = 'Stats:\n\n{}'.format(hunt_stats)
+                    else:
+                        msg = 'Nessuna squadra iscritta'
+                    send_message(p, msg, markdown=False)
                 elif text_input == p.ux().BUTTON_TERMINATE:
-                    terminate(p)
+                    redirect_to_state(p, state_TERMINATE_HUNT_CONFIRM)
             else:
                 send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)     
         else:
             send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)
+
+# ================================
+# Hunt Admin State
+# ================================
+
+def state_TERMINATE_HUNT_CONFIRM(p, message_obj=None, **kwargs):    
+    hunt_name = p.get_tmp_variable('ADMIN_HUNT_NAME')
+    hunt_pw = game.HUNTS_NAME[hunt_name]['Password']
+    if message_obj is None:
+        kb = [
+            [p.ux().BUTTON_YES],
+            [p.ux().BUTTON_ANNULLA],
+        ]
+        msg = p.ux().MSG_HUNT_TERMINATE_CONFIRM.format(hunt_name)
+        send_message(p, msg, kb)
+    else: 
+        text_input = message_obj.text
+        kb = p.get_keyboard()
+        if text_input:
+            if text_input in flatten(kb):
+                if text_input == p.ux().BUTTON_ANNULLA:
+                    redirect_to_state(p, state_HUNT_ADMIN)
+                elif text_input == p.ux().BUTTON_YES:
+                    qry = Person.query(Person.current_hunt==hunt_pw)
+                    remaining_people = qry.fetch()
+                    if remaining_people:                                                            
+                        for u in remaining_people:                     
+                            if not p.tmp_variables.get('FINISHED', False):                   
+                                game.exit_game(u, save_data=True, reset_current_hunt=True)
+                                restart(u, silent=True)
+                            else:
+                                # people who have completed needs to be informed too
+                                # we already saved the data but current hunt wasn't reset
+                                u.reset_current_hunt()
+                            reset_hunt_after_completion = get_str_param_boolean(u.tmp_variables['SETTINGS'], 'RESET_HUNT_AFTER_COMPLETION')
+                            terminate_message_key = 'MSG_HUNT_TERMINATED_RESET_ON' if reset_hunt_after_completion else 'MSG_HUNT_TERMINATED_RESET_OFF'
+                            send_message(u, p.ux().get_var(terminate_message_key), remove_keyboard=True, sleep=True)
+                    msg = "Mandato messaggio di termine a {} squadre.".format(len(remaining_people))
+                    send_message(p, msg, remove_keyboard=True)
+                    send_typing_action(p, sleep_time=1)
+                    restart(p)
+            else:
+                send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)     
+        else:
+            send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)    
+
 
 # ================================
 # Intro - Instructions
@@ -716,7 +814,7 @@ def deal_with_callback_query(callback_query):
 
 def deal_with_admin_commands(p, message_obj):
     text_input = message_obj.text
-    if p.is_admin():
+    if p.is_error_reporter():
         if text_input == '/debug':
             #send_message(p, game.debug_tmp_vars(p), markdown=False)
             send_text_document(p, 'tmp_vars.json', game.debug_tmp_vars(p))
@@ -788,80 +886,6 @@ def deal_with_admin_commands(p, message_obj):
             reset_all_users(message=None) #message=p.ux().MSG_THANKS_FOR_PARTECIPATING
             return True
     return False
-
-def update_config_hunt(p):
-    game.reload_config_hunt()
-    send_message(p, p.ux().MSG_RELOADED_HUNTS_CONFIG)
-
-def stats(p):
-    stats_list_str = '\n'.join(["- {} /stats_{}".format(k, k) for k in game.HUNTS.keys()])
-    msg = "Statistiche disponibili:\n{}".format(stats_list_str)
-    send_message(p, msg, markdown=False)
-
-def terminate(p):
-    terminate_list_str = '\n'.join(["- {} /terminate_{}".format(k,k) for k in game.HUNTS.keys()])
-    msg = "Available games to terminate:\n{}".format(terminate_list_str)
-    send_message(p, msg, markdown=False)
-
-def deal_with_manager_commands(p, message_obj):
-    text_input = message_obj.text
-    # logging.debug("In deal_with_manager_commands with user:{} ismanager:{}".format(p.get_id(), p.is_manager()))
-    if p.is_manager():
-        if text_input == '/admin':
-            msg = "Comandi disponibili:\n"
-            msg += "- /update_config_hunt: refresh configuarzione cacce al tesoro\n"                        
-            msg += "- /info: info cacce al tesoro attive\n"
-            msg += "- /stats: statistiche delle cacce al tesoro\n"
-            msg += "- /terminate: termina una caccia al tesoro"
-            send_message(p, msg, markdown=False)
-            return True
-        if text_input == '/update_config_hunt':
-            update_config_hunt(p)
-            return True
-        if text_input == '/info':
-            info_cacce = '\n'.join(["- {} 🔐{}".format(v['Name'], k) for k,v in game.HUNTS.items()])
-            msg = "Cacce al tesoro attive:\n{}".format(info_cacce)
-            send_message(p, msg, markdown=False)
-            return True
-        if text_input == '/stats':
-            stats(p)
-            return True
-        if text_input.startswith('/stats_'):
-            hunt_pw = text_input.split('_', 1)[1]
-            if hunt_pw in game.HUNTS:
-                hunt_stats = ndb_person.get_people_on_hunt_stats(hunt_pw)
-                if hunt_stats:
-                    msg = 'Stats:\n\n{}'.format(hunt_stats)
-                else:
-                    msg = 'Nessuna squadra iscritta'
-                send_message(p, msg, markdown=False)
-            else:
-                msg = 'Wrong stats command'
-                send_message(p, msg, markdown=False)
-            return True        
-        if text_input == '/terminate':            
-            terminate(p)            
-            return True
-        if text_input.startswith('/terminate_'):            
-            hunt_pw = text_input.split('_', 1)[1]
-            if hunt_pw in game.HUNTS:
-                qry = Person.query(Person.current_hunt==hunt_pw)
-                remaining_people = qry.fetch()
-                if remaining_people:                                                            
-                    for u in remaining_people:                     
-                        if not p.tmp_variables.get('FINISHED', False):                   
-                            game.exit_game(u, save_data=True, reset_current_hunt=True)
-                            restart(u, silent=True)
-                        else:
-                            # people who have completed needs to be informed too
-                            # we already saved the data but current hunt wasn't reset
-                            u.reset_current_hunt()
-                        reset_hunt_after_completion = get_str_param_boolean(u.tmp_variables['SETTINGS'], 'RESET_HUNT_AFTER_COMPLETION')
-                        terminate_message_key = 'MSG_HUNT_TERMINATED_RESET_ON' if reset_hunt_after_completion else 'MSG_HUNT_TERMINATED_RESET_OFF'
-                        send_message(u, p.ux().get_var(terminate_message_key), remove_keyboard=True, sleep=True)
-                send_message(p, "Mandato messagio di termine a {} squadre.".format(len(remaining_people)))
-                return True
-        return False
 
 
 def deal_with_universal_command(p, message_obj):
@@ -936,7 +960,7 @@ def deal_with_request(request_json):
             msg = "Bot riattivato!"
             send_message(p, msg)
 
-    if message_obj.forward_from and not p.is_manager():
+    if message_obj.forward_from and not p.is_admin_current_hunt():
         send_message(p, p.ux().MSG_NO_FORWARDING_ALLOWED)
         return
 
@@ -944,14 +968,9 @@ def deal_with_request(request_json):
     if text:
         text_input = message_obj.text        
         logging.debug('Message from @{} in state {} with text {}'.format(chat_id, p.state, text_input))
-        if params.WORK_IN_PROGRESS and not p.is_manager():
-            send_message(p, p.ux().MSG_WORK_IN_PROGRESS)    
-            return
         if deal_with_admin_commands(p, message_obj):
             return
         if deal_with_universal_command(p, message_obj):
-            return
-        if deal_with_manager_commands(p, message_obj):
             return
     logging.debug("Sending {} to state {} with input message_obj {}".format(p.get_first_name(), p.state, message_obj))
     repeat_state(p, message_obj=message_obj)

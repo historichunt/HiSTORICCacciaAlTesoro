@@ -1,7 +1,5 @@
-import atexit
 from flask import Flask, request
 from bot import settings
-import json
 
 
 import logging
@@ -15,12 +13,10 @@ client.setup_logging(log_level=logging.DEBUG)
 # called `app` in `main.py`.
 app = Flask(__name__)
 
+# run once
 with app.app_context():
     from bot import bot_telegram_admin
     bot_telegram_admin.set_webhook()
-    # if not settings.GAE_SERVER:
-    #     from bot import ngrok
-    #     atexit.register(ngrok.stop_pyngrok)
 
 @app.route('/')
 def root():
