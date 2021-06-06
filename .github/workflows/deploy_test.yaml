@@ -1,7 +1,7 @@
 name: deploy-app-to-gcp
 on:
   push:
-    branches: ['!master']
+    branches: ['test_*']
 jobs:
   deploy:
     name: Deploy
