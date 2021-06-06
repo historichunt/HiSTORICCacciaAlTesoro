@@ -184,8 +184,6 @@ def reset_all_users(qry = None, message=None):
     while more:
         users, cursor, more = qry.fetch_page(100, start_cursor=cursor)
         for p in users:
-            if p.get_id() == settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID:
-                continue
             if p.state == 'state_INITIAL':
                 continue
             if p.enabled:
@@ -202,8 +200,8 @@ def reset_all_users(qry = None, message=None):
     msg_admin = 'Resetted {} users.'.format(total)
     report_admins(msg_admin)
 
-def remove_keyboard_from_notification_group():
-    send_message(settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID, 'Removing Keyboard', remove_keyboard=True)
+def remove_keyboard_from_group(chat_id):
+    send_message(chat_id, 'Removing Keyboard', remove_keyboard=True)
 
 # ================================
 # UTILIITY TELL FUNCTIONS

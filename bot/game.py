@@ -224,7 +224,7 @@ def reset_game(p, hunt_password):
     tvar['SETTINGS'] = hunt_settings    
     tvar['UX'] = hunt_ux    
     tvar['HUNT_INFO'] = hunt_info
-    tvar['Notify_Group'] = hunt_info.get('Notify_Group', False)
+    tvar['Notify_Group ID'] = hunt_info.get('Notify_Group ID', None)
     tvar['Validators IDs'] = hunt_info.get('Validators IDs', None)
     tvar['ID'] = p.get_id()
     tvar['NOME'] = p.get_first_name(escape_markdown=False)
@@ -277,8 +277,8 @@ def get_game_stats(p):
     else:
         return '- {} {} ?'.format(name_username, group_name)
 
-def send_notification_to_group(p):
-    return p.tmp_variables['Notify_Group']
+def get_notify_group_id(p):
+    return p.tmp_variables['Notify_Group ID']
 
 def manual_validation(p):
     return p.tmp_variables['Validators IDs'] != None
