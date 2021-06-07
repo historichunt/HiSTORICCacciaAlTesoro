@@ -278,7 +278,10 @@ def get_game_stats(p):
         return '- {} {} ?'.format(name_username, group_name)
 
 def get_notify_group_id(p):
-    return p.tmp_variables['Notify_Group ID']
+    id_list = p.tmp_variables['Notify_Group ID']
+    if id_list is None:
+        return None
+    return str(id_list[0])
 
 def manual_validation(p):
     return p.tmp_variables['Validators IDs'] != None
