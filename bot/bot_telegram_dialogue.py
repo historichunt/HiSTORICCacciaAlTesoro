@@ -296,9 +296,9 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                     send_message(p, p.ux().MSG_GROUP_NAME_INVALID)
                     return
                 game.set_group_name(p, text_input)
-                # send_message(p, p.ux().MSG_GROUP_NAME_OK.format(text_input))
-                if game.send_notification_to_group(p):
-                    send_message(settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID, "Nuova squadra registrata: {}".format(text_input))
+                notify_group_id = game.get_notify_group_id(p)
+                if notify_group_id:
+                    send_message(notify_group_id, "Nuova squadra registrata: {}".format(text_input))
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:
@@ -324,8 +324,9 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 photo_file_id = photo[-1]['file_id']
                 game.append_group_media_input_file_id(p, photo_file_id)
                 send_typing_action(p, sleep_time=1)                            
-                if game.send_notification_to_group(p):
-                    BOT.send_photo(settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID, photo=photo_file_id, caption='Selfie iniziale {}'.format(game.get_group_name(p)))
+                notify_group_id = game.get_notify_group_id(p)
+                if notify_group_id:
+                    BOT.send_photo(notify_group_id, photo=photo_file_id, caption='Selfie iniziale {}'.format(game.get_group_name(p)))
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:
@@ -600,16 +601,17 @@ def approve_media_input_indovinello(p, approved, signature):
     if approved:
         game.set_end_mission_time(p)
         send_message(p, bot_ux.MSG_MEDIA_INPUT_MISSIONE_OK(p.language))        
-        if game.send_notification_to_group(p):
+        notify_group_id = game.get_notify_group_id(p)
+        if notify_group_id:
             squadra_name = game.get_group_name(p)
             indovinello_number = game.completed_indovinello_number(p) + 1
             indovinello_name = current_indovinello['NOME']            
             if input_type=='PHOTO':
                 caption = 'Selfie indovinello {} squadra {} per indovinello {}'.format(indovinello_number, squadra_name, indovinello_name)
-                BOT.send_photo(settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID, photo=file_id, caption=caption)
+                BOT.send_photo(notify_group_id, photo=file_id, caption=caption)
             else: #elif input_type=='VOICE':
                 caption = 'Registrazione indovinello {} squadra {} per indovinello {}'.format(indovinello_number, squadra_name, indovinello_name)
-                BOT.send_voice(settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID, voice=file_id, caption=caption)
+                BOT.send_voice(notify_group_id, voice=file_id, caption=caption)
         game.append_group_media_input_file_id(p, file_id)        
         if 'POST_INPUT' in current_indovinello:                        
             msg = current_indovinello['POST_INPUT']
@@ -761,10 +763,11 @@ def state_END(p, message_obj=None, **kwargs):
         msg = p.ux().MSG_END.format(penalty_hms, \
             total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)        
         send_message(p, msg, remove_keyboard=True)
-        if game.send_notification_to_group(p):
+        notify_group_id = game.get_notify_group_id(p)
+        if notify_group_id:
             msg_group = p.ux().MSG_END_NOTIFICATION.format(game.get_group_name(p), penalty_hms, \
                 total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)
-            send_message(settings.HISTORIC_NOTIFICHE_GROUP_CHAT_ID, msg_group)                        
+            send_message(notify_group_id, msg_group)                        
         final_message_key = 'MSG_FINAL_RESET_ON' if reset_hunt_after_completion else 'MSG_FINAL_RESET_OFF'
         send_message(p, p.ux().get_var(final_message_key))     
         game.exit_game(p, save_data=True, reset_current_hunt=reset_hunt_after_completion)   
