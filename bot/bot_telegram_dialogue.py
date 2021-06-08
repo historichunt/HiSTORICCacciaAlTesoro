@@ -413,6 +413,8 @@ def state_GPS(p, message_obj=None, **kwargs):
             else:
                 msg = p.ux().MSG_TOO_FAR.format(distance)
                 send_message(p, msg)
+                send_typing_action(p, sleep_time=1)
+                repeat_state(p)
         else:
             send_message(p, p.ux().MSG_WRONG_INPUT_SEND_LOCATION)
 
@@ -881,9 +883,6 @@ def deal_with_admin_commands(p, message_obj):
             else:
                 msg_admin = 'No user found: {}'.format(p_id)
                 report_admins(msg_admin)
-            return True
-        if text_input == '/remove_keyboard_from_notification_group':
-            bot_telegram.remove_keyboard_from_notification_group()
             return True
         if text_input == '/reset_all_users':            
             reset_all_users(message=None) #message=p.ux().MSG_THANKS_FOR_PARTECIPATING
