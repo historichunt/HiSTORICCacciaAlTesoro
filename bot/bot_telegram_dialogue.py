@@ -100,8 +100,8 @@ def state_INITIAL(p, message_obj=None, silent=False, **kwargs):
                     or 
                     game.is_person_hunt_admin(p, hunt_password)
                 ):
-                    game.reset_game(p, hunt_password)
-                    # game_name = game.HUNTS_PW[hunt_password]['Name']
+                    hunt_name = game.HUNTS_PW[hunt_password]['Name']
+                    game.reset_game(p, hunt_name, hunt_password)                    
                     # send_message(p, p.ux().MSG_WELCOME.format(game_name), remove_keyboard=True)
                     hunt_settings = p.tmp_variables['SETTINGS']
                     skip_instructions = get_str_param_boolean(hunt_settings, 'SKIP_INSTRUCTIONS')
@@ -296,9 +296,13 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                     send_message(p, p.ux().MSG_GROUP_NAME_INVALID)
                     return
                 game.set_group_name(p, text_input)
-                notify_group_id = game.get_notify_group_id(p)
+                notify_group_id = game.get_notify_group_id(p)                
                 if notify_group_id:
-                    send_message(notify_group_id, "Nuova squadra registrata: {}".format(text_input))
+                    msg = '\n'.join([
+                        f'Caccia {game.get_hunt_name(p)}:',
+                        f'Nuova squadra registrata: {text_input}'
+                    ])
+                    send_message(notify_group_id, msg)
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:
@@ -326,7 +330,11 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 send_typing_action(p, sleep_time=1)                            
                 notify_group_id = game.get_notify_group_id(p)
                 if notify_group_id:
-                    BOT.send_photo(notify_group_id, photo=photo_file_id, caption='Selfie iniziale {}'.format(game.get_group_name(p)))
+                    msg = '\n'.join([
+                        f'Caccia {game.get_hunt_name(p)}:',
+                        f'Selfie iniziale {game.get_group_name(p)}'
+                    ])
+                    BOT.send_photo(notify_group_id, photo=photo_file_id, caption=msg)
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:
@@ -607,13 +615,17 @@ def approve_media_input_indovinello(p, approved, signature):
         if notify_group_id:
             squadra_name = game.get_group_name(p)
             indovinello_number = game.completed_indovinello_number(p) + 1
-            indovinello_name = current_indovinello['NOME']            
-            if input_type=='PHOTO':
-                caption = 'Selfie indovinello {} squadra {} per indovinello {}'.format(indovinello_number, squadra_name, indovinello_name)
-                BOT.send_photo(notify_group_id, photo=file_id, caption=caption)
-            else: #elif input_type=='VOICE':
-                caption = 'Registrazione indovinello {} squadra {} per indovinello {}'.format(indovinello_number, squadra_name, indovinello_name)
-                BOT.send_voice(notify_group_id, voice=file_id, caption=caption)
+            indovinello_name = current_indovinello['NOME']     
+            msg_type = 'Selfie' if input_type=='PHOTO' else 'Registrazione'
+            msg = '\n'.join([
+                f'Caccia {game.get_hunt_name(p)}:',
+                f'{msg_type} indovinello {indovinello_number} ({indovinello_name}) squadra {squadra_name}'
+            ])
+            if input_type=='PHOTO':                
+                BOT.send_photo(notify_group_id, photo=file_id, caption=msg)
+            else: 
+                # VOICE
+                BOT.send_voice(notify_group_id, voice=file_id, caption=msg)
         game.append_group_media_input_file_id(p, file_id)        
         if 'POST_INPUT' in current_indovinello:                        
             msg = current_indovinello['POST_INPUT']
@@ -762,13 +774,23 @@ def state_END(p, message_obj=None, **kwargs):
     if give_instruction:        
         penalty_hms, total_hms_game, ellapsed_hms_game, \
             total_hms_missions, ellapsed_hms_missions = game.get_elapsed_and_penalty_and_total_hms(p)
-        msg = p.ux().MSG_END.format(penalty_hms, \
-            total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)        
+        penalty_sec = p.get_tmp_variable('penalty_sec')
+        if penalty_sec > 0:
+            msg = p.ux().MSG_END.format(penalty_hms, \
+                total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)        
+        else:
+            msg = p.ux().MSG_END_NO_PENALTY.format(\
+                total_hms_game, total_hms_missions)        
         send_message(p, msg, remove_keyboard=True)
         notify_group_id = game.get_notify_group_id(p)
         if notify_group_id:
-            msg_group = p.ux().MSG_END_NOTIFICATION.format(game.get_group_name(p), penalty_hms, \
-                total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)
+            msg_game_penalty = f' ({ellapsed_hms_game} tempo + {penalty_hms} penalità)' if penalty_sec > 0 else ''
+            msg_missioni_penalty = f' ({ellapsed_hms_missions} tempo + {penalty_hms} penalità)' if penalty_sec > 0 else ''
+            msg_group = '\n'.join([
+                f'Caccia {game.get_hunt_name(p)}:',
+                f'🏁 La squadra *{game.get_group_name(p)}* ha completato la caccia al tesoro in *{total_hms_game}*{msg_game_penalty}',
+                f'Ha completato le missioni in *{total_hms_missions}*{msg_missioni_penalty}'
+            ])
             send_message(notify_group_id, msg_group)                        
         final_message_key = 'MSG_FINAL_RESET_ON' if reset_hunt_after_completion else 'MSG_FINAL_RESET_OFF'
         send_message(p, p.ux().get_var(final_message_key))     
