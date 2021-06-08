@@ -199,7 +199,7 @@ def save_survey_data_in_airtable(p):
 # GAME MANAGEMENT FUNCTIONS
 ################################
 
-def reset_game(p, hunt_password):    
+def reset_game(p, hunt_name, hunt_password):    
     '''
     Save current game info user tmp_variable
     '''    
@@ -221,6 +221,7 @@ def reset_game(p, hunt_password):
     )
     survey = airtable_utils.get_rows(survey_table, sort_key=lambda r: r['QN'])
     tvar = p.tmp_variables = {}  
+    tvar['HUNT_NAME'] = hunt_name
     tvar['SETTINGS'] = hunt_settings    
     tvar['UX'] = hunt_ux    
     tvar['HUNT_INFO'] = hunt_info
@@ -276,6 +277,9 @@ def get_game_stats(p):
         return '- {} {} {}/{} Finished={}'.format(name_username, group_name, completed, total, finished)
     else:
         return '- {} {} ?'.format(name_username, group_name)
+
+def get_hunt_name(p):
+    return p.tmp_variables['HUNT_NAME']
 
 def get_notify_group_id(p):
     id_list = p.tmp_variables['Notify_Group ID']
@@ -348,6 +352,7 @@ def set_elapsed_and_penalty_and_compute_total(p):
     total_sec_game_missions = elapsed_sec_missions + penalty_sec
     
     # variables to print to users
+    tvar['penalty_sec'] = penalty_sec
     tvar['penalty_hms'] = utility.sec_to_hms(penalty_sec)
     tvar['total_hms_game'] = utility.sec_to_hms(total_sec_game)    
     tvar['ellapsed_hms_game'] = utility.sec_to_hms(elapsed_sec_game)    
