@@ -359,7 +359,10 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:
-                send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VIDEO)
+                if message_obj.video_note is not None:
+                    send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VIDEO_NO_VIDEO_NOTE)
+                else:
+                    send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VIDEO)
 
 # ================================
 # MISSION INSTRUCTIONS
@@ -563,7 +566,10 @@ def state_MEDIA_INPUT_MISSION(p, message_obj=None, **kwargs):
             file_id = voice['file_id']
         if input_type == 'VIDEO':          
             if video is None:
-                send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VIDEO)
+                if message_obj.video_note is not None:
+                    send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VIDEO_NO_VIDEO_NOTE)
+                else:
+                    send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VIDEO)
                 return 
             file_id = video['file_id']
         current_indovinello['MEDIA_INPUT_ID_TYPE'] = [file_id, input_type]
