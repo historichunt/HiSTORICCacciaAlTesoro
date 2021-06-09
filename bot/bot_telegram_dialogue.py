@@ -222,7 +222,7 @@ def state_TERMINATE_HUNT_CONFIRM(p, message_obj=None, **kwargs):
                         for u in remaining_people:                     
                             if not p.tmp_variables.get('FINISHED', False):                   
                                 game.exit_game(u, save_data=True, reset_current_hunt=True)
-                                restart(u, silent=True)
+                                restart(u)
                             else:
                                 # people who have completed needs to be informed too
                                 # we already saved the data but current hunt wasn't reset
@@ -826,7 +826,7 @@ def state_END(p, message_obj=None, **kwargs):
         send_message(p, p.ux().get_var(final_message_key))     
         game.exit_game(p, save_data=True, reset_current_hunt=reset_hunt_after_completion)   
         if reset_hunt_after_completion:
-            restart(p, silent=True)        
+            restart(p)        
     else:
         # thisi only happens if RESET_HUNT_AFTER_COMPLETION is False:
         # checking reset_hunt flag to prevent msg to be shown 
