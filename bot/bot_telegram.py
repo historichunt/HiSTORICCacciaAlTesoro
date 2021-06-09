@@ -45,12 +45,12 @@ def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
             **kwargs
         )
     except Unauthorized:
-        logging.debug('User has blocked Bot: {}'.format(p.chat_id))
+        logging.debug('User has blocked Bot: {}'.format(chat_id))
         if kwargs.get('switch_notifications', True):
             p.switch_notifications()
         return False
     except TelegramError as e:
-        logging.debug('Exception in reaching user {}: {}'.format(p.chat_id, e))
+        logging.debug('Exception in reaching user {}: {}'.format(chat_id, e))
         return False
     if sleep:
         time.sleep(0.1)
