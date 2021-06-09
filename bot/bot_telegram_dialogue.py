@@ -619,8 +619,10 @@ def send_to_validator(p, game, current_indovinello, input_type):
     logging.debug('Sending group input ({}) to validator'.format(input_type))
     if input_type == 'PHOTO':
         BOT.send_photo(game.get_validator_chat_id(p), photo=file_id, caption=caption, reply_markup=kb_markup)
-    else: # input_type == 'VOICE':
+    elif input_type == 'VOICE':
         BOT.send_voice(game.get_validator_chat_id(p), voice=file_id, caption=caption, reply_markup=kb_markup)
+    else: # input_type == 'VIDEO':
+        BOT.send_video(game.get_validator_chat_id(p), video=file_id, caption=caption, reply_markup=kb_markup)
 
 def approve_media_input_indovinello(p, approved, signature):
     # need to double check if team is still waiting for approval

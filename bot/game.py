@@ -216,10 +216,10 @@ def reset_game(p, hunt_name, hunt_password):
     mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni'
     missioni = get_random_missioni(p, airtable_game_id, mission_tab_name, initial_cat)
     instructions_steps = airtable_utils.get_rows(
-        instructions_table, filter=lambda r: not r.get('Skip',False), 
-        sort_key=lambda r: r['ORDER']
+        instructions_table, view='Grid view',
+        filter=lambda r: not r.get('Skip',False), 
     )
-    survey = airtable_utils.get_rows(survey_table, sort_key=lambda r: r['QN'])
+    survey = airtable_utils.get_rows(survey_table, view='Grid view')
     tvar = p.tmp_variables = {}  
     tvar['HUNT_NAME'] = hunt_name
     tvar['SETTINGS'] = hunt_settings    
