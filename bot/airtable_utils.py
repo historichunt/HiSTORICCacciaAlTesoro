@@ -34,8 +34,8 @@ def download_media(hunt_password, output_dir, table_name='Results'):
             with open(output_file, 'wb') as output:
                 output.write(r.content)
 
-def get_rows(table, filter=None, sort_key=None):
-    rows = [r['fields'] for r in table.get_all()]
+def get_rows(table, view=None, filter=None, sort_key=None):
+    rows = [r['fields'] for r in table.get_all(view=view)]
     if filter:
         rows = [r for r in rows if filter(r)]
     if sort_key:

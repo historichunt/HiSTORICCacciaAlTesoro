@@ -222,7 +222,7 @@ def state_TERMINATE_HUNT_CONFIRM(p, message_obj=None, **kwargs):
                         for u in remaining_people:                     
                             if not p.tmp_variables.get('FINISHED', False):                   
                                 game.exit_game(u, save_data=True, reset_current_hunt=True)
-                                restart(u, silent=True)
+                                restart(u)
                             else:
                                 # people who have completed needs to be informed too
                                 # we already saved the data but current hunt wasn't reset
@@ -281,12 +281,15 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
     else:
         text_input = message_obj.text                
         if input_type == 'EMAIL':
-            if utility.check_email(text_input):                
-                game.set_email(p, text_input)
-                send_typing_action(p, sleep_time=1)
-                repeat_state(p, next_step=True)
+            if text_input:
+                if utility.check_email(text_input):                
+                    game.set_email(p, text_input)
+                    send_typing_action(p, sleep_time=1)
+                    repeat_state(p, next_step=True)
+                else:
+                    send_message(p, p.ux().MSG_EMAIL_WRONG)
             else:
-                send_message(p, p.ux().MSG_EMAIL_WRONG)
+                send_message(p, p.ux().MSG_WRONG_INPUT_INSERT_TEXT)
         elif input_type == 'TEAM_NAME':
             if text_input:
                 if len(text_input) > params.MAX_TEAM_NAME_LENGTH:
@@ -348,6 +351,18 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 repeat_state(p, next_step=True)
             else:
                 send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VOICE)
+        elif input_type == 'TEST_VIDEO':
+            video = message_obj.video
+            if video is not None:
+                video_file_id = video['file_id']
+                game.append_group_media_input_file_id(p, video_file_id)
+                send_typing_action(p, sleep_time=1)
+                repeat_state(p, next_step=True)
+            else:
+                if message_obj.video_note is not None:
+                    send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VIDEO_NO_VIDEO_NOTE)
+                else:
+                    send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VIDEO)
 
 # ================================
 # MISSION INSTRUCTIONS
@@ -531,21 +546,32 @@ def state_MEDIA_INPUT_MISSION(p, message_obj=None, **kwargs):
     give_instruction = message_obj is None
     current_indovinello = game.getCurrentIndovinello(p)
     input_type = current_indovinello['INPUT_TYPE'] # PHOTO, VOICE
-    assert input_type in ['PHOTO','VOICE'] # missing video
+    assert input_type in ['PHOTO','VOICE','VIDEO']
     if give_instruction:
         msg = current_indovinello['INPUT_INSTRUCTIONS']
         send_message(p, msg, remove_keyboard=True)
     else:
         photo = message_obj.photo
         voice = message_obj.voice
-        logging.debug("input_type: {} photo: {} voice: {}".format(input_type, photo, voice))
-        if input_type == 'PHOTO' and (photo is None or len(photo)==0):            
-            send_message(p, p.ux().MSG_WRONG_INPUT_SEND_PHOTO)
-            return
-        if input_type == 'VOICE' and voice is None:          
-            send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VOICE)
-            return        
-        file_id = photo[-1]['file_id'] if input_type=='PHOTO' else voice['file_id']
+        video = message_obj.video
+        if input_type == 'PHOTO': 
+            if photo is None or len(photo)==0:            
+                send_message(p, p.ux().MSG_WRONG_INPUT_SEND_PHOTO)
+                return
+            file_id = photo[-1]['file_id']
+        if input_type == 'VOICE':          
+            if voice is None:
+                send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VOICE)
+                return                    
+            file_id = voice['file_id']
+        if input_type == 'VIDEO':          
+            if video is None:
+                if message_obj.video_note is not None:
+                    send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VIDEO_NO_VIDEO_NOTE)
+                else:
+                    send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VIDEO)
+                return 
+            file_id = video['file_id']
         current_indovinello['MEDIA_INPUT_ID_TYPE'] = [file_id, input_type]
         if current_indovinello.get('INPUT_CONFIRMATION', False):
             redirect_to_state(p, state_CONFIRM_MEDIA_INPUT)
@@ -556,7 +582,7 @@ def state_MEDIA_INPUT_MISSION(p, message_obj=None, **kwargs):
         p.put()
 
 def send_to_validator(p, game, current_indovinello, input_type):
-    assert input_type in ['PHOTO','VOICE'] # missing 'VIDEO'
+    assert input_type in ['PHOTO','VOICE', 'VIDEO']
     squadra_name = game.get_group_name(p)
     indovinello_number = game.completed_indovinello_number(p) + 1
     indovinello_name = current_indovinello['NOME']
@@ -569,6 +595,11 @@ def send_to_validator(p, game, current_indovinello, input_type):
         'VOICE': {
             'reply': p.ux().MSG_WAIT_VOICE_APPROVAL,
             'caption': 'Registrazione indovinello {} squadra {} per indovinello {}'.format(\
+                indovinello_number, squadra_name, indovinello_name)
+        },
+        'VIDEO': {
+            'reply': p.ux().MSG_WAIT_VIDEO_APPROVAL,
+            'caption': 'Video indovinello {} squadra {} per indovinello {}'.format(\
                 indovinello_number, squadra_name, indovinello_name)
         }
     }
@@ -594,8 +625,10 @@ def send_to_validator(p, game, current_indovinello, input_type):
     logging.debug('Sending group input ({}) to validator'.format(input_type))
     if input_type == 'PHOTO':
         BOT.send_photo(game.get_validator_chat_id(p), photo=file_id, caption=caption, reply_markup=kb_markup)
-    else: # input_type == 'VOICE':
+    elif input_type == 'VOICE':
         BOT.send_voice(game.get_validator_chat_id(p), voice=file_id, caption=caption, reply_markup=kb_markup)
+    else: # input_type == 'VIDEO':
+        BOT.send_video(game.get_validator_chat_id(p), video=file_id, caption=caption, reply_markup=kb_markup)
 
 def approve_media_input_indovinello(p, approved, signature):
     # need to double check if team is still waiting for approval
@@ -604,7 +637,7 @@ def approve_media_input_indovinello(p, approved, signature):
     if current_indovinello is None:
         return False
     file_id, input_type = current_indovinello['MEDIA_INPUT_ID_TYPE']
-    assert input_type in ['PHOTO','VOICE']
+    assert input_type in ['PHOTO','VOICE', 'VIDEO']
     if game.manual_validation(p) and signature != current_indovinello.get('sign', signature):
         # if 'sign' is not in current_indovinello it means we are in INPUT_CONFIRMATION mode 
         return False
@@ -616,16 +649,17 @@ def approve_media_input_indovinello(p, approved, signature):
             squadra_name = game.get_group_name(p)
             indovinello_number = game.completed_indovinello_number(p) + 1
             indovinello_name = current_indovinello['NOME']     
-            msg_type = 'Selfie' if input_type=='PHOTO' else 'Registrazione'
+            msg_type_str = {'PHOTO':'Selfie', 'VOICE': 'Registrazione', 'VIDEO': 'Video'}
             msg = '\n'.join([
                 f'Caccia {game.get_hunt_name(p)}:',
-                f'{msg_type} indovinello {indovinello_number} ({indovinello_name}) squadra {squadra_name}'
+                f'{msg_type_str[input_type]} indovinello {indovinello_number} ({indovinello_name}) squadra {squadra_name}'
             ])
             if input_type=='PHOTO':                
                 BOT.send_photo(notify_group_id, photo=file_id, caption=msg)
-            else: 
-                # VOICE
+            elif input_type=='VOICE':
                 BOT.send_voice(notify_group_id, voice=file_id, caption=msg)
+            else: # input_type=='VIDEO':
+                BOT.send_video(notify_group_id, video=file_id, caption=msg)
         game.append_group_media_input_file_id(p, file_id)        
         if 'POST_INPUT' in current_indovinello:                        
             msg = current_indovinello['POST_INPUT']
@@ -635,8 +669,10 @@ def approve_media_input_indovinello(p, approved, signature):
     else:
         if input_type=='PHOTO':
             send_message(p, p.ux().MSG_SELFIE_MISSIONE_WRONG)
-        else: #input_type=='VOICE':
+        elif input_type=='VOICE':
             send_message(p, p.ux().MSG_RECORDING_MISSIONE_WRONG)
+        else: # input_type=='VIDEO'
+            send_message(p, p.ux().MSG_VIDEO_MISSIONE_WRONG)
     return True
 
 
@@ -796,7 +832,7 @@ def state_END(p, message_obj=None, **kwargs):
         send_message(p, p.ux().get_var(final_message_key))     
         game.exit_game(p, save_data=True, reset_current_hunt=reset_hunt_after_completion)   
         if reset_hunt_after_completion:
-            restart(p, silent=True)        
+            restart(p)        
     else:
         # thisi only happens if RESET_HUNT_AFTER_COMPLETION is False:
         # checking reset_hunt flag to prevent msg to be shown 
