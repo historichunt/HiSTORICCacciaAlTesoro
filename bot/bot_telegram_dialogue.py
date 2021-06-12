@@ -58,23 +58,25 @@ def repeat_state(user, message_obj=None, **kwargs):
 # Initial State
 # ================================
 
-def state_INITIAL(p, message_obj=None, silent=False, **kwargs):    
+def state_INITIAL(p, message_obj=None, **kwargs):    
     if message_obj is None:
-        if not silent:
-            switch_language_button = p.ux().BUTTON_ENGLISH if p.language=='IT' else p.ux().BUTTON_ITALIAN
-            kb = [
-                [switch_language_button],
-                [p.ux().BUTTON_INFO]
-            ]     
-            if p.is_global_admin() or p.is_hunt_admin():
-                kb[-1].append(p.ux().BUTTON_ADMIN)       
-            send_message(p, p.ux().MSG_WELCOME_START, kb)
+        switch_language_button = p.ux().BUTTON_ENGLISH if p.language=='IT' else p.ux().BUTTON_ITALIAN
+        kb = [
+            [p.ux().BUTTON_START_HUNT],
+            [switch_language_button],
+            [p.ux().BUTTON_INFO]
+        ]     
+        if p.is_global_admin() or p.is_hunt_admin():
+            kb[-1].append(p.ux().BUTTON_ADMIN)       
+        send_message(p, p.ux().MSG_WELCOME, kb)
     else: 
         text_input = message_obj.text
         kb = p.get_keyboard()
         if text_input:            
             if text_input in flatten(kb):
-                if text_input == p.ux().BUTTON_INFO:
+                if text_input == p.ux().BUTTON_START_HUNT:
+                    redirect_to_state(p, state_START_HUNT)
+                elif text_input == p.ux().BUTTON_INFO:
                     send_message(p, p.ux().MSG_HISTORIC_INFO, remove_keyboard=True)
                     send_typing_action(p, sleep_time=5)
                     repeat_state(p)
@@ -94,28 +96,35 @@ def state_INITIAL(p, message_obj=None, silent=False, **kwargs):
                 hunt_password = text_input.lower().split()[1]
             else: 
                 hunt_password = text_input.lower()
-            if hunt_password in game.HUNTS_PW:   
-                if (
-                    game.HUNTS_PW[hunt_password].get('Active', False) 
-                    or 
-                    game.is_person_hunt_admin(p, hunt_password)
-                ):
-                    hunt_name = game.HUNTS_PW[hunt_password]['Name']
-                    game.reset_game(p, hunt_name, hunt_password)                    
-                    # send_message(p, p.ux().MSG_WELCOME.format(game_name), remove_keyboard=True)
-                    hunt_settings = p.tmp_variables['SETTINGS']
-                    skip_instructions = get_str_param_boolean(hunt_settings, 'SKIP_INSTRUCTIONS')
-                    if not skip_instructions:
-                        redirect_to_state(p, state_INSTRUCTIONS)
-                    else:
-                        # start the hunt
-                        redirect_to_state(p, state_MISSION_INTRO)
-                else:
-                    send_message(p, p.ux().MSG_HUNT_DISABLED)
-            else:
-                send_message(p, p.ux().MSG_WRONG_PASSWORD)
+            check_hunt_password(p, hunt_password)
         else:
             send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)
+
+def check_hunt_password(p, hunt_password):
+    if hunt_password in game.HUNTS_PW:   
+        if (
+            game.HUNTS_PW[hunt_password].get('Active', False) 
+            or 
+            game.is_person_hunt_admin(p, hunt_password)
+        ):
+            hunt_name = game.HUNTS_PW[hunt_password]['Name']
+            game.reset_game(p, hunt_name, hunt_password)                    
+            # send_message(p, p.ux().MSG_WELCOME.format(game_name), remove_keyboard=True)
+            hunt_settings = p.tmp_variables['SETTINGS']
+            skip_instructions = get_str_param_boolean(hunt_settings, 'SKIP_INSTRUCTIONS')
+            if not skip_instructions:
+                redirect_to_state(p, state_INSTRUCTIONS)
+            else:
+                # start the hunt
+                redirect_to_state(p, state_MISSION_INTRO)
+        else:
+            send_message(p, p.ux().MSG_HUNT_DISABLED)
+            send_typing_action(p, 1)
+            repeat_state(p)
+    else:
+        send_message(p, p.ux().MSG_WRONG_PASSWORD)
+        send_typing_action(p, 1)
+        repeat_state(p)
 
 
 # ================================
@@ -239,6 +248,40 @@ def state_TERMINATE_HUNT_CONFIRM(p, message_obj=None, **kwargs):
         else:
             send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)    
 
+# ================================
+# Start Hunt
+# ================================
+
+def state_START_HUNT(p, message_obj=None, **kwargs):    
+    give_instruction = message_obj is None
+    if give_instruction:                
+        switch_language_button = p.ux().BUTTON_ENGLISH if p.language=='IT' else p.ux().BUTTON_ITALIAN
+        kb = [
+            [switch_language_button],
+            [p.ux().BUTTON_BACK]
+        ]     
+        send_message(p, p.ux().MSG_START_INSTRUCTIONS, kb)
+    else:
+        text_input = message_obj.text
+        kb = p.get_keyboard()
+        if text_input:            
+            if text_input in flatten(kb):
+                if text_input == p.ux().BUTTON_BACK:
+                    restart(p)
+                elif text_input == p.ux().BUTTON_ITALIAN:
+                    p.set_language('IT')
+                    repeat_state(p)
+                elif text_input == p.ux().BUTTON_ENGLISH:
+                    p.set_language('EN')                
+                    repeat_state(p)      
+            else:
+                hunt_password = text_input.lower()
+                check_hunt_password(p, hunt_password)
+        else:
+            send_message(p, p.ux().MSG_WRONG_INPUT_INSERT_TEXT, kb)
+            send_typing_action(p, 1)
+            repeat_state(p)
+            
 
 # ================================
 # Intro - Instructions

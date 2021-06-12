@@ -8,10 +8,16 @@ from bot.params import ROOT_DIR, LANGUAGES
 UX_DIR = os.path.join(ROOT_DIR, 'ux')
 
 # lang -> var -> string
-UX_DICT = {
-    lang: json.load(open(os.path.join(UX_DIR, f'{lang}.json')))
-    for lang in LANGUAGES
-}
+UX_DICT = None
+
+def build_ux_dict():
+    global UX_DICT
+    UX_DICT = {
+        lang: json.load(open(os.path.join(UX_DIR, f'{lang}.json')))
+        for lang in LANGUAGES
+    }
+
+build_ux_dict()
 
 class UX_LANG:
     
@@ -79,6 +85,13 @@ BUTTON_NO_CALLBACK = lambda x: telegram.InlineKeyboardButton(
     callback_data = x
 )
 
+def sort_alphabetically():
+    for lang in LANGUAGES:
+        lang_dict = UX_DICT[lang]
+        ux_file = os.path.join('ux', f'{lang}.json')
+        with open(ux_file, 'w') as f_out:
+            json.dump(lang_dict, f_out, indent=3, sort_keys=True, ensure_ascii=False)
+
 def check_language_consistency():
     lang_keys = {
         lang: list(UX_DICT[lang].keys())
@@ -102,4 +115,6 @@ def check_language_consistency():
 
 
 if __name__ == "__main__":
+    sort_alphabetically()
+    build_ux_dict()
     check_language_consistency()
