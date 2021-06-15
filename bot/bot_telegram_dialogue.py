@@ -808,9 +808,13 @@ def state_SURVEY(p, message_obj=None, **kwargs):
             send_typing_action(p, sleep_time=1)
         total_questions = game.get_tot_survey_questions(p)
         msg = '*Domanda {}/{}*: {}'.format(questions_number, total_questions, current_question['DOMANDA'])
-        risposte = [x.strip() for x in current_question['RISPOSTE'].split(',')]
-        kb = [risposte]
-        send_message(p, msg, kb)
+        if 'RISPOSTE' in current_question:
+            risposte = [x.strip() for x in current_question['RISPOSTE'].split(',')]
+            kb = [risposte]
+            send_message(p, msg, kb)
+        else:
+            # no buttons -> no skip
+            send_message(p, msg, remove_keyboard=True)
     else:
         text_input = message_obj.text
         kb = p.get_keyboard()
