@@ -541,12 +541,15 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                         remaining = MIN_SEC_INDIZIO_1 - ellapsed
                         send_message(p, p.ux().MSG_TOO_EARLY.format(remaining))
             else:
-                import functools, re
-                soluzioni_list = current_indovinello['SOLUZIONI'].upper().split(',')
-                correct_answers_upper = [x.strip() for x in soluzioni_list if not (x.strip()[0] == '/' and x.strip()[-1] == '/')]
-                correct_answers_regex = [x.strip()[1:-1] for x in soluzioni_list if (x.strip()[0] == '/' and x.strip()[-1] == '/')]
+                import functools, regex
+                soluzioni_list = regex.split(r"(?<!\\)(?:\\{2})*\K,", current_indovinello['SOLUZIONI'])
+                correct_answers_upper = [x.strip().upper() for x in soluzioni_list if not regex.match(r'^/.*/$', x)]
+                correct_answers_regex = [x[1:-1].replace('\\,',',') for x in soluzioni_list if regex.match(r'^/.*/$', x)]
+                for r in correct_answers_regex:
+                    try: regex.compile(r)
+                    except regex.error: correct_answers_regex.remove(r)
                 #correct_answers_upper_word_set = set(flatten([x.split() for x in correct_answers_upper]))
-                if text_input.upper() in correct_answers_upper or functools.reduce(lambda a, regex: a or re.compile(regex).match(text_input.upper()), correct_answers_regex, False):
+                if text_input.upper() in correct_answers_upper or functools.reduce(lambda a, r: a or regex.match(r, text_input, regex.I), correct_answers_regex, False):
                     game.set_end_mission_time(p)
                     if not send_post_message(p, current_indovinello):
                         send_message(p, bot_ux.MSG_ANSWER_OK(p.language), remove_keyboard=True)
