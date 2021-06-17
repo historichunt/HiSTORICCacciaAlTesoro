@@ -96,11 +96,13 @@ def state_INITIAL(p, message_obj=None, **kwargs):
                 hunt_password = text_input.lower().split()[1]
             else: 
                 hunt_password = text_input.lower()
-            check_hunt_password(p, hunt_password)
+            correct_password = check_hunt_password(p, hunt_password, send_msg_if_wrong_pw=False)
+            if not correct_password:
+                send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)    
         else:
             send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
-def check_hunt_password(p, hunt_password):
+def check_hunt_password(p, hunt_password, send_msg_if_wrong_pw):
     if hunt_password in game.HUNTS_PW:   
         if (
             game.HUNTS_PW[hunt_password].get('Active', False) 
@@ -117,15 +119,19 @@ def check_hunt_password(p, hunt_password):
             else:
                 # start the hunt
                 redirect_to_state(p, state_MISSION_INTRO)
+            return True
         else:
-            send_message(p, p.ux().MSG_HUNT_DISABLED)
+            if send_msg_if_wrong_pw:
+                send_message(p, p.ux().MSG_HUNT_DISABLED)
+                send_typing_action(p, 1)
+                repeat_state(p)
+            return False
+    else:
+        if send_msg_if_wrong_pw:
+            send_message(p, p.ux().MSG_WRONG_PASSWORD)
             send_typing_action(p, 1)
             repeat_state(p)
-    else:
-        send_message(p, p.ux().MSG_WRONG_PASSWORD)
-        send_typing_action(p, 1)
-        repeat_state(p)
-
+        return False
 
 # ================================
 # Admin State
@@ -276,7 +282,7 @@ def state_START_HUNT(p, message_obj=None, **kwargs):
                     repeat_state(p)      
             else:
                 hunt_password = text_input.lower()
-                check_hunt_password(p, hunt_password)
+                check_hunt_password(p, hunt_password, send_msg_if_wrong_pw=True)
         else:
             send_message(p, p.ux().MSG_WRONG_INPUT_INSERT_TEXT, kb)
             send_typing_action(p, 1)
