@@ -96,11 +96,13 @@ def state_INITIAL(p, message_obj=None, **kwargs):
                 hunt_password = text_input.lower().split()[1]
             else: 
                 hunt_password = text_input.lower()
-            check_hunt_password(p, hunt_password)
+            correct_password = check_hunt_password(p, hunt_password, send_msg_if_wrong_pw=False)
+            if not correct_password:
+                send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)    
         else:
             send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
-def check_hunt_password(p, hunt_password):
+def check_hunt_password(p, hunt_password, send_msg_if_wrong_pw):
     if hunt_password in game.HUNTS_PW:   
         if (
             game.HUNTS_PW[hunt_password].get('Active', False) 
@@ -117,15 +119,19 @@ def check_hunt_password(p, hunt_password):
             else:
                 # start the hunt
                 redirect_to_state(p, state_MISSION_INTRO)
+            return True
         else:
-            send_message(p, p.ux().MSG_HUNT_DISABLED)
+            if send_msg_if_wrong_pw:
+                send_message(p, p.ux().MSG_HUNT_DISABLED)
+                send_typing_action(p, 1)
+                repeat_state(p)
+            return False
+    else:
+        if send_msg_if_wrong_pw:
+            send_message(p, p.ux().MSG_WRONG_PASSWORD)
             send_typing_action(p, 1)
             repeat_state(p)
-    else:
-        send_message(p, p.ux().MSG_WRONG_PASSWORD)
-        send_typing_action(p, 1)
-        repeat_state(p)
-
+        return False
 
 # ================================
 # Admin State
@@ -276,7 +282,7 @@ def state_START_HUNT(p, message_obj=None, **kwargs):
                     repeat_state(p)      
             else:
                 hunt_password = text_input.lower()
-                check_hunt_password(p, hunt_password)
+                check_hunt_password(p, hunt_password, send_msg_if_wrong_pw=True)
         else:
             send_message(p, p.ux().MSG_WRONG_INPUT_INSERT_TEXT, kb)
             send_typing_action(p, 1)
@@ -541,9 +547,18 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                         remaining = MIN_SEC_INDIZIO_1 - ellapsed
                         send_message(p, p.ux().MSG_TOO_EARLY.format(remaining))
             else:
-                correct_answers_upper = [x.strip() for x in current_indovinello['SOLUZIONI'].upper().split(',')]
+                import functools, regex
+                soluzioni_list = [
+                    x.strip() for x in 
+                    regex.split(r"(?<!\\)(?:\\{2})*\K,", current_indovinello['SOLUZIONI'])
+                ] # split on comma but not on /, (when comma is used in regex)
+                correct_answers_upper = [x.upper() for x in soluzioni_list if not regex.match(r'^/.*/$', x)]
+                correct_answers_regex = [x[1:-1].replace('\\,',',') for x in soluzioni_list if regex.match(r'^/.*/$', x)]
+                for r in correct_answers_regex:
+                    try: regex.compile(r)
+                    except regex.error: correct_answers_regex.remove(r)
                 #correct_answers_upper_word_set = set(flatten([x.split() for x in correct_answers_upper]))
-                if text_input.upper() in correct_answers_upper:
+                if text_input.upper() in correct_answers_upper or functools.reduce(lambda a, r: a or regex.match(r, text_input, regex.I), correct_answers_regex, False):
                     game.set_end_mission_time(p)
                     if not send_post_message(p, current_indovinello):
                         send_message(p, bot_ux.MSG_ANSWER_OK(p.language), remove_keyboard=True)
