@@ -542,8 +542,11 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                         send_message(p, p.ux().MSG_TOO_EARLY.format(remaining))
             else:
                 import functools, regex
-                soluzioni_list = regex.split(r"(?<!\\)(?:\\{2})*\K,", current_indovinello['SOLUZIONI'])
-                correct_answers_upper = [x.strip().upper() for x in soluzioni_list if not regex.match(r'^/.*/$', x)]
+                soluzioni_list = [
+                    x.strip() for x in 
+                    regex.split(r"(?<!\\)(?:\\{2})*\K,", current_indovinello['SOLUZIONI'])
+                ] # split on comma but not on /, (when comma is used in regex)
+                correct_answers_upper = [x.upper() for x in soluzioni_list if not regex.match(r'^/.*/$', x)]
                 correct_answers_regex = [x[1:-1].replace('\\,',',') for x in soluzioni_list if regex.match(r'^/.*/$', x)]
                 for r in correct_answers_regex:
                     try: regex.compile(r)

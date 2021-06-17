@@ -39,8 +39,8 @@ python-telegram-bot==12.8
 pytz==2020.1
 PyYAML==5.4.1
 redis==3.5.3
-requests==2.24.0
 regex==2021.4.4
+requests==2.24.0
 rsa==4.7
 six==1.15.0
 toml==0.10.1
