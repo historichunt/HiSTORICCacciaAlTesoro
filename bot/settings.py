@@ -4,7 +4,7 @@ from bot import ndb_envvar
 from bot.params import ROOT_DIR
 
 APP_NAME = 'historictrentobot'
-APP_VERSION = '0.6.6'
+APP_VERSION = '0.6.7'
 CLOUD_ENVS = ['test', 'production']
 GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
 
