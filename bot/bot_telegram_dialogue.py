@@ -1065,16 +1065,17 @@ def deal_with_request(request_json):
         return 
     message_obj = update_obj.message    
     user_obj = message_obj.from_user
+    
     chat_id = user_obj.id    
     username = user_obj.username
     last_name = user_obj.last_name if user_obj.last_name else ''
     name = (user_obj.first_name + ' ' + last_name).strip()
-    # language = user_obj.language_code
+    lang = user_obj.language_code
     
     p = ndb_person.get_person_by_id_and_application(user_obj.id, 'telegram')
 
     if p == None:
-        p = ndb_person.add_person(chat_id, name, last_name, username, 'telegram')
+        p = ndb_person.add_person(chat_id, name, last_name, username, lang, 'telegram')
         report_admins('New user: {}'.format(p.get_first_last_username()))
     else:
         _, was_disabled = p.update_info(name, last_name, username)

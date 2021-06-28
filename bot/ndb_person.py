@@ -147,7 +147,7 @@ def get_person_by_id(uid):
     #return k.get()
     return Person.get_by_id(uid)
 
-def add_person(chat_id, name, last_name, username, application):
+def add_person(chat_id, name, last_name, username, lang, application):
     p = Person(
         id=make_id(chat_id, application),
         chat_id=str(chat_id),
@@ -155,6 +155,7 @@ def add_person(chat_id, name, last_name, username, application):
         last_name=last_name,
         username=username,
         application=application,
+        language = 'IT' if lang.upper()=='IT' else 'EN',
         tmp_variables={}
     )
     p.put()
