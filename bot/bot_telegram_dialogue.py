@@ -182,8 +182,8 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
     hunt_pw = game.HUNTS_NAME[hunt_name]['Password']
     if message_obj is None:
         kb = [
-            [p.ux().BUTTON_STATS],
-            [p.ux().BUTTON_TERMINATE],
+            [p.ux().BUTTON_CHECK_HUNT],
+            [p.ux().BUTTON_STATS, p.ux().BUTTON_TERMINATE],
             [p.ux().BUTTON_BACK]
         ]
         msg = p.ux().MSG_HUNT_ADMIN_SELECTED.format(hunt_name)
@@ -195,6 +195,13 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
             if text_input in flatten(kb):
                 if text_input == p.ux().BUTTON_BACK:
                     redirect_to_state(p, state_ADMIN)
+                elif text_input == p.ux().BUTTON_CHECK_HUNT:
+                    from bot.airtable_check import check_hunt
+                    error = check_hunt(hunt_pw)
+                    if error:
+                        send_message(p, error, markdown=False)
+                    else:
+                        send_message(p, p.ux().MSG_CHECK_HUNT_OK)
                 elif text_input == p.ux().BUTTON_STATS:
                     hunt_stats = ndb_person.get_people_on_hunt_stats(hunt_pw)
                     if hunt_stats:

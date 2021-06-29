@@ -3,7 +3,7 @@ from airtable import Airtable
 from bot import settings, airtable_utils
 
 def check_curly_bracket(s):
-    return len(re.findall(r'\{\d*\}',s)) == s.count('{') == s.count('}')
+    return s.count('{') == s.count('}')
 
 def check_asterix(s):
     return s.count('*')%2==0
@@ -14,7 +14,7 @@ def check_underscores(s):
 def check_square_bracket(s):
     return s.count('[') == s.count(']')
 
-def check_back_apostrophe(s):
+def check_backtick(s):
     return s.count('`')==0
 
 
@@ -31,38 +31,38 @@ def check_ux():
                     'Error UNDERSCORES in ux table in var "{}" column {}'.format(row_dict['VAR'], k)
             assert check_square_bracket(v), \
                 'Error SQUARE BRACKET in ux table in var "{}" column {}'.format(row_dict['VAR'], k)
-            assert check_back_apostrophe(v), \
+            assert check_backtick(v), \
                 'Error BACK APOSTROPHE in ux table in var "{}" column {}'.format(row_dict['VAR'], k)
 
-def check_hunts():
+def check_hunt(hunt_pw):
     from bot.game import HUNTS_PW
-    for hunt_config_dict in HUNTS_PW.values():
-        hunt_name = hunt_config_dict['Name']        
-        print('Checking {}'.format(hunt_name))
-        game_id = hunt_config_dict['Airtable_Game_ID']
-        hunt_missioni_table = Airtable(game_id, 'Missioni', api_key=settings.AIRTABLE_API_KEY)
-        missioni_row_dict_list = airtable_utils.get_rows(hunt_missioni_table)
-        for row_dict in missioni_row_dict_list:
-            for k,v in row_dict.items():
-                if type(v) is not str:
-                    continue
-                assert check_curly_bracket(v), \
-                    'Error CURLY BRACKET in missioni of hunt "{}" in mission name "{}" column {}'.format(
-                        hunt_name, row_dict['NAME'], k)
-                assert check_underscores(v), \
-                    'Error UNDERSCORES in missioni of hunt "{}" in mission name "{}" column {}'.format(
-                        hunt_name, row_dict['NAME'], k)
-                assert check_square_bracket(v), \
-                    'Error SQUARE BRACKET in missioni of hunt "{}" in mission name "{}" column {}'.format(
-                        hunt_name, row_dict['NAME'], k)
-                assert check_back_apostrophe(v), \
-                    'Error BACK APOSTROPHE in missioni of hunt "{}" in mission name "{}" column {}'.format(
-                        hunt_name, row_dict['NAME'], k)        
+    hunt_config_dict = HUNTS_PW[hunt_pw]    
+    # hunt_name = hunt_config_dict['Name']            
+    game_id = hunt_config_dict['Airtable_Game_ID']
+    hunt_missioni_table = Airtable(game_id, 'Missioni', api_key=settings.AIRTABLE_API_KEY)
+    missioni_row_dict_list = airtable_utils.get_rows(hunt_missioni_table)
+    for row_dict in missioni_row_dict_list:
+        for k,v in row_dict.items():
+            if type(v) is not str:
+                continue
+            mk_check = (
+                ('PARENTESI GRAFFE', check_curly_bracket),
+                ('PARENTESI QUADRE', check_square_bracket),
+                ('UNDERSCORES', check_underscores),
+                ('BACKTICK', check_backtick)
+            )
+            miss_name = row_dict['NOME']
+            for err_type, check_func in mk_check:
+                if not check_func(v):
+                    return f'Errore {err_type} in tabella "Missioni": missione "{miss_name}", colonna {k}'
 
-def check_consistencies():
-    check_ux()
-    check_hunts() 
-    print('Success!!')
+# def check_consistencies():
+#     check_ux()
+#     check_hunt() 
+#     print('Success!!')
 
 if __name__ == "__main__":
-    check_consistencies()
+    import sys
+    assert len(sys.argv)==2
+    pw = sys.argv[1]
+    check_hunt(pw)
