@@ -1070,8 +1070,14 @@ def deal_with_request(request_json):
     if update_obj.callback_query:
         deal_with_callback_query(update_obj.callback_query)
         return 
-    message_obj = update_obj.message    
-    user_obj = message_obj.from_user
+    
+    message_obj = update_obj.message
+    
+    if message_obj.chat.type == 'group':
+        # ignore commands from group
+        return
+    
+    user_obj = message_obj.from_user    
     
     chat_id = user_obj.id    
     username = user_obj.username
