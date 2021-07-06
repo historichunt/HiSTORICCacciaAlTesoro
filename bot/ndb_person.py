@@ -155,7 +155,7 @@ def add_person(chat_id, name, last_name, username, lang, application):
         last_name=last_name,
         username=username,
         application=application,
-        language = 'IT' if lang.upper()=='IT' else 'EN',
+        language = 'IT' if lang is None or lang.upper()=='IT' else 'EN',
         tmp_variables={}
     )
     p.put()
