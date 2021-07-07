@@ -62,7 +62,7 @@
     "MSG_HUNT_NOT_TERMINATED": "⌛ Vi preghiamo di attendere la comunicazione del termine della caccia al tesoro.",
     "MSG_HUNT_TERMINATED_RESET_OFF": "⏰ Il tempo a disposizione è terminato!\n🏘 Ritornate al punto di partenza per la premiazione!",
     "MSG_HUNT_TERMINATED_RESET_ON": "⏰ Il tempo a disposizione è terminato!\n\n📜 Pubblicheremo i risultati sulla nostra [pagina FB](https://www.facebook.com/historictrento).",
-    "MSG_HUNT_TERMINATE_CONFIRM": "🤔 Sei proprio sicuro/a di voler terminare la caccia: {}? QUESTO COMANDO NON È REVERSIBILE. IL SUO EFFETTO È CHE TUTTE LE PERSONE ANCORA DENTRO LA CACCIA VENGONO MANDATE FUORI DALLA CACCIA.",
+    "MSG_HUNT_TERMINATE_CONFIRM": "🤔 Sei proprio sicuro/a di voler terminare la caccia: {}? QUESTO COMANDO NON È REVERSIBILE. A tutte le persone ancora all'interno, verrà terminata la caccia.",
     "MSG_MEDIA_INPUT_ABORTED": "❌ Invio annullato.",
     "MSG_MEDIA_INPUT_MISSIONE_OK_01": "😀 Fantastico!",
     "MSG_MEDIA_INPUT_MISSIONE_OK_02": "😀 Super!",
