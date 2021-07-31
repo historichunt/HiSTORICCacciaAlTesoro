@@ -24,8 +24,10 @@ def reload_config_hunt():
         for row in HUNTS_CONFIG_TABLE.get_all() 
         if 'Password' in row['fields']
     ]
+    for d in hunts:
+        d['Password'] = d['Password'].lower()
     HUNTS_PW = {
-        d['Password'].lower(): d
+        d['Password']: d
         for d in hunts
     }
     HUNTS_NAME = {
