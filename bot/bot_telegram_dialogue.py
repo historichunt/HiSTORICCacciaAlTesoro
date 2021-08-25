@@ -1089,7 +1089,7 @@ def deal_with_request(request_json):
 
     if p == None:
         p = ndb_person.add_person(chat_id, name, last_name, username, lang, 'telegram')
-        report_admins('New user: {}'.format(p.get_first_last_username()))
+        report_admins('New user: {}'.format(p.get_first_last_username(escape_markdown=False)))
     else:
         _, was_disabled = p.update_info(name, last_name, username)
         if was_disabled:
