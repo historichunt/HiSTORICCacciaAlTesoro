@@ -63,12 +63,12 @@ class Person(ndb.Model):
     def get_last_name(self, escape_markdown=True):
         if self.last_name is None:
             return None
-        return utility.escape_markdown(self.last_name) if escape_markdown else self.name
+        return utility.escape_markdown(self.last_name) if escape_markdown else self.last_name
 
     def get_username(self, escape_markdown=True):
         if self.username is None:
             return None
-        return utility.escape_markdown(self.username) if escape_markdown else self.name
+        return utility.escape_markdown(self.username) if escape_markdown else self.username
 
     def get_first_last_name(self, escape_markdown=True):
         if self.last_name is None:
