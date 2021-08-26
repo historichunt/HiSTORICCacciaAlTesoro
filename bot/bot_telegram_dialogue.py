@@ -2,7 +2,7 @@ import logging
 import telegram
 import json
 import random
-from bot import bot_telegram, utility, ndb_person, bot_ux, game, geoUtils, params, settings
+from bot import airtable_utils, bot_telegram, utility, ndb_person, bot_ux, game, geoUtils, params, settings
 from bot import date_time_util as dtu
 from bot.bot_telegram import BOT, send_message, send_location, send_typing_action, \
     report_admins, send_text_document, send_media_url, \
@@ -182,8 +182,10 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
     hunt_pw = game.HUNTS_NAME[hunt_name]['Password']
     if message_obj is None:
         kb = [
+            [p.ux().BUTTON_BACK],
             [p.ux().BUTTON_CHECK_HUNT],
             [p.ux().BUTTON_STATS, p.ux().BUTTON_TERMINATE],
+            [p.ux().BUTTON_DOWNLOAD_MEDIA],
             [p.ux().BUTTON_BACK]
         ]
         msg = p.ux().MSG_HUNT_ADMIN_SELECTED.format(hunt_name)
@@ -211,6 +213,15 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                     send_message(p, msg, markdown=False)
                 elif text_input == p.ux().BUTTON_TERMINATE:
                     redirect_to_state(p, state_TERMINATE_HUNT_CONFIRM)
+                elif text_input == p.ux().BUTTON_DOWNLOAD_MEDIA:
+                    msg = 'Preparazione del file, ti prego di attendere...'
+                    send_message(p, msg, markdown=False)
+                    zip_content = airtable_utils.download_media_zip(hunt_pw)
+                    if zip_content is None:
+                        msg = 'Nessun media trovato.'
+                        send_message(p, msg, markdown=False)
+                    else:
+                        send_text_document(p, 'media.zip', zip_content)      
             else:
                 send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)     
         else:
@@ -954,6 +965,14 @@ def deal_with_admin_commands(p, message_obj):
         if text_input == '/version':
             msg = f'{settings.ENV_VERSION} {settings.APP_VERSION}'
             send_message(p, msg)
+            return True
+        if text_input.startswith('/test_zip'):
+            pw = text_input.split()[1]
+            zip_content = airtable_utils.download_media_zip(pw)
+            if zip_content is None:
+                send_message(p, 'No media found')
+            else:
+                send_text_document(p, 'media.zip', zip_content)      
             return True
         if text_input == '/test_inline_kb':
             send_message(p, "Test inline keypboard", kb=[[p.ux().BUTTON_YES_CALLBACK('test'), p.ux().BUTTON_NO_CALLBACK('test')]], inline_keyboard=True)

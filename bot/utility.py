@@ -48,12 +48,22 @@ def import_url_csv_to_dict_list(url_csv, remove_new_line_escape=True): #escape_m
     return [dict for dict in reader]
 
 
-def representsInt(s):
+def is_int(s):
     try:
         int(s)
         return True
     except ValueError:
         return False
+
+def append_num_to_filename(filename):
+    if '_' in filename: 
+        prefix, suffix = filename.rsplit('_', 1)
+        if is_int(suffix):
+            num = int(suffix)
+            filename = f'{prefix}_{num+1}'
+    else:
+        filename = f'{filename}_1'
+    return filename
 
 re_letters_space = re.compile('^[a-zA-Z ]+$')
 re_digits = re.compile(r'^\d+$')
@@ -77,7 +87,7 @@ def representsFloat(s):
         return False
 
 def representsIntBetween(s, low, high):
-    if not representsInt(s):
+    if not is_int(s):
         return False
     sInt = int(s)
     if sInt>=low and sInt<=high:
@@ -103,7 +113,7 @@ def letterEnumeration(list):
 
 
 def getIndexIfIntOrLetterInRange(input, max):
-    if representsInt(input):
+    if is_int(input):
         result = int(input)
         if result in range(1, max + 1):
             return result
