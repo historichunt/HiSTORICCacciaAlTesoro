@@ -214,14 +214,16 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                 elif text_input == p.ux().BUTTON_TERMINATE:
                     redirect_to_state(p, state_TERMINATE_HUNT_CONFIRM)
                 elif text_input == p.ux().BUTTON_DOWNLOAD_MEDIA:
-                    msg = 'Preparazione del file, ti prego di attendere...'
+                    msg = "Preparazione del file, ti prego di attendere... "\
+                        "(L'operazione potrebbe richiedere anche diversi minuti)"
                     send_message(p, msg, markdown=False)
                     zip_content = airtable_utils.download_media_zip(hunt_pw)
                     if zip_content is None:
                         msg = 'Nessun media trovato.'
                         send_message(p, msg, markdown=False)
                     else:
-                        send_text_document(p, 'media.zip', zip_content)      
+                        zip_file_name = hunt_name.replace(' ','_')[:20] + ".zip"
+                        send_text_document(p, zip_file_name, zip_content)      
             else:
                 send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)     
         else:
