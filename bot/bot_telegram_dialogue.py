@@ -226,8 +226,9 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                         send_text_document(p, zip_file_name, zip_content)      
                 elif text_input == p.ux().BUTTON_DOWNLOAD_ERRORS:
                     mission_errors, errors_digested = airtable_utils.get_wrong_answers(hunt_pw)
-                    send_text_document(p, 'errori_missioni.txt', mission_errors)      
-                    send_text_document(p, 'errori_digested.txt', errors_digested)      
+                    file_name_prefix = 'errori_' + hunt_name.replace(' ','_')[:20]
+                    send_text_document(p, f'{file_name_prefix}.txt', mission_errors)      
+                    send_text_document(p, f'{file_name_prefix}_digested.txt', errors_digested)      
             else:
                 send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)     
         else:
