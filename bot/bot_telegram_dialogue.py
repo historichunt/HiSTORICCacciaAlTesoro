@@ -222,13 +222,13 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                         msg = 'Nessun media trovato.'
                         send_message(p, msg, markdown=False)
                     else:
-                        timestamp = dtu.timestamp_yyyymmdd
+                        timestamp = dtu.timestamp_yyyymmdd()
                         zip_file_name = 'media_' + hunt_name.replace(' ','_')[:20] + f"_{timestamp}.zip"
                         send_text_document(p, zip_file_name, zip_content)      
                 elif text_input == p.ux().BUTTON_DOWNLOAD_ERRORS:
                     mission_errors, errors_digested = airtable_utils.get_wrong_answers(hunt_pw)
                     file_name_prefix = 'errori_' + hunt_name.replace(' ','_')[:20]
-                    timestamp = dtu.timestamp_yyyymmdd
+                    timestamp = dtu.timestamp_yyyymmdd()
                     send_text_document(p, f'{file_name_prefix}_{timestamp}.txt', mission_errors)      
                     send_text_document(p, f'{file_name_prefix}_{timestamp}_digested.txt', errors_digested)      
             else:
