@@ -32,6 +32,9 @@ def formatDateTime(dt, format='%d-%m-%Y %H:%M'):
         return dt.strftime(format)
     return None
 
+def timestamp_yyyymmdd():
+    return nowUTC().strftime("%Y%m%d")
+
 
 def delta_min(dt1, dt2):
     diff = dt2 - dt1
