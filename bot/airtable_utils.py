@@ -64,6 +64,9 @@ def get_wrong_answers(hunt_password, table_name='Results'):
     for entry in table_entries:
         fields = entry['fields']
         # group_name = fields['GROUP_NAME']
+        if 'GAME VARS' not in fields:
+            # empty row
+            continue
         game_vars = json.loads(fields['GAME VARS'])
         completed_missioni = game_vars['MISSIONI_INFO']['COMPLETED']
         for m in completed_missioni:
