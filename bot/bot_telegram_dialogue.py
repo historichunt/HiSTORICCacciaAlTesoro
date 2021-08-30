@@ -185,7 +185,7 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
             [p.ux().BUTTON_BACK],
             [p.ux().BUTTON_CHECK_HUNT],
             [p.ux().BUTTON_STATS, p.ux().BUTTON_TERMINATE],
-            [p.ux().BUTTON_DOWNLOAD_MEDIA],
+            [p.ux().BUTTON_DOWNLOAD_MEDIA, p.ux().BUTTON_DOWNLOAD_ERRORS],
             [p.ux().BUTTON_BACK]
         ]
         msg = p.ux().MSG_HUNT_ADMIN_SELECTED.format(hunt_name)
@@ -224,6 +224,10 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                     else:
                         zip_file_name = hunt_name.replace(' ','_')[:20] + ".zip"
                         send_text_document(p, zip_file_name, zip_content)      
+                elif text_input == p.ux().BUTTON_DOWNLOAD_ERRORS:
+                    mission_errors, errors_digested = airtable_utils.get_wrong_answers(hunt_pw)
+                    send_text_document(p, 'errori_missioni.txt', mission_errors)      
+                    send_text_document(p, 'errori_digested.txt', errors_digested)      
             else:
                 send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)     
         else:
