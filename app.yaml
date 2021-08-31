@@ -2,3 +2,5 @@
 
 entrypoint: gunicorn -b :$PORT main:app --chdir bot
 runtime: python37
+
+instance_class: F2
