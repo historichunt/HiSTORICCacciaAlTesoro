@@ -1103,7 +1103,7 @@ def deal_with_request(request_json):
     chat_id = user_obj.id    
     username = user_obj.username
     last_name = user_obj.last_name if user_obj.last_name else ''
-    name = (user_obj.first_name + ' ' + last_name).strip()
+    name = user_obj.first_name
     lang = user_obj.language_code
     
     p = ndb_person.get_person_by_id_and_application(user_obj.id, 'telegram')
