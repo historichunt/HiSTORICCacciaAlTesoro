@@ -28,9 +28,13 @@ def download_media_zip(hunt_password, table_name='Results', log=False):
             print('Downloading group ', group_name)
         if 'GROUP_MEDIA_FILE_IDS' not in fields:
             continue  
+        unique_media_names_list = []
         for media in fields['GROUP_MEDIA_FILE_IDS']:
             url = media['url']
             file_name = media['filename']   
+            while file_name in unique_media_names_list:
+                file_name = append_num_to_filename(file_name)
+            unique_media_names_list.append(file_name)
             output_file = os.path.join(group_name, file_name)
             r = requests.get(url)
             zf.writestr(output_file, r.content)
