@@ -1,21 +1,22 @@
 import collections
+import requests
+import os
+import io
 from airtable import Airtable
 from bot import settings, game
 import zipfile
 from bot.utility import append_num_to_filename
+from params import MAX_SIZE_FILE_BYTES
 
 
 def download_media_zip(hunt_password, table_name='Results', log=False):    
-    import zipfile
-    import requests
-    import os
-    import io
     table_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
     RESULTS_TABLE = Airtable(table_id, table_name, api_key=settings.AIRTABLE_API_KEY)
     table_entries = RESULTS_TABLE.get_all()
     zip_buffer = io.BytesIO()
     zf = zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED)
     unique_group_names_list = []
+    total_size = 0
     for entry in table_entries:
         fields = entry['fields']
         group_name = fields.get('GROUP_NAME', None)
@@ -38,9 +39,14 @@ def download_media_zip(hunt_password, table_name='Results', log=False):
             output_file = os.path.join(group_name, file_name)
             r = requests.get(url)
             zf.writestr(output_file, r.content)
+            zf_info = zf.getinfo(output_file)
+            total_size += zf_info.file_size # zf_info.compress_size            
+            if total_size > MAX_SIZE_FILE_BYTES:
+                zf.close()
+                return 'MAX'
     zf.close()
     if len(unique_group_names_list) == 0:
-        return None
+        return 0
     zip_content = zip_buffer.getvalue()
     return zip_content
 

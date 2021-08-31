@@ -218,8 +218,11 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                         "(L'operazione potrebbe richiedere anche diversi minuti)"
                     send_message(p, msg, markdown=False)
                     zip_content = airtable_utils.download_media_zip(hunt_pw)
-                    if zip_content is None:
+                    if zip_content == 0:
                         msg = 'Nessun media trovato.'
+                        send_message(p, msg, markdown=False)
+                    elif zip_content == 'MAX':
+                        msg = 'I file sono più di 50 mega, fai girare lo script da linea di comando, per favore.'
                         send_message(p, msg, markdown=False)
                     else:
                         timestamp = dtu.timestamp_yyyymmdd()
