@@ -3,4 +3,10 @@
 entrypoint: gunicorn -b :$PORT main:app --chdir bot
 runtime: python37
 
-instance_class: F2
+# change instance class
+# https://cloud.google.com/appengine/docs/standard
+# default F1: 256 MB 600 MHz
+# free uota: https://cloud.google.com/appengine/quotas#Instances
+# pricing: https://cloud.google.com/appengine/pricing
+
+# instance_class: F2
