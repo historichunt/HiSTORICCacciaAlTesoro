@@ -1,6 +1,8 @@
 import collections
 from airtable import Airtable
 from bot import settings, game
+import zipfile
+from bot.utility import append_num_to_filename
 
 def download_media(hunt_password, output_dir, table_name='Results'):    
     import requests
@@ -10,12 +12,15 @@ def download_media(hunt_password, output_dir, table_name='Results'):
     table_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
     RESULTS_TABLE = Airtable(table_id, table_name, api_key=settings.AIRTABLE_API_KEY)
     table_entries = RESULTS_TABLE.get_all()
+    unique_group_names_list = []
     for entry in table_entries:
         fields = entry['fields']
         group_name = fields.get('GROUP_NAME', None)
         if group_name is None:
-            print('No group name, skipping')
-            continue
+            group_name = 'no_name'
+        while group_name in unique_group_names_list:
+            group_name = append_num_to_filename(group_name)
+        unique_group_names_list.append(group_name)
         print('Downloading media for group {}'.format(group_name))        
         output_dir_group = os.path.join(output_dir, group_name)
         if os.path.exists(output_dir_group):
@@ -33,6 +38,38 @@ def download_media(hunt_password, output_dir, table_name='Results'):
             r = requests.get(url)
             with open(output_file, 'wb') as output:
                 output.write(r.content)
+
+def download_media_zip(hunt_password, table_name='Results'):    
+    import requests
+    import os
+    import io
+    table_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
+    RESULTS_TABLE = Airtable(table_id, table_name, api_key=settings.AIRTABLE_API_KEY)
+    table_entries = RESULTS_TABLE.get_all()
+    zip_buffer = io.BytesIO()
+    zf = zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED)
+    unique_group_names_list = []
+    for entry in table_entries:
+        fields = entry['fields']
+        group_name = fields.get('GROUP_NAME', None)
+        if group_name is None:
+            group_name = 'no_name'
+        while group_name in unique_group_names_list:
+            group_name = append_num_to_filename(group_name)
+        unique_group_names_list.append(group_name)
+        if 'GROUP_MEDIA_FILE_IDS' not in fields:
+            continue  
+        for media in fields['GROUP_MEDIA_FILE_IDS']:
+            url = media['url']
+            file_name = media['filename']   
+            output_file = os.path.join(group_name, file_name)
+            r = requests.get(url)
+            zf.writestr(output_file, r.content)
+    zf.close()
+    if len(unique_group_names_list) == 0:
+        return None
+    zip_content = zip_buffer.getvalue()
+    return zip_content
 
 def get_rows(table, view=None, filter=None, sort_key=None):
     rows = [r['fields'] for r in table.get_all(view=view)]
@@ -92,5 +129,6 @@ if __name__ == "__main__":
     outputdir = os.path.join('data', hunt_name)
     os.makedirs(outputdir)
     download_media(password, os.path.join(outputdir, 'media'))
+    # download_media_zip(password)
     error_dict = get_wrong_answers(password, os.path.join(outputdir, 'errori.txt'))
     process_errori(error_dict, os.path.join(outputdir, 'errori_processed.txt'))

@@ -1,2 +1,4 @@
+# gcloud config set project historictrentobot
+
 entrypoint: gunicorn -b :$PORT main:app --chdir bot
 runtime: python37
