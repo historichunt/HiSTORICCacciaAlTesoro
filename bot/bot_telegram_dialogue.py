@@ -603,8 +603,10 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
             send_message(p, p.ux().MSG_WRONG_INPUT_INSERT_TEXT)
 
 def send_post_message(p, current_indovinello):
-    if 'POST_MESSAGE' in current_indovinello:                        
-        if 'POST_MEDIA' in current_indovinello:
+    post_msg_present = 'POST_MESSAGE' in current_indovinello
+    post_media_present = 'POST_MEDIA' in current_indovinello
+    if post_msg_present or post_media_present:
+        if post_media_present:
             caption = current_indovinello.get('POST_MEDIA_CAPTION',None)
             url_attachment = current_indovinello['POST_MEDIA'][0]['url']
             send_media_url(p, url_attachment, caption=caption)
