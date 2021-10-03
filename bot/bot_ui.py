@@ -115,35 +115,58 @@ def check_language_consistency():
             assert False, f'Keys mismatch at line {i+2}: {i_keys}'
 
 def build_ui_csv():
-    from bot import params
     import csv
     check_language_consistency()
     lang_dict = {
         lang: UI_DICT[lang]
         for lang in LANGUAGES
     }
-    primary_lang = params.LANGUAGES[0]
+    primary_lang = LANGUAGES[0]
     keys = lang_dict[primary_lang].keys()    
     
     with open(UI_CSV_FILE, 'w') as csvfile:
         writer = csv.writer(csvfile)
         # header
-        writer.writerow(['KEY','DESCRIPTION'] + params.LANGUAGES)
+        writer.writerow(['KEY','DESCRIPTION'] + LANGUAGES)
         for k in keys:
-            writer.writerow([k,''] + [lang_dict[lang][k] for lang in params.LANGUAGES])
+            writer.writerow([k,''] + [lang_dict[lang][k] for lang in LANGUAGES])
 
-def download_ui_tsv():
+def download_ui_csv():
     import requests
     from bot import settings
     spreadsheet_key = settings.UI_SPREADSHEET_KEY
-    url = f'https://docs.google.com/spreadsheets/d/{spreadsheet_key}/export?gid=0&format=tsv'
+    url = f'https://docs.google.com/spreadsheets/d/{spreadsheet_key}/export?gid=0&format=csv'
     r = requests.get(url, allow_redirects=True)
     with open(UI_CSV_FILE, 'wb') as csvfile:
         csvfile.write(r.content)
+        csvfile.write(str.encode('\r\n'))
+
+def build_json_lang_dict_from_ui_csv():
+    import csv
+    lang_dict = {
+        lang: {}
+        for lang in LANGUAGES
+    }
+
+    with open(UI_CSV_FILE) as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader) # skip header
+        for row in reader:
+            key, _ = row[:2] # ignoring description
+            # languages start from column at index 2
+            for col, lang in enumerate(LANGUAGES,2):
+                lang_dict[lang][key] = row[col]
+
+    for lang in LANGUAGES:
+        ui_file = os.path.join('ui', f'{lang}.json')
+        with open(ui_file, 'w') as f_out:
+            json.dump(lang_dict[lang], f_out, indent=3, sort_keys=True, ensure_ascii=False)
+
 
 if __name__ == "__main__":
-    build_ui_csv()
-    # download_ui_tsv()
+    # build_ui_csv()
+    # download_ui_csv()
+    build_json_lang_dict_from_ui_csv()
     # sort_alphabetically()
     # build_ui_dict()
     # check_language_consistency()
