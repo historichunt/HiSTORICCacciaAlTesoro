@@ -5,96 +5,96 @@ import random
 from airtable import Airtable
 from bot.params import ROOT_DIR, LANGUAGES
 
-UX_DIR = os.path.join(ROOT_DIR, 'ux')
+UI_DIR = os.path.join(ROOT_DIR, 'ui')
 
 # lang -> var -> string
-UX_DICT = None
+UI_DICT = None
 
-def build_ux_dict():
-    global UX_DICT
-    UX_DICT = {
-        lang: json.load(open(os.path.join(UX_DIR, f'{lang}.json')))
+def build_ui_dict():
+    global UI_DICT
+    UI_DICT = {
+        lang: json.load(open(os.path.join(UI_DIR, f'{lang}.json')))
         for lang in LANGUAGES
     }
 
-build_ux_dict()
+build_ui_dict()
 
-class UX_LANG:
+class UI_LANG:
     
-    def __init__(self, lang, ux_custom_dict=None):
+    def __init__(self, lang, ui_custom_dict=None):
         assert lang in LANGUAGES
         self.lang = lang
-        self.ux_custom_dict = ux_custom_dict
+        self.ui_custom_dict = ui_custom_dict
 
     def get_var(self, var):
-        if self.ux_custom_dict and var in self.ux_custom_dict[self.lang]:
-            return self.ux_custom_dict[self.lang][var]
-        return UX_DICT[self.lang].get(var, None)
+        if self.ui_custom_dict and var in self.ui_custom_dict[self.lang]:
+            return self.ui_custom_dict[self.lang][var]
+        return UI_DICT[self.lang].get(var, None)
 
     def __getattr__(self, attr):
         return self.get_var(attr)
 
-# ux = lambda l: UX_LANG(l)
+# ui = lambda l: UI_LANG(l)
 
 # ================================
 # SPECIAL BUTTONS
 # ================================
 
 BUTTON_CONTINUE_MULTI = lambda l: [
-    UX_LANG(l).BUTTON_CONTINUE_01,
-    UX_LANG(l).BUTTON_CONTINUE_02,
-    UX_LANG(l).BUTTON_CONTINUE_03
+    UI_LANG(l).BUTTON_CONTINUE_01,
+    UI_LANG(l).BUTTON_CONTINUE_02,
+    UI_LANG(l).BUTTON_CONTINUE_03
 ]
 
 MSG_ANSWER_WRONG_NO_PENALTY =  lambda l: random.choice(
     [
-        UX_LANG(l).MSG_ANSWER_WRONG_NO_PENALTY_01,
-        UX_LANG(l).MSG_ANSWER_WRONG_NO_PENALTY_02,
-        UX_LANG(l).MSG_ANSWER_WRONG_NO_PENALTY_03,
+        UI_LANG(l).MSG_ANSWER_WRONG_NO_PENALTY_01,
+        UI_LANG(l).MSG_ANSWER_WRONG_NO_PENALTY_02,
+        UI_LANG(l).MSG_ANSWER_WRONG_NO_PENALTY_03,
     ]
 )
 
 MSG_ANSWER_OK = lambda l: random.choice(
     [
-        UX_LANG(l).MSG_ANSWER_OK_01, 
-        UX_LANG(l).MSG_ANSWER_OK_02, 
-        UX_LANG(l).MSG_ANSWER_OK_03
+        UI_LANG(l).MSG_ANSWER_OK_01, 
+        UI_LANG(l).MSG_ANSWER_OK_02, 
+        UI_LANG(l).MSG_ANSWER_OK_03
     ]
 )
 
 MSG_MEDIA_INPUT_MISSIONE_OK = lambda l: random.choice(
     [
-        UX_LANG(l).MSG_MEDIA_INPUT_MISSIONE_OK_01,
-        UX_LANG(l).MSG_MEDIA_INPUT_MISSIONE_OK_02
+        UI_LANG(l).MSG_MEDIA_INPUT_MISSIONE_OK_01,
+        UI_LANG(l).MSG_MEDIA_INPUT_MISSIONE_OK_02
     ]
 )
 
 BUTTON_LOCATION = lambda l: {
-    'text': UX_LANG(l).BUTTON_GPS,
+    'text': UI_LANG(l).BUTTON_GPS,
     'request_location': True,
 }
 
 BUTTON_YES_CALLBACK = lambda x: telegram.InlineKeyboardButton(
-    text = UX_LANG('IT').BUTTON_YES,
+    text = UI_LANG('IT').BUTTON_YES,
     callback_data = x
 )
 
 
 BUTTON_NO_CALLBACK = lambda x: telegram.InlineKeyboardButton(
-    text = UX_LANG('IT').BUTTON_NO,
+    text = UI_LANG('IT').BUTTON_NO,
     callback_data = x
 )
 
 def sort_alphabetically():
     for lang in LANGUAGES:
-        lang_dict = UX_DICT[lang]
-        ux_file = os.path.join('ux', f'{lang}.json')
-        with open(ux_file, 'w') as f_out:
+        lang_dict = UI_DICT[lang]
+        ui_file = os.path.join('ui', f'{lang}.json')
+        with open(ui_file, 'w') as f_out:
             json.dump(lang_dict, f_out, indent=3, sort_keys=True, ensure_ascii=False)
 
 def check_language_consistency():
     lang_keys = {
-        lang: list(UX_DICT[lang].keys())
+        lang: list(UI_DICT[lang].keys())
         for lang in LANGUAGES
     }
     lang_keys_length = {
@@ -118,12 +118,12 @@ def download_ui_tsv():
     import csv
     check_language_consistency()
     lang_dict = {
-        lang: UX_DICT[lang]
+        lang: UI_DICT[lang]
         for lang in LANGUAGES
     }
     primary_lang = params.LANGUAGES[0]
     keys = lang_dict[primary_lang].keys()
-    tsv_file = os.path.join(UX_DIR, 'UI.tsv')
+    tsv_file = os.path.join(UI_DIR, 'UI.tsv')
     
     with open(tsv_file, 'w') as tsvfile:
         writer = csv.writer(tsvfile, delimiter='\t')
@@ -135,6 +135,6 @@ def download_ui_tsv():
 
 if __name__ == "__main__":
     # sort_alphabetically()
-    # build_ux_dict()
+    # build_ui_dict()
     # check_language_consistency()
     download_ui_tsv()

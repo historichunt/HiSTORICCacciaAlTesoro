@@ -71,20 +71,20 @@ def get_hunt_settings(p, airtable_game_id):
     }
     return SETTINGS
 
-def get_hunt_ux(p, airtable_game_id):    
-    UX_TABLE = Airtable(airtable_game_id, 'UX', api_key=settings.AIRTABLE_API_KEY)
+def get_hunt_ui(p, airtable_game_id):    
+    UI_TABLE = Airtable(airtable_game_id, 'UI', api_key=settings.AIRTABLE_API_KEY)
     table_rows = [
         row['fields'] 
-        for row in UX_TABLE.get_all() 
+        for row in UI_TABLE.get_all() 
     ]
-    UX = {
+    UI = {
         lang: {
             r['VAR']: r[lang].strip()
             for r in table_rows
         }        
         for lang in params.LANGUAGES
     }
-    return UX
+    return UI
 
 def get_random_missioni(p, airtable_game_id, mission_tab_name, initial_cat):
     import itertools
@@ -209,7 +209,7 @@ def reset_game(p, hunt_name, hunt_password):
     hunt_info = HUNTS_PW[hunt_password]
     airtable_game_id = hunt_info['Airtable_Game_ID']
     hunt_settings = get_hunt_settings(p, airtable_game_id)
-    hunt_ux = get_hunt_ux(p, airtable_game_id)
+    hunt_ui = get_hunt_ui(p, airtable_game_id)
     instructions_table = Airtable(airtable_game_id, 'Instructions', api_key=settings.AIRTABLE_API_KEY)    
     survey_table = Airtable(airtable_game_id, 'Survey', api_key=settings.AIRTABLE_API_KEY)        
     p.current_hunt = hunt_password         
@@ -225,7 +225,7 @@ def reset_game(p, hunt_name, hunt_password):
     tvar = p.tmp_variables = {}  
     tvar['HUNT_NAME'] = hunt_name
     tvar['SETTINGS'] = hunt_settings    
-    tvar['UX'] = hunt_ux    
+    tvar['UI'] = hunt_ui    
     tvar['HUNT_INFO'] = hunt_info
     tvar['Notify_Group ID'] = hunt_info.get('Notify_Group ID', None)
     tvar['Validators IDs'] = hunt_info.get('Validators IDs', None)

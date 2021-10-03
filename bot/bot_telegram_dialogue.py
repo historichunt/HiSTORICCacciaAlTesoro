@@ -2,7 +2,7 @@ import logging
 import telegram
 import json
 import random
-from bot import airtable_utils, bot_telegram, utility, ndb_person, bot_ux, game, geoUtils, params, settings
+from bot import airtable_utils, bot_telegram, utility, ndb_person, bot_ui, game, geoUtils, params, settings
 from bot import date_time_util as dtu
 from bot.bot_telegram import BOT, send_message, send_location, send_typing_action, \
     report_admins, send_text_document, send_media_url, \
@@ -60,33 +60,33 @@ def repeat_state(user, message_obj=None, **kwargs):
 
 def state_INITIAL(p, message_obj=None, **kwargs):    
     if message_obj is None:
-        switch_language_button = p.ux().BUTTON_ENGLISH if p.language=='IT' else p.ux().BUTTON_ITALIAN
+        switch_language_button = p.ui().BUTTON_ENGLISH if p.language=='IT' else p.ui().BUTTON_ITALIAN
         kb = [
-            [p.ux().BUTTON_START_HUNT],
+            [p.ui().BUTTON_START_HUNT],
             [switch_language_button],
-            [p.ux().BUTTON_INFO]
+            [p.ui().BUTTON_INFO]
         ]     
         if p.is_global_admin() or p.is_hunt_admin():
-            kb[-1].append(p.ux().BUTTON_ADMIN)       
-        send_message(p, p.ux().MSG_WELCOME, kb)
+            kb[-1].append(p.ui().BUTTON_ADMIN)       
+        send_message(p, p.ui().MSG_WELCOME, kb)
     else: 
         text_input = message_obj.text
         kb = p.get_keyboard()
         if text_input:            
             if text_input in flatten(kb):
-                if text_input == p.ux().BUTTON_START_HUNT:
+                if text_input == p.ui().BUTTON_START_HUNT:
                     redirect_to_state(p, state_START_HUNT)
-                elif text_input == p.ux().BUTTON_INFO:
-                    send_message(p, p.ux().MSG_HISTORIC_INFO, remove_keyboard=True)
+                elif text_input == p.ui().BUTTON_INFO:
+                    send_message(p, p.ui().MSG_HISTORIC_INFO, remove_keyboard=True)
                     send_typing_action(p, sleep_time=5)
                     repeat_state(p)
-                elif text_input == p.ux().BUTTON_ITALIAN:
+                elif text_input == p.ui().BUTTON_ITALIAN:
                     p.set_language('IT')
                     repeat_state(p)
-                elif text_input == p.ux().BUTTON_ENGLISH:
+                elif text_input == p.ui().BUTTON_ENGLISH:
                     p.set_language('EN')                
                     repeat_state(p)          
-                elif text_input == p.ux().BUTTON_ADMIN:
+                elif text_input == p.ui().BUTTON_ADMIN:
                     redirect_to_state(p, state_ADMIN)
                 return
             if text_input.lower() == '/start':
@@ -98,9 +98,9 @@ def state_INITIAL(p, message_obj=None, **kwargs):
                 hunt_password = text_input.lower()
             correct_password = check_hunt_password(p, hunt_password, send_msg_if_wrong_pw=False)
             if not correct_password:
-                send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)    
+                send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)    
         else:
-            send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)
+            send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
 def check_hunt_password(p, hunt_password, send_msg_if_wrong_pw):
     if hunt_password in game.HUNTS_PW:   
@@ -111,7 +111,7 @@ def check_hunt_password(p, hunt_password, send_msg_if_wrong_pw):
         ):
             hunt_name = game.HUNTS_PW[hunt_password]['Name']
             game.reset_game(p, hunt_name, hunt_password)                    
-            # send_message(p, p.ux().MSG_WELCOME.format(game_name), remove_keyboard=True)
+            # send_message(p, p.ui().MSG_WELCOME.format(game_name), remove_keyboard=True)
             hunt_settings = p.tmp_variables['SETTINGS']
             skip_instructions = get_str_param_boolean(hunt_settings, 'SKIP_INSTRUCTIONS')
             if not skip_instructions:
@@ -122,13 +122,13 @@ def check_hunt_password(p, hunt_password, send_msg_if_wrong_pw):
             return True
         else:
             if send_msg_if_wrong_pw:
-                send_message(p, p.ux().MSG_HUNT_DISABLED)
+                send_message(p, p.ui().MSG_HUNT_DISABLED)
                 send_typing_action(p, 1)
                 repeat_state(p)
             return False
     else:
         if send_msg_if_wrong_pw:
-            send_message(p, p.ux().MSG_WRONG_PASSWORD)
+            send_message(p, p.ui().MSG_WRONG_PASSWORD)
             send_typing_action(p, 1)
             repeat_state(p)
         return False
@@ -140,37 +140,37 @@ def check_hunt_password(p, hunt_password, send_msg_if_wrong_pw):
 def state_ADMIN(p, message_obj=None, **kwargs):    
     if message_obj is None:
         kb = [
-            [p.ux().BUTTON_BACK]
+            [p.ui().BUTTON_BACK]
         ]
         if p.is_global_admin():
             kb.extend([
-                [p.ux().BUTTON_VERSION, p.ux().BUTTON_UPDATE_HUNTS_CONFIG],
+                [p.ui().BUTTON_VERSION, p.ui().BUTTON_UPDATE_HUNTS_CONFIG],
             ])
         if p.is_hunt_admin():
             hunts_dict_list = game.get_hunts_that_person_admins(p)
             hunt_names_buttons = sorted([[d['Name']] for d in hunts_dict_list])
             kb.extend(hunt_names_buttons)
         if len(kb)>3:
-            kb.append([p.ux().BUTTON_BACK])
-        send_message(p, p.ux().MSG_ADMIN, kb)
+            kb.append([p.ui().BUTTON_BACK])
+        send_message(p, p.ui().MSG_ADMIN, kb)
     else: 
         text_input = message_obj.text
         kb = p.get_keyboard()
         if text_input:
             if text_input in flatten(kb):
-                if text_input == p.ux().BUTTON_VERSION:
-                    msg = p.ux().MSG_VERSION.format(settings.APP_VERSION)
+                if text_input == p.ui().BUTTON_VERSION:
+                    msg = p.ui().MSG_VERSION.format(settings.APP_VERSION)
                     send_message(p, msg)
-                elif text_input == p.ux().BUTTON_BACK:
+                elif text_input == p.ui().BUTTON_BACK:
                     redirect_to_state(p, state_INITIAL)
-                elif text_input == p.ux().BUTTON_UPDATE_HUNTS_CONFIG:
+                elif text_input == p.ui().BUTTON_UPDATE_HUNTS_CONFIG:
                     game.reload_config_hunt()
-                    send_message(p, p.ux().MSG_RELOADED_HUNTS_CONFIG)
+                    send_message(p, p.ui().MSG_RELOADED_HUNTS_CONFIG)
                 else:
                     p.set_tmp_variable('ADMIN_HUNT_NAME', text_input)
                     redirect_to_state(p, state_HUNT_ADMIN)
         else:
-            send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)
+            send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
 
 # ================================
@@ -182,38 +182,38 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
     hunt_pw = game.HUNTS_NAME[hunt_name]['Password']
     if message_obj is None:
         kb = [
-            [p.ux().BUTTON_BACK],
-            [p.ux().BUTTON_CHECK_HUNT],
-            [p.ux().BUTTON_STATS, p.ux().BUTTON_TERMINATE],
-            [p.ux().BUTTON_DOWNLOAD_MEDIA, p.ux().BUTTON_DOWNLOAD_ERRORS],
-            [p.ux().BUTTON_BACK]
+            [p.ui().BUTTON_BACK],
+            [p.ui().BUTTON_CHECK_HUNT],
+            [p.ui().BUTTON_STATS, p.ui().BUTTON_TERMINATE],
+            [p.ui().BUTTON_DOWNLOAD_MEDIA, p.ui().BUTTON_DOWNLOAD_ERRORS],
+            [p.ui().BUTTON_BACK]
         ]
-        msg = p.ux().MSG_HUNT_ADMIN_SELECTED.format(hunt_name)
+        msg = p.ui().MSG_HUNT_ADMIN_SELECTED.format(hunt_name)
         send_message(p, msg, kb)
     else: 
         text_input = message_obj.text
         kb = p.get_keyboard()
         if text_input:
             if text_input in flatten(kb):
-                if text_input == p.ux().BUTTON_BACK:
+                if text_input == p.ui().BUTTON_BACK:
                     redirect_to_state(p, state_ADMIN)
-                elif text_input == p.ux().BUTTON_CHECK_HUNT:
+                elif text_input == p.ui().BUTTON_CHECK_HUNT:
                     from bot.airtable_check import check_hunt
                     error = check_hunt(hunt_pw)
                     if error:
                         send_message(p, error, markdown=False)
                     else:
-                        send_message(p, p.ux().MSG_CHECK_HUNT_OK)
-                elif text_input == p.ux().BUTTON_STATS:
+                        send_message(p, p.ui().MSG_CHECK_HUNT_OK)
+                elif text_input == p.ui().BUTTON_STATS:
                     hunt_stats = ndb_person.get_people_on_hunt_stats(hunt_pw)
                     if hunt_stats:
                         msg = 'Stats:\n\n{}'.format(hunt_stats)
                     else:
                         msg = 'Nessuna squadra iscritta'
                     send_message(p, msg, markdown=False)
-                elif text_input == p.ux().BUTTON_TERMINATE:
+                elif text_input == p.ui().BUTTON_TERMINATE:
                     redirect_to_state(p, state_TERMINATE_HUNT_CONFIRM)
-                elif text_input == p.ux().BUTTON_DOWNLOAD_MEDIA:
+                elif text_input == p.ui().BUTTON_DOWNLOAD_MEDIA:
                     msg = "Preparazione del file, ti prego di attendere... "\
                         "(L'operazione potrebbe richiedere anche diversi minuti)"
                     send_message(p, msg, markdown=False)
@@ -228,16 +228,16 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                         timestamp = dtu.timestamp_yyyymmdd()
                         zip_file_name = 'media_' + hunt_name.replace(' ','_')[:20] + f"_{timestamp}.zip"
                         send_text_document(p, zip_file_name, zip_content)      
-                elif text_input == p.ux().BUTTON_DOWNLOAD_ERRORS:
+                elif text_input == p.ui().BUTTON_DOWNLOAD_ERRORS:
                     mission_errors, errors_digested = airtable_utils.get_wrong_answers(hunt_pw)
                     file_name_prefix = 'errori_' + hunt_name.replace(' ','_')[:20]
                     timestamp = dtu.timestamp_yyyymmdd()
                     send_text_document(p, f'{file_name_prefix}_{timestamp}.txt', mission_errors)      
                     send_text_document(p, f'{file_name_prefix}_{timestamp}_digested.txt', errors_digested)      
             else:
-                send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)     
+                send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)     
         else:
-            send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)
+            send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
 # ================================
 # Hunt Admin State
@@ -248,19 +248,19 @@ def state_TERMINATE_HUNT_CONFIRM(p, message_obj=None, **kwargs):
     hunt_pw = game.HUNTS_NAME[hunt_name]['Password']
     if message_obj is None:
         kb = [
-            [p.ux().BUTTON_YES],
-            [p.ux().BUTTON_ANNULLA],
+            [p.ui().BUTTON_YES],
+            [p.ui().BUTTON_ANNULLA],
         ]
-        msg = p.ux().MSG_HUNT_TERMINATE_CONFIRM.format(hunt_name)
+        msg = p.ui().MSG_HUNT_TERMINATE_CONFIRM.format(hunt_name)
         send_message(p, msg, kb)
     else: 
         text_input = message_obj.text
         kb = p.get_keyboard()
         if text_input:
             if text_input in flatten(kb):
-                if text_input == p.ux().BUTTON_ANNULLA:
+                if text_input == p.ui().BUTTON_ANNULLA:
                     redirect_to_state(p, state_HUNT_ADMIN)
-                elif text_input == p.ux().BUTTON_YES:
+                elif text_input == p.ui().BUTTON_YES:
                     qry = Person.query(Person.current_hunt==hunt_pw)
                     remaining_people = qry.fetch()
                     if remaining_people:                                                            
@@ -274,15 +274,15 @@ def state_TERMINATE_HUNT_CONFIRM(p, message_obj=None, **kwargs):
                                 u.reset_current_hunt()
                             reset_hunt_after_completion = get_str_param_boolean(u.tmp_variables['SETTINGS'], 'RESET_HUNT_AFTER_COMPLETION')
                             terminate_message_key = 'MSG_HUNT_TERMINATED_RESET_ON' if reset_hunt_after_completion else 'MSG_HUNT_TERMINATED_RESET_OFF'
-                            send_message(u, p.ux().get_var(terminate_message_key), remove_keyboard=True, sleep=True)
+                            send_message(u, p.ui().get_var(terminate_message_key), remove_keyboard=True, sleep=True)
                     msg = "Mandato messaggio di termine a {} squadre.".format(len(remaining_people))
                     send_message(p, msg, remove_keyboard=True)
                     send_typing_action(p, sleep_time=1)
                     restart(p)
             else:
-                send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)     
+                send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)     
         else:
-            send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS, kb)    
+            send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)    
 
 # ================================
 # Start Hunt
@@ -291,30 +291,30 @@ def state_TERMINATE_HUNT_CONFIRM(p, message_obj=None, **kwargs):
 def state_START_HUNT(p, message_obj=None, **kwargs):    
     give_instruction = message_obj is None
     if give_instruction:                
-        switch_language_button = p.ux().BUTTON_ENGLISH if p.language=='IT' else p.ux().BUTTON_ITALIAN
+        switch_language_button = p.ui().BUTTON_ENGLISH if p.language=='IT' else p.ui().BUTTON_ITALIAN
         kb = [
             [switch_language_button],
-            [p.ux().BUTTON_BACK]
+            [p.ui().BUTTON_BACK]
         ]     
-        send_message(p, p.ux().MSG_START_INSTRUCTIONS, kb)
+        send_message(p, p.ui().MSG_START_INSTRUCTIONS, kb)
     else:
         text_input = message_obj.text
         kb = p.get_keyboard()
         if text_input:            
             if text_input in flatten(kb):
-                if text_input == p.ux().BUTTON_BACK:
+                if text_input == p.ui().BUTTON_BACK:
                     restart(p)
-                elif text_input == p.ux().BUTTON_ITALIAN:
+                elif text_input == p.ui().BUTTON_ITALIAN:
                     p.set_language('IT')
                     repeat_state(p)
-                elif text_input == p.ux().BUTTON_ENGLISH:
+                elif text_input == p.ui().BUTTON_ENGLISH:
                     p.set_language('EN')                
                     repeat_state(p)      
             else:
                 hunt_password = text_input.lower()
                 check_hunt_password(p, hunt_password, send_msg_if_wrong_pw=True)
         else:
-            send_message(p, p.ux().MSG_WRONG_INPUT_INSERT_TEXT, kb)
+            send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT, kb)
             send_typing_action(p, 1)
             repeat_state(p)
             
@@ -340,9 +340,9 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
         msg = current_step.get('Text','')
         media = current_step.get('Media', '')
         if input_type.startswith('BUTTON_'):
-            kb = [[p.ux().BUTTON_UNDERSTOOD]] \
+            kb = [[p.ui().BUTTON_UNDERSTOOD]] \
                 if input_type == 'BUTTON_UNDERSTOOD' \
-                else [[p.ux().BUTTON_START_GAME]]             
+                else [[p.ui().BUTTON_START_GAME]]             
             if media:
                 url_attachment = media[0]['url']
                 send_media_url(p, url_attachment, kb, caption=msg)
@@ -366,16 +366,16 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                     send_typing_action(p, sleep_time=1)
                     repeat_state(p, next_step=True)
                 else:
-                    send_message(p, p.ux().MSG_EMAIL_WRONG)
+                    send_message(p, p.ui().MSG_EMAIL_WRONG)
             else:
-                send_message(p, p.ux().MSG_WRONG_INPUT_INSERT_TEXT)
+                send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
         elif input_type == 'TEAM_NAME':
             if text_input:
                 if len(text_input) > params.MAX_TEAM_NAME_LENGTH:
-                    send_message(p, p.ux().MSG_GROUP_NAME_TOO_LONG.format(params.MAX_TEAM_NAME_LENGTH))
+                    send_message(p, p.ui().MSG_GROUP_NAME_TOO_LONG.format(params.MAX_TEAM_NAME_LENGTH))
                     return
                 if not utility.hasOnlyLettersAndSpaces(text_input):
-                    send_message(p, p.ux().MSG_GROUP_NAME_INVALID)
+                    send_message(p, p.ui().MSG_GROUP_NAME_INVALID)
                     return
                 game.set_group_name(p, text_input)
                 notify_group_id = game.get_notify_group_id(p)                
@@ -388,7 +388,7 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:
-                send_message(p, p.ux().MSG_WRONG_INPUT_INSERT_TEXT)
+                send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
         elif input_type.startswith('BUTTON_'):
             # BUTTON_UNDERSTOOD, BUTTON_START_GAME
             kb = p.get_keyboard()
@@ -396,14 +396,14 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:            
-                send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)                  
+                send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)                  
         elif input_type == 'TEST_POSITION':
             location = message_obj.location
             if location:            
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:
-                send_message(p, p.ux().MSG_WRONG_INPUT_SEND_LOCATION)
+                send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
         elif input_type == 'TEST_PHOTO':     
             photo = message_obj.photo       
             if photo is not None and len(photo)>0:
@@ -420,7 +420,7 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:
-                send_message(p, p.ux().MSG_WRONG_INPUT_SEND_PHOTO)
+                send_message(p, p.ui().MSG_WRONG_INPUT_SEND_PHOTO)
         elif input_type == 'TEST_VOICE':
             voice = message_obj.voice
             if voice is not None:
@@ -429,7 +429,7 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:
-                send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VOICE)
+                send_message(p, p.ui().MSG_WRONG_INPUT_SEND_VOICE)
         elif input_type == 'TEST_VIDEO':
             video = message_obj.video
             if video is not None:
@@ -439,9 +439,9 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 repeat_state(p, next_step=True)
             else:
                 if message_obj.video_note is not None:
-                    send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VIDEO_NO_VIDEO_NOTE)
+                    send_message(p, p.ui().MSG_WRONG_INPUT_SEND_VIDEO_NO_VIDEO_NOTE)
                 else:
-                    send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VIDEO)
+                    send_message(p, p.ui().MSG_WRONG_INPUT_SEND_VIDEO)
 
 # ================================
 # MISSION INSTRUCTIONS
@@ -454,11 +454,11 @@ def state_MISSION_INTRO(p, message_obj=None, **kwargs):
         indovinello_number = game.completed_indovinello_number(p) + 1
         if indovinello_number==1:
             # first one
-            send_message(p, p.ux().MSG_START_TIME, remove_keyboard=True)            
+            send_message(p, p.ui().MSG_START_TIME, remove_keyboard=True)            
             game.set_game_start_time(p)
             send_typing_action(p, sleep_time=1)        
         total_missioni = game.getTotalIndovinelli(p)
-        msg = p.ux().MSG_MISSION_N_TOT.format(indovinello_number, total_missioni)
+        msg = p.ui().MSG_MISSION_N_TOT.format(indovinello_number, total_missioni)
         send_message(p, msg, remove_keyboard=True)
         send_typing_action(p, sleep_time=1)        
         if 'INTRODUZIONE_LOCATION' not in current_indovinello:
@@ -470,18 +470,18 @@ def state_MISSION_INTRO(p, message_obj=None, **kwargs):
             send_media_url(p, url_attachment, caption=caption)
             send_typing_action(p, sleep_time=1)
         msg = current_indovinello['INTRODUZIONE_LOCATION'] # '*Introduzione*: ' + 
-        kb = [[random.choice(bot_ux.BUTTON_CONTINUE_MULTI(p.language))]]
+        kb = [[random.choice(bot_ui.BUTTON_CONTINUE_MULTI(p.language))]]
         send_message(p, msg, kb)
         p.put()
     else:
         text_input = message_obj.text
         kb = p.get_keyboard()
         if text_input in flatten(kb):
-            if text_input in bot_ux.BUTTON_CONTINUE_MULTI(p.language):
+            if text_input in bot_ui.BUTTON_CONTINUE_MULTI(p.language):
                 current_indovinello = game.getCurrentIndovinello(p)
                 redirect_to_state(p, state_GPS)
         else:
-            send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)            
+            send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)            
 
 # ================================
 # GPS state
@@ -495,8 +495,8 @@ def state_GPS(p, message_obj=None, **kwargs):
         return
     if give_instruction:
         goal_position = [float(x) for x in current_indovinello['GPS'].split(',')]
-        msg = p.ux().MSG_GO_TO_PLACE
-        kb = [[bot_ux.BUTTON_LOCATION(p.language)]]
+        msg = p.ui().MSG_GO_TO_PLACE
+        kb = [[bot_ui.BUTTON_LOCATION(p.language)]]
         send_message(p, msg, kb)
         send_location(p, goal_position[0], goal_position[1])
     else:
@@ -509,16 +509,16 @@ def state_GPS(p, message_obj=None, **kwargs):
             distance = geoUtils.distance_meters(goal_position, given_position)
             GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
             if distance <= GPS_TOLERANCE_METERS:
-                send_message(p, p.ux().MSG_GPS_OK, remove_keyboard=True)
+                send_message(p, p.ui().MSG_GPS_OK, remove_keyboard=True)
                 send_typing_action(p, sleep_time=1)
                 redirect_to_state(p, state_DOMANDA)
             else:
-                msg = p.ux().MSG_TOO_FAR.format(distance)
+                msg = p.ui().MSG_TOO_FAR.format(distance)
                 send_message(p, msg)
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p)
         else:
-            send_message(p, p.ux().MSG_WRONG_INPUT_SEND_LOCATION)
+            send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
 
 # ================================
 # DOMANDA state
@@ -534,7 +534,7 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
             send_typing_action(p, sleep_time=1)                
         msg = current_indovinello['DOMANDA'] 
         if current_indovinello.get('INDIZIO_1',False):
-            kb = [[p.ux().BUTTON_FIRST_HINT]]
+            kb = [[p.ui().BUTTON_FIRST_HINT]]
             send_message(p, msg, kb)
         else:
             send_message(p, msg, remove_keyboard=True)
@@ -552,21 +552,21 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                 now_string = dtu.nowUtcIsoFormat()
                 MIN_SEC_INDIZIO_1 = int(p.tmp_variables['SETTINGS']['MIN_SEC_INDIZIO_1'])
                 MIN_SEC_INDIZIO_2 = int(p.tmp_variables['SETTINGS']['MIN_SEC_INDIZIO_2'])
-                if text_input == p.ux().BUTTON_FIRST_HINT:
+                if text_input == p.ui().BUTTON_FIRST_HINT:
                     before_string = current_indovinello['start_time']
                     ellapsed = dtu.delta_seconds_iso(before_string, now_string)
                     if ellapsed > MIN_SEC_INDIZIO_1 and current_indovinello.get('INDIZIO_1',False):
                         msg = '💡 *Indizio 1*: {}'.format(current_indovinello['INDIZIO_1'])
                         if current_indovinello.get('INDIZIO_2',False):
-                            kb = [[p.ux().BUTTON_SECOND_HINT]]
+                            kb = [[p.ui().BUTTON_SECOND_HINT]]
                             current_indovinello['indizio1_time'] = now_string
                             send_message(p, msg, kb)
                         else:
                             send_message(p, msg, remove_keyboard=True)
                     else:
                         remaining = MIN_SEC_INDIZIO_1 - ellapsed
-                        send_message(p, p.ux().MSG_TOO_EARLY.format(remaining))
-                elif text_input == p.ux().BUTTON_SECOND_HINT and current_indovinello.get('INDIZIO_2',False):
+                        send_message(p, p.ui().MSG_TOO_EARLY.format(remaining))
+                elif text_input == p.ui().BUTTON_SECOND_HINT and current_indovinello.get('INDIZIO_2',False):
                     before_string = current_indovinello['indizio1_time']
                     ellapsed = dtu.delta_seconds_iso(before_string, now_string)
                     if ellapsed > MIN_SEC_INDIZIO_2 and current_indovinello.get('INDIZIO_2',False):
@@ -575,7 +575,7 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                         send_message(p, msg, remove_keyboard=True)
                     else:
                         remaining = MIN_SEC_INDIZIO_1 - ellapsed
-                        send_message(p, p.ux().MSG_TOO_EARLY.format(remaining))
+                        send_message(p, p.ui().MSG_TOO_EARLY.format(remaining))
             else:
                 import functools, regex
                 soluzioni_list = [
@@ -591,7 +591,7 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                 if text_input.upper() in correct_answers_upper or functools.reduce(lambda a, r: a or regex.match(r, text_input, regex.I), correct_answers_regex, False):
                     game.set_end_mission_time(p)
                     if not send_post_message(p, current_indovinello):
-                        send_message(p, bot_ux.MSG_ANSWER_OK(p.language), remove_keyboard=True)
+                        send_message(p, bot_ui.MSG_ANSWER_OK(p.language), remove_keyboard=True)
                         send_typing_action(p, sleep_time=1)                    
                     if 'INPUT_INSTRUCTIONS' in current_indovinello:
                         # only missioni with GPS require selfies
@@ -599,18 +599,18 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                     else:
                         redirect_to_state(p, state_COMPLETE_MISSION)
                 # elif utility.answer_is_almost_correct(text_input.upper(), correct_answers_upper_word_set):
-                #     send_message(p, p.ux().MSG_ANSWER_ALMOST)
+                #     send_message(p, p.ui().MSG_ANSWER_ALMOST)
                 else:
                     give_penalty = current_indovinello.get('PENALTY',False)
                     game.increase_wrong_answers_current_indovinello(p, text_input, give_penalty)
                     if give_penalty:
                         penalties, penalty_sec = game.get_total_penalty(p)
-                        msg = p.ux().MSG_ANSWER_WRONG_SG if penalties==1 else p.ux().MSG_ANSWER_WRONG_PL
+                        msg = p.ui().MSG_ANSWER_WRONG_SG if penalties==1 else p.ui().MSG_ANSWER_WRONG_PL
                         send_message(p, msg.format(penalties, penalty_sec))
                     else:
-                        send_message(p, bot_ux.MSG_ANSWER_WRONG_NO_PENALTY(p.language))
+                        send_message(p, bot_ui.MSG_ANSWER_WRONG_NO_PENALTY(p.language))
         else:
-            send_message(p, p.ux().MSG_WRONG_INPUT_INSERT_TEXT)
+            send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
 
 def send_post_message(p, current_indovinello):
     post_msg_present = 'POST_MESSAGE' in current_indovinello
@@ -646,20 +646,20 @@ def state_MEDIA_INPUT_MISSION(p, message_obj=None, **kwargs):
         video = message_obj.video
         if input_type == 'PHOTO': 
             if photo is None or len(photo)==0:            
-                send_message(p, p.ux().MSG_WRONG_INPUT_SEND_PHOTO)
+                send_message(p, p.ui().MSG_WRONG_INPUT_SEND_PHOTO)
                 return
             file_id = photo[-1]['file_id']
         if input_type == 'VOICE':          
             if voice is None:
-                send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VOICE)
+                send_message(p, p.ui().MSG_WRONG_INPUT_SEND_VOICE)
                 return                    
             file_id = voice['file_id']
         if input_type == 'VIDEO':          
             if video is None:
                 if message_obj.video_note is not None:
-                    send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VIDEO_NO_VIDEO_NOTE)
+                    send_message(p, p.ui().MSG_WRONG_INPUT_SEND_VIDEO_NO_VIDEO_NOTE)
                 else:
-                    send_message(p, p.ux().MSG_WRONG_INPUT_SEND_VIDEO)
+                    send_message(p, p.ui().MSG_WRONG_INPUT_SEND_VIDEO)
                 return 
             file_id = video['file_id']
         current_indovinello['MEDIA_INPUT_ID_TYPE'] = [file_id, input_type]
@@ -678,17 +678,17 @@ def send_to_validator(p, game, current_indovinello, input_type):
     indovinello_name = current_indovinello['NOME']
     replies_dict = {
         'PHOTO': {
-            'reply': p.ux().MSG_WAIT_SELFIE_APPROVAL,
+            'reply': p.ui().MSG_WAIT_SELFIE_APPROVAL,
             'caption': 'Selfie indovinello {} squadra {} per indovinello {}'.format(\
                 indovinello_number, squadra_name, indovinello_name)
         },
         'VOICE': {
-            'reply': p.ux().MSG_WAIT_VOICE_APPROVAL,
+            'reply': p.ui().MSG_WAIT_VOICE_APPROVAL,
             'caption': 'Registrazione indovinello {} squadra {} per indovinello {}'.format(\
                 indovinello_number, squadra_name, indovinello_name)
         },
         'VIDEO': {
-            'reply': p.ux().MSG_WAIT_VIDEO_APPROVAL,
+            'reply': p.ui().MSG_WAIT_VIDEO_APPROVAL,
             'caption': 'Video indovinello {} squadra {} per indovinello {}'.format(\
                 indovinello_number, squadra_name, indovinello_name)
         }
@@ -701,10 +701,10 @@ def send_to_validator(p, game, current_indovinello, input_type):
     kb_markup = telegram.InlineKeyboardMarkup(
         [
             [
-                bot_ux.BUTTON_YES_CALLBACK(
+                bot_ui.BUTTON_YES_CALLBACK(
                     json.dumps({'ok': True, 'uid':p.get_id(), 'sign': approval_signature})
                 ),
-                bot_ux.BUTTON_NO_CALLBACK(
+                bot_ui.BUTTON_NO_CALLBACK(
                     json.dumps({'ok': False, 'uid': p.get_id(), 'sign': approval_signature})
                 ),
             ]
@@ -733,7 +733,7 @@ def approve_media_input_indovinello(p, approved, signature):
         return False
     if approved:
         game.set_end_mission_time(p)
-        send_message(p, bot_ux.MSG_MEDIA_INPUT_MISSIONE_OK(p.language))        
+        send_message(p, bot_ui.MSG_MEDIA_INPUT_MISSIONE_OK(p.language))        
         notify_group_id = game.get_notify_group_id(p)
         if notify_group_id:
             squadra_name = game.get_group_name(p)
@@ -758,11 +758,11 @@ def approve_media_input_indovinello(p, approved, signature):
         redirect_to_state(p, state_COMPLETE_MISSION)
     else:
         if input_type=='PHOTO':
-            send_message(p, p.ux().MSG_SELFIE_MISSIONE_WRONG)
+            send_message(p, p.ui().MSG_SELFIE_MISSIONE_WRONG)
         elif input_type=='VOICE':
-            send_message(p, p.ux().MSG_RECORDING_MISSIONE_WRONG)
+            send_message(p, p.ui().MSG_RECORDING_MISSIONE_WRONG)
         else: # input_type=='VIDEO'
-            send_message(p, p.ux().MSG_VIDEO_MISSIONE_WRONG)
+            send_message(p, p.ui().MSG_VIDEO_MISSIONE_WRONG)
     return True
 
 
@@ -775,23 +775,23 @@ def state_CONFIRM_MEDIA_INPUT(p, message_obj=None, **kwargs):
     current_indovinello = game.getCurrentIndovinello(p)
     input_type = current_indovinello['INPUT_TYPE'] # PHOTO, VOICE
     if give_instruction:
-        msg = p.ux().MSG_CONFIRM_PHOTO_INPUT if input_type == 'PHOTO' else p.ux().MSG_CONFIRM_RECORDING_INPUT
-        kb = [[p.ux().BUTTON_YES, p.ux().BUTTON_NO]]
+        msg = p.ui().MSG_CONFIRM_PHOTO_INPUT if input_type == 'PHOTO' else p.ui().MSG_CONFIRM_RECORDING_INPUT
+        kb = [[p.ui().BUTTON_YES, p.ui().BUTTON_NO]]
         send_message(p, msg, kb)
     else:
         text_input = message_obj.text
         kb = p.get_keyboard()
         if text_input in flatten(kb):
-            if text_input == p.ux().BUTTON_YES:
+            if text_input == p.ui().BUTTON_YES:
                 approve_media_input_indovinello(p, approved=True, signature=None)
             else: 
-                assert text_input == p.ux().BUTTON_NO
-                msg = p.ux().MSG_MEDIA_INPUT_ABORTED
+                assert text_input == p.ui().BUTTON_NO
+                msg = p.ui().MSG_MEDIA_INPUT_ABORTED
                 send_message(p, msg, remove_keyboard=True)
                 send_typing_action(p, sleep_time=1)
                 redirect_to_state(p, state_MEDIA_INPUT_MISSION)
         else:
-            send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)  
+            send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)  
 
 # ================================
 # COMPLETE CURRENT MISSION
@@ -810,23 +810,23 @@ def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
         game.set_mission_end_time(p)
         if survery_time:            
             game.set_game_end_time(p, finished=True)
-            msg = p.ux().MSG_PRESS_FOR_ENDING
-            kb = [[p.ux().BUTTON_END]]
+            msg = p.ui().MSG_PRESS_FOR_ENDING
+            kb = [[p.ui().BUTTON_END]]
             send_message(p, msg, kb)
         else:        
-            msg = p.ux().MSG_PRESS_FOR_NEXT_MISSION
-            kb = [[p.ux().BUTTON_NEXT_MISSION]]            
+            msg = p.ui().MSG_PRESS_FOR_NEXT_MISSION
+            kb = [[p.ui().BUTTON_NEXT_MISSION]]            
             send_message(p, msg, kb)
     else:
         text_input = message_obj.text
         kb = p.get_keyboard()
         if text_input in flatten(kb):
-            if text_input == p.ux().BUTTON_NEXT_MISSION:
+            if text_input == p.ui().BUTTON_NEXT_MISSION:
                 redirect_to_state(p, state_MISSION_INTRO)
-            elif text_input == p.ux().BUTTON_END:
-                send_message(p, p.ux().MSG_TIME_STOP, remove_keyboard=True)
+            elif text_input == p.ui().BUTTON_END:
+                send_message(p, p.ui().MSG_TIME_STOP, remove_keyboard=True)
                 send_typing_action(p, sleep_time=1)
-                send_message(p, p.ux().MSG_CONGRATS_PRE_SURVEY)
+                send_message(p, p.ui().MSG_CONGRATS_PRE_SURVEY)
                 send_typing_action(p, sleep_time=1)                
                 settings = p.tmp_variables['SETTINGS']
                 skip_survey = get_str_param_boolean(settings, 'SKIP_SURVEY')
@@ -839,7 +839,7 @@ def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
                     # end game
                     redirect_to_state(p, state_END)
         else:
-            send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)        
+            send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)        
 
 # ================================
 # Survey State
@@ -851,7 +851,7 @@ def state_SURVEY(p, message_obj=None, **kwargs):
         current_question = game.set_next_survey_question(p)
         questions_number = game.get_num_completed_survey_questions(p) + 1
         if questions_number == 1:
-            send_message(p, p.ux().MSG_SURVEY_INTRO)
+            send_message(p, p.ui().MSG_SURVEY_INTRO)
             send_typing_action(p, sleep_time=1)
         total_questions = game.get_tot_survey_questions(p)
         msg = '*Domanda {}/{}*: {}'.format(questions_number, total_questions, current_question['DOMANDA'])
@@ -878,7 +878,7 @@ def state_SURVEY(p, message_obj=None, **kwargs):
             elif question_type_open:
                 game.set_current_survey_question_as_completed(p, text_input)
             else:
-                send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)
+                send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)
                 return
             if game.get_remaing_survey_questions_number(p) == 0:
                 # end survey -> save survey data in airtable
@@ -889,9 +889,9 @@ def state_SURVEY(p, message_obj=None, **kwargs):
                 repeat_state(p)
         else:
             if question_type_open:
-                send_message(p, p.ux().MSG_WRONG_INPUT_INSERT_TEXT_OR_BUTTONS)
+                send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT_OR_BUTTONS)
             else:
-                send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)
+                send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)
 
 # ================================
 # Final State
@@ -906,10 +906,10 @@ def state_END(p, message_obj=None, **kwargs):
             total_hms_missions, ellapsed_hms_missions = game.get_elapsed_and_penalty_and_total_hms(p)
         penalty_sec = p.get_tmp_variable('penalty_sec')
         if penalty_sec > 0:
-            msg = p.ux().MSG_END.format(penalty_hms, \
+            msg = p.ui().MSG_END.format(penalty_hms, \
                 total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)        
         else:
-            msg = p.ux().MSG_END_NO_PENALTY.format(\
+            msg = p.ui().MSG_END_NO_PENALTY.format(\
                 total_hms_game, total_hms_missions)        
         send_message(p, msg, remove_keyboard=True)
         notify_group_id = game.get_notify_group_id(p)
@@ -923,7 +923,7 @@ def state_END(p, message_obj=None, **kwargs):
             ])
             send_message(notify_group_id, msg_group)                        
         final_message_key = 'MSG_FINAL_RESET_ON' if reset_hunt_after_completion else 'MSG_FINAL_RESET_OFF'
-        send_message(p, p.ux().get_var(final_message_key))     
+        send_message(p, p.ui().get_var(final_message_key))     
         game.exit_game(p, save_data=True, reset_current_hunt=reset_hunt_after_completion)   
         if reset_hunt_after_completion:
             restart(p)        
@@ -933,7 +933,7 @@ def state_END(p, message_obj=None, **kwargs):
         # in case of double click on button on previous state
         if not reset_hunt_after_completion:        
             # we need to tell them that we will let them know when the games is over
-            msg = p.ux().MSG_HUNT_NOT_TERMINATED
+            msg = p.ui().MSG_HUNT_NOT_TERMINATED
             send_message(p, msg)        
         
 
@@ -989,7 +989,7 @@ def deal_with_admin_commands(p, message_obj):
                 send_text_document(p, 'media.zip', zip_content)      
             return True
         if text_input == '/test_inline_kb':
-            send_message(p, "Test inline keypboard", kb=[[p.ux().BUTTON_YES_CALLBACK('test'), p.ux().BUTTON_NO_CALLBACK('test')]], inline_keyboard=True)
+            send_message(p, "Test inline keypboard", kb=[[p.ui().BUTTON_YES_CALLBACK('test'), p.ui().BUTTON_NO_CALLBACK('test')]], inline_keyboard=True)
             return True
         if text_input == '/random':
             from random import shuffle
@@ -1036,7 +1036,7 @@ def deal_with_admin_commands(p, message_obj):
             if p:
                 if game.user_in_game(p):
                     game.exit_game(p, save_data=False, reset_current_hunt=True)
-                    send_message(p, p.ux().MSG_EXITED_FROM_GAME, remove_keyboard=True)
+                    send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
                 restart(p)
                 msg_admin = 'User restarted: {}'.format(p.get_first_last_username())
                 report_admins(msg_admin)                
@@ -1045,7 +1045,7 @@ def deal_with_admin_commands(p, message_obj):
                 report_admins(msg_admin)
             return True
         if text_input == '/reset_all_users':            
-            reset_all_users(message=None) #message=p.ux().MSG_THANKS_FOR_PARTECIPATING
+            reset_all_users(message=None) #message=p.ui().MSG_THANKS_FOR_PARTECIPATING
             return True
     return False
 
@@ -1054,7 +1054,7 @@ def deal_with_universal_command(p, message_obj):
     text_input = message_obj.text
     if text_input.startswith('/start'):
         if game.user_in_game(p):
-            send_message(p, p.ux().MSG_YOU_ARE_IN_A_GAME_EXIT_FIRST)
+            send_message(p, p.ui().MSG_YOU_ARE_IN_A_GAME_EXIT_FIRST)
         else:
             redirect_to_state(p, state_INITIAL, message_obj)
         return True
@@ -1069,10 +1069,10 @@ def deal_with_universal_command(p, message_obj):
     if text_input == '/exit':
         if game.user_in_game(p):
             game.exit_game(p, save_data=False, reset_current_hunt=True)
-            send_message(p, p.ux().MSG_EXITED_FROM_GAME, remove_keyboard=True)
+            send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
             restart(p)
         else:
-            send_message(p, p.ux().MSG_NOT_IN_GAME)
+            send_message(p, p.ui().MSG_NOT_IN_GAME)
         return True
     if text_input == '/state':
         state = p.get_state()
@@ -1083,7 +1083,7 @@ def deal_with_universal_command(p, message_obj):
         repeat_state(p)
         return True
     if text_input in ['/help', 'HELP', 'AIUTO']:
-        send_message(p, p.ux().MSG_SUPPORT)
+        send_message(p, p.ui().MSG_SUPPORT)
         return True
     if text_input in ['/stop']:
         p.set_enabled(False, put=True)
@@ -1130,7 +1130,7 @@ def deal_with_request(request_json):
             send_message(p, msg)
 
     if message_obj.forward_from and not p.is_admin_current_hunt():
-        send_message(p, p.ux().MSG_NO_FORWARDING_ALLOWED)
+        send_message(p, p.ui().MSG_NO_FORWARDING_ALLOWED)
         return
 
     text = message_obj.text

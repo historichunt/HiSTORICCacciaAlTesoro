@@ -1,6 +1,6 @@
 from google.cloud import ndb
 from bot.ndb_utils import client_context
-from bot import utility, bot_ux, settings
+from bot import utility, bot_ui, settings
 
 class Person(ndb.Model):
     chat_id = ndb.StringProperty()
@@ -84,9 +84,9 @@ class Person(ndb.Model):
     def get_state(self):
         return self.state
 
-    def ux(self):
-        ux_custom_dict = self.tmp_variables.get('UX', None)
-        return bot_ux.UX_LANG(self.language, ux_custom_dict)
+    def ui(self):
+        ui_custom_dict = self.tmp_variables.get('UI', None)
+        return bot_ui.UI_LANG(self.language, ui_custom_dict)
 
     def set_language(self, l, put=False):
         self.language = l
