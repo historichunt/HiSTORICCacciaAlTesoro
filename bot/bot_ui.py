@@ -164,9 +164,9 @@ def build_json_lang_dict_from_ui_csv():
 
 
 if __name__ == "__main__":
-    # build_ui_csv()
-    # download_ui_csv()
+    download_ui_csv()
     build_json_lang_dict_from_ui_csv()
+    # build_ui_csv()    
     # sort_alphabetically()
     # build_ui_dict()
     # check_language_consistency()
