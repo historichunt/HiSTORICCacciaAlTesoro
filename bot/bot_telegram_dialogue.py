@@ -185,7 +185,7 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
             [p.ux().BUTTON_BACK],
             [p.ux().BUTTON_CHECK_HUNT],
             [p.ux().BUTTON_STATS, p.ux().BUTTON_TERMINATE],
-            [p.ux().BUTTON_DOWNLOAD_MEDIA],
+            [p.ux().BUTTON_DOWNLOAD_MEDIA, p.ux().BUTTON_DOWNLOAD_ERRORS],
             [p.ux().BUTTON_BACK]
         ]
         msg = p.ux().MSG_HUNT_ADMIN_SELECTED.format(hunt_name)
@@ -218,12 +218,22 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                         "(L'operazione potrebbe richiedere anche diversi minuti)"
                     send_message(p, msg, markdown=False)
                     zip_content = airtable_utils.download_media_zip(hunt_pw)
-                    if zip_content is None:
+                    if zip_content == 0:
                         msg = 'Nessun media trovato.'
                         send_message(p, msg, markdown=False)
+                    elif zip_content == 'MAX':
+                        msg = 'I file sono più di 50 mega, fai girare lo script da linea di comando, per favore.'
+                        send_message(p, msg, markdown=False)
                     else:
-                        zip_file_name = hunt_name.replace(' ','_')[:20] + ".zip"
+                        timestamp = dtu.timestamp_yyyymmdd()
+                        zip_file_name = 'media_' + hunt_name.replace(' ','_')[:20] + f"_{timestamp}.zip"
                         send_text_document(p, zip_file_name, zip_content)      
+                elif text_input == p.ux().BUTTON_DOWNLOAD_ERRORS:
+                    mission_errors, errors_digested = airtable_utils.get_wrong_answers(hunt_pw)
+                    file_name_prefix = 'errori_' + hunt_name.replace(' ','_')[:20]
+                    timestamp = dtu.timestamp_yyyymmdd()
+                    send_text_document(p, f'{file_name_prefix}_{timestamp}.txt', mission_errors)      
+                    send_text_document(p, f'{file_name_prefix}_{timestamp}_digested.txt', errors_digested)      
             else:
                 send_message(p, p.ux().MSG_WRONG_INPUT_USE_BUTTONS)     
         else:
@@ -603,8 +613,10 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
             send_message(p, p.ux().MSG_WRONG_INPUT_INSERT_TEXT)
 
 def send_post_message(p, current_indovinello):
-    if 'POST_MESSAGE' in current_indovinello:                        
-        if 'POST_MEDIA' in current_indovinello:
+    post_msg_present = 'POST_MESSAGE' in current_indovinello
+    post_media_present = 'POST_MEDIA' in current_indovinello
+    if post_msg_present or post_media_present:
+        if post_media_present:
             caption = current_indovinello.get('POST_MEDIA_CAPTION',None)
             url_attachment = current_indovinello['POST_MEDIA'][0]['url']
             send_media_url(p, url_attachment, caption=caption)

@@ -1,6 +1,8 @@
 import re
 import textwrap
 
+from google.cloud.ndb import utils
+
 
 def check_email(text_input):
     email_split = text_input.split()
@@ -60,10 +62,9 @@ def append_num_to_filename(filename):
         prefix, suffix = filename.rsplit('_', 1)
         if is_int(suffix):
             num = int(suffix)
-            filename = f'{prefix}_{num+1}'
-    else:
-        filename = f'{filename}_1'
-    return filename
+            return f'{prefix}_{num+1}'
+    return f'{filename}_1'
+    
 
 re_letters_space = re.compile('^[a-zA-Z ]+$')
 re_digits = re.compile(r'^\d+$')
