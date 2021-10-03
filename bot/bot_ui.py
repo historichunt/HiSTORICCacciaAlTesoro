@@ -6,6 +6,7 @@ from airtable import Airtable
 from bot.params import ROOT_DIR, LANGUAGES
 
 UI_DIR = os.path.join(ROOT_DIR, 'ui')
+UI_CSV_FILE = os.path.join(UI_DIR, 'UI.csv')
 
 # lang -> var -> string
 UI_DICT = None
@@ -113,7 +114,7 @@ def check_language_consistency():
         if len(set(i_keys.values()))!=1:
             assert False, f'Keys mismatch at line {i+2}: {i_keys}'
 
-def download_ui_tsv():
+def build_ui_csv():
     from bot import params
     import csv
     check_language_consistency()
@@ -122,19 +123,28 @@ def download_ui_tsv():
         for lang in LANGUAGES
     }
     primary_lang = params.LANGUAGES[0]
-    keys = lang_dict[primary_lang].keys()
-    tsv_file = os.path.join(UI_DIR, 'UI.tsv')
+    keys = lang_dict[primary_lang].keys()    
     
-    with open(tsv_file, 'w') as tsvfile:
-        writer = csv.writer(tsvfile, delimiter='\t')
+    with open(UI_CSV_FILE, 'w') as csvfile:
+        writer = csv.writer(csvfile)
         # header
         writer.writerow(['KEY','DESCRIPTION'] + params.LANGUAGES)
         for k in keys:
             writer.writerow([k,''] + [lang_dict[lang][k] for lang in params.LANGUAGES])
 
+def download_ui_tsv():
+    import requests
+    from bot import settings
+    spreadsheet_key = settings.UI_SPREADSHEET_KEY
+    url = f'https://docs.google.com/spreadsheets/d/{spreadsheet_key}/export?gid=0&format=tsv'
+    r = requests.get(url, allow_redirects=True)
+    with open(UI_CSV_FILE, 'wb') as csvfile:
+        csvfile.write(r.content)
 
 if __name__ == "__main__":
+    build_ui_csv()
+    # download_ui_tsv()
     # sort_alphabetically()
     # build_ui_dict()
     # check_language_consistency()
-    download_ui_tsv()
+    # build_ui_tsv()
