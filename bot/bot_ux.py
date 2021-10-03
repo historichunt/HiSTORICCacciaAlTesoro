@@ -113,8 +113,28 @@ def check_language_consistency():
         if len(set(i_keys.values()))!=1:
             assert False, f'Keys mismatch at line {i+2}: {i_keys}'
 
+def download_ui_tsv():
+    from bot import params
+    import csv
+    check_language_consistency()
+    lang_dict = {
+        lang: UX_DICT[lang]
+        for lang in LANGUAGES
+    }
+    primary_lang = params.LANGUAGES[0]
+    keys = lang_dict[primary_lang].keys()
+    tsv_file = os.path.join(UX_DIR, 'UI.tsv')
+    
+    with open(tsv_file, 'w') as tsvfile:
+        writer = csv.writer(tsvfile, delimiter='\t')
+        # header
+        writer.writerow(['KEY','DESCRIPTION'] + params.LANGUAGES)
+        for k in keys:
+            writer.writerow([k,''] + [lang_dict[lang][k] for lang in params.LANGUAGES])
+
 
 if __name__ == "__main__":
-    sort_alphabetically()
-    build_ux_dict()
-    check_language_consistency()
+    # sort_alphabetically()
+    # build_ux_dict()
+    # check_language_consistency()
+    download_ui_tsv()
