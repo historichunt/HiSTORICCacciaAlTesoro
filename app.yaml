@@ -1,6 +1,6 @@
 # gcloud config set project historictrentobot
 
-entrypoint: gunicorn -b :$PORT main:app --chdir bot
+entrypoint: gunicorn -b :$PORT main:app --chdir historic
 runtime: python37
 
 # change instance class

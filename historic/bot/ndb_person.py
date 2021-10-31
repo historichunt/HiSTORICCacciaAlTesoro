@@ -1,6 +1,7 @@
 from google.cloud import ndb
-from bot.ndb_utils import client_context
-from bot import utility, bot_ui, settings
+from historic.bot.ndb_utils import client_context
+from historic.bot import utility, bot_ui
+from historic.config import settings
 
 class Person(ndb.Model):
     chat_id = ndb.StringProperty()
@@ -50,7 +51,7 @@ class Person(ndb.Model):
         return self.get_id() in settings.HUNT_ADMIN_IDS
 
     def is_admin_current_hunt(self):
-        from bot import game
+        from historic.bot import game
         return (
             self.current_hunt!=None 
             and 
@@ -185,7 +186,7 @@ def reset_person_tmp_var(uid):
     p.put()
 
 def get_people_on_hunt_stats(hunt):
-    from bot import game
+    from historic.bot import game
     people_on_hunt = Person.query(Person.current_hunt==hunt).fetch()    
     stats = '\n'.join(
         [game.get_game_stats(p) for p in people_on_hunt])    #  if p.tmp_variables['GROUP_NAME']

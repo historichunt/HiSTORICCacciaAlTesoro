@@ -1,5 +1,5 @@
 from flask import Flask, request
-from bot import settings
+from historic.config import settings
 
 
 import logging
@@ -15,7 +15,7 @@ app = Flask(__name__)
 
 # run once
 with app.app_context():
-    from bot import bot_telegram_admin
+    from historic.bot import bot_telegram_admin
     bot_telegram_admin.set_webhook()
 
 @app.route('/')
@@ -26,8 +26,8 @@ def root():
 
 @app.route(settings.DEPLOY_NOTIFICATION_WEBHOOK_URL_ROUTING, methods=['POST'])
 def new_deploy():    
-    from bot.bot_telegram import report_admins
-    from bot.settings import APP_VERSION, ENV_VERSION
+    from historic.bot.bot_telegram import report_admins
+    from historic.bot.settings import APP_VERSION, ENV_VERSION
     payload_json = request.get_json(force=True)
     # payload has the following struture
     # {
@@ -59,8 +59,8 @@ def internal_error(error):
 
 @app.route(settings.WEBHOOK_TELEGRAM_ROUTING, methods=['POST'])
 def telegram_webhook_handler():
-    from bot.main_exception import run_new_thread_and_report_exception
-    from bot.bot_telegram_dialogue import deal_with_request    
+    from historic.bot.main_exception import run_new_thread_and_report_exception
+    from historic.bot.bot_telegram_dialogue import deal_with_request    
     import json
 
     request_json = request.get_json(force=True)

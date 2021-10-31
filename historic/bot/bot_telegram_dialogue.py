@@ -2,15 +2,16 @@ import logging
 import telegram
 import json
 import random
-from bot import airtable_utils, bot_telegram, utility, ndb_person, bot_ui, game, geoUtils, params, settings
-from bot import date_time_util as dtu
-from bot.bot_telegram import BOT, send_message, send_location, send_typing_action, \
+from historic.config import params, settings
+from historic.bot import airtable_utils, bot_telegram, utility, ndb_person, bot_ui, game, geoUtils
+from historic.bot import date_time_util as dtu
+from historic.bot.bot_telegram import BOT, send_message, send_location, send_typing_action, \
     report_admins, send_text_document, send_media_url, \
     broadcast, report_admins, reset_all_users
-from bot import params
-from bot.utility import flatten, get_str_param_boolean
-from bot.ndb_person import Person
-from bot.ndb_utils import client_context
+from historic.config import params
+from historic.bot.utility import flatten, get_str_param_boolean
+from historic.bot.ndb_person import Person
+from historic.bot.ndb_utils import client_context
 
 # ================================
 # RESTART
@@ -198,7 +199,7 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                 if text_input == p.ui().BUTTON_BACK:
                     redirect_to_state(p, state_ADMIN)
                 elif text_input == p.ui().BUTTON_CHECK_HUNT:
-                    from bot.airtable_check import check_hunt
+                    from historic.bot.airtable_check import check_hunt
                     error = check_hunt(hunt_pw)
                     if error:
                         send_message(p, error, markdown=False)

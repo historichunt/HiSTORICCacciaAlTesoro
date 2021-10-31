@@ -4,8 +4,9 @@ from telegram.error import (TelegramError, Unauthorized,
     BadRequest, TimedOut, ChatMigrated, NetworkError)
 import logging
 import time
-from bot import settings, game, utility
-from bot.ndb_person import Person
+from historic.config import settings
+from historic.bot import game, utility
+from historic.bot.ndb_person import Person
 
 BOT = telegram.Bot(token=settings.TELEGRAM_API_TOKEN)
 
@@ -172,7 +173,7 @@ def broadcast(sender, msg, qry = None, blackList_sender=False, sendNotification=
 # ---------
 
 def reset_all_users(qry = None, message=None):
-    from bot.bot_telegram_dialogue import restart
+    from historic.bot.bot_telegram_dialogue import restart
     if qry is None:
         qry = Person.query()
     qry = qry.order(Person._key)  # _MultiQuery with cursors requires __key__ order

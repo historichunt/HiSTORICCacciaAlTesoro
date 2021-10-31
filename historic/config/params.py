@@ -1,6 +1,8 @@
 import os
 
-ROOT_DIR = os.path.dirname(os.path.dirname(__file__)) # base dir (works both in flask and gunicorn)
+# base dir (two levels up)
+# (works both in flask and gunicorn)
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) 
 
 LANGUAGES = ['IT','EN', 'DE']
 MAX_TEAM_NAME_LENGTH = 30

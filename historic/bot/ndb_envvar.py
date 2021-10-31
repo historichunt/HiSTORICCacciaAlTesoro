@@ -1,5 +1,5 @@
 from google.cloud import ndb
-from bot.ndb_utils import client_context
+from historic.bot.ndb_utils import client_context
 
 class EnvVar(ndb.Model):
   name = ndb.StringProperty()

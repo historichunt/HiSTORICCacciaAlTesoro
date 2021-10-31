@@ -3,7 +3,7 @@ import json
 import telegram
 import random
 from airtable import Airtable
-from bot.params import ROOT_DIR, LANGUAGES
+from historic.config.params import ROOT_DIR, LANGUAGES
 
 UI_DIR = os.path.join(ROOT_DIR, 'ui')
 UI_CSV_FILE = os.path.join(UI_DIR, 'UI.csv')
@@ -133,7 +133,7 @@ def build_ui_csv():
 
 def download_ui_csv():
     import requests
-    from bot import settings
+    from historic.config import settings
     spreadsheet_key = settings.UI_SPREADSHEET_KEY
     url = f'https://docs.google.com/spreadsheets/d/{spreadsheet_key}/export?gid=0&format=csv'
     r = requests.get(url, allow_redirects=True)

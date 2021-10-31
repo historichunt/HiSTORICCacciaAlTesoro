@@ -2,7 +2,7 @@ import logging
 import traceback
 import telegram
 import time
-from bot.bot_telegram import report_admins
+from historic.bot.bot_telegram import report_admins
 
 def exception_reporter(func, *args, **kwargs):    
     def exception_reporter_wrapper(*args, **kwargs):

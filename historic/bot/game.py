@@ -1,8 +1,9 @@
 
 from airtable import Airtable
 from random import shuffle, choice
-from bot import params, settings, utility, airtable_utils
-import bot.date_time_util as dtu
+from historic.config import params, settings
+from historic.bot import utility, airtable_utils
+import historic.bot.date_time_util as dtu
 
 #################
 # GAMES CONFIG
@@ -150,7 +151,7 @@ def get_random_missioni(p, airtable_game_id, mission_tab_name, initial_cat):
         missioni_random.append(missione_finale)
     # debug
     if p.is_admin_current_hunt(): 
-        from bot.bot_telegram import send_message   
+        from historic.bot.bot_telegram import send_message   
         random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_random,1)])
         send_message(p, "DEBUG Random missioni:\n{}".format(random_missioni_names))
     return missioni_random
@@ -165,7 +166,7 @@ RESULTS_GAME_TABLE_HEADERS = \
     'PENALTIES', 'PENALTY TIME', 'FINISHED', 'TOTAL TIME GAME', 'TOTAL TIME MISSIONS']
 
 def save_game_data_in_airtable(p):
-    from bot.bot_telegram import get_photo_url_from_telegram
+    from historic.bot.bot_telegram import get_photo_url_from_telegram
     import json
     game_data = p.tmp_variables
     airtable_game_id = game_data['HUNT_INFO']['Airtable_Game_ID']

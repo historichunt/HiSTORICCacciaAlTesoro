@@ -1,10 +1,10 @@
 import os
 from airtable import Airtable
-from bot import ndb_envvar
-from bot.params import ROOT_DIR
+from historic.bot import ndb_envvar
+from historic.config.params import ROOT_DIR
 
 APP_NAME = 'historictrentobot'
-APP_VERSION = '0.8.0'
+APP_VERSION = '0.9.0'
 CLOUD_ENVS = ['test', 'production']
 GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
 
@@ -16,7 +16,7 @@ if GAE_SERVER:
     LOCAL_ENV_FILES = None
 else:
     # local version
-    from bot import ngrok 
+    from historic.bot import ngrok 
     APP_BASE_URL = ngrok.start_pyngrok()    
     print(f'Running local version: {APP_BASE_URL}')
 
@@ -46,7 +46,6 @@ else:
 TELEGRAM_API_TOKEN = ENV_VARS.get("TELEGRAM_API_TOKEN")
 AIRTABLE_API_KEY = ENV_VARS.get("AIRTABLE_API_KEY")
 AIRTABLE_CONFIG_ID = ENV_VARS.get("AIRTABLE_CONFIG_ID")
-HISTORIC_NOTIFICHE_GROUP_CHAT_ID = ENV_VARS.get("HISTORIC_NOTIFICHE_GROUP_CHAT_ID")
 DEPLOY_NOTIFICATION_WEBHOOK_URL_ROUTING = ENV_VARS.get("DEPLOY_NOTIFICATION_WEBHOOK_URL_ROUTING")
 DEPLOY_NOTIFICATION_WEBHOOK_SECRET = ENV_VARS.get("DEPLOY_NOTIFICATION_WEBHOOK_SECRET")
 UI_SPREADSHEET_KEY = ENV_VARS.get("UI_SPREADSHEET_KEY")

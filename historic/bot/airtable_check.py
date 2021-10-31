@@ -1,6 +1,6 @@
 import re
 from airtable import Airtable
-from bot import settings, airtable_utils
+from historic.config import settings, airtable_utils
 
 def check_curly_bracket(s):
     return s.count('{') == s.count('}')
@@ -35,7 +35,7 @@ def check_ui():
                 'Error BACK APOSTROPHE in ui table in var "{}" column {}'.format(row_dict['VAR'], k)
 
 def check_hunt(hunt_pw):
-    from bot.game import HUNTS_PW
+    from historic.bot.game import HUNTS_PW
     hunt_config_dict = HUNTS_PW[hunt_pw]    
     # hunt_name = hunt_config_dict['Name']            
     game_id = hunt_config_dict['Airtable_Game_ID']

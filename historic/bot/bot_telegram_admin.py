@@ -1,5 +1,5 @@
-from bot import bot_telegram, settings
-from bot.bot_telegram import BOT
+from historic.config import settings
+from historic.bot.bot_telegram import BOT
 
 def get_ngrok_base():
     import requests

@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.9
+- hunt route
+- open hunts
+
 ## 0.8
 - changelog (questo file)
 - interfaccia UI tramite google spreadsheet
