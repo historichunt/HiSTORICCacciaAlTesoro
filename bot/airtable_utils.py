@@ -6,10 +6,9 @@ from airtable import Airtable
 from bot import settings, game
 import zipfile
 from bot.utility import append_num_to_filename
-from params import MAX_SIZE_FILE_BYTES
-
 
 def download_media_zip(hunt_password, table_name='Results', log=False):    
+    from params import MAX_SIZE_FILE_BYTES    
     table_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
     RESULTS_TABLE = Airtable(table_id, table_name, api_key=settings.AIRTABLE_API_KEY)
     table_entries = RESULTS_TABLE.get_all()
