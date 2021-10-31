@@ -27,7 +27,7 @@ def root():
 @app.route(settings.DEPLOY_NOTIFICATION_WEBHOOK_URL_ROUTING, methods=['POST'])
 def new_deploy():    
     from historic.bot.bot_telegram import report_admins
-    from historic.bot.settings import APP_VERSION, ENV_VERSION
+    from historic.config.settings import APP_VERSION, ENV_VERSION
     payload_json = request.get_json(force=True)
     # payload has the following struture
     # {
