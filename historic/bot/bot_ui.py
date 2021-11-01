@@ -2,7 +2,6 @@ import os
 import json
 import telegram
 import random
-from airtable import Airtable
 from historic.config.params import ROOT_DIR, LANGUAGES
 
 UI_DIR = os.path.join(ROOT_DIR, 'ui')

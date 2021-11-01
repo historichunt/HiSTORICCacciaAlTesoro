@@ -1,6 +1,7 @@
 import re
 from airtable import Airtable
-from historic.config import settings, airtable_utils
+from historic.config import settings
+from historic.bot import airtable_utils
 
 def check_curly_bracket(s):
     return s.count('{') == s.count('}')

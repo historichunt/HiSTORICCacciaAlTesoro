@@ -9,3 +9,7 @@ MAX_TEAM_NAME_LENGTH = 30
 JUMP_TO_SURVEY_AFTER = False  # 2
 
 MAX_SIZE_FILE_BYTES = 50 * 1024 * 1024
+
+# max distance to hunt gps location (config table)
+# in order to be able to access the hunt
+MAX_DISTANCE_KM_HUNT_GPS = 100000

@@ -72,18 +72,19 @@ def get_hunt_settings(p, airtable_game_id):
     }
     return SETTINGS
 
-def get_hunt_ui(p, airtable_game_id):    
-    UI_TABLE = Airtable(airtable_game_id, 'UI', api_key=settings.AIRTABLE_API_KEY)
+def get_hunt_ui(p, airtable_game_id, multilingual):    
+    UI_TABLE = Airtable(airtable_game_id, 'UX', api_key=settings.AIRTABLE_API_KEY)
     table_rows = [
         row['fields'] 
         for row in UI_TABLE.get_all() 
     ]
+    LANGS = params.LANGUAGES if multilingual else ['IT']
     UI = {
         lang: {
             r['VAR']: r[lang].strip()
             for r in table_rows
         }        
-        for lang in params.LANGUAGES
+        for lang in LANGS
     }
     return UI
 
@@ -210,12 +211,12 @@ def reset_game(p, hunt_name, hunt_password):
     hunt_info = HUNTS_PW[hunt_password]
     airtable_game_id = hunt_info['Airtable_Game_ID']
     hunt_settings = get_hunt_settings(p, airtable_game_id)
-    hunt_ui = get_hunt_ui(p, airtable_game_id)
+    multilingual =  utility.get_str_param_boolean(hunt_settings, 'MULTILINGUAL')
+    hunt_ui = get_hunt_ui(p, airtable_game_id, multilingual)
     instructions_table = Airtable(airtable_game_id, 'Instructions', api_key=settings.AIRTABLE_API_KEY)    
     survey_table = Airtable(airtable_game_id, 'Survey', api_key=settings.AIRTABLE_API_KEY)        
     p.current_hunt = hunt_password         
-    initial_cat = hunt_settings.get('INITIAL_CAT', None)
-    multilingual =  utility.get_str_param_boolean(hunt_settings, 'MULTILINGUAL')
+    initial_cat = hunt_settings.get('INITIAL_CAT', None)    
     mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni'
     missioni = get_random_missioni(p, airtable_game_id, mission_tab_name, initial_cat)
     instructions_steps = airtable_utils.get_rows(

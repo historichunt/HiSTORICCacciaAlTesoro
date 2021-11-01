@@ -5,6 +5,9 @@ from geopy.distance import distance
 def distance_meters(point1, point2):
     return int(distance(point1, point2).meters)
 
+def distance_km(point1, point2):
+    return int(distance(point1, point2).kilometers)
+
 
 # lat, lon, poly is a list of lat lon coords
 def point_inside_polygon(x,y,poly):

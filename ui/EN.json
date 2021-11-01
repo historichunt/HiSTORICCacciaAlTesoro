@@ -81,7 +81,7 @@
    "MSG_SELFIE_INIZIALE": "📷 Now I want to see you!\nSend me a selfie with all the tram members!\n\n⏱️ As soon as you send me the picture, I will start the timer.",
    "MSG_SELFIE_INIZIALE_OK": "😀 You are so beautiful!\nNow we can start with the *first mission*.",
    "MSG_SELFIE_MISSIONE_WRONG": "🤔 Unfortunately the selfie hasn't been accepted because it doesn't include the object of the riddle, or we cannot see you clearly.\n\n📷 Try to send us a new selfie!",
-   "MSG_START_INSTRUCTIONS": "🔑 In order to start the treasure hunt type the *magic word* provided by the organizers.",
+   "MSG_START_INSTRUCTIONS": "🔑 In order to start the treasure hunt type the *magic word* provided by the organizers or send me your position to see if there are open hunts nearby.",
    "MSG_START_TIME": "⏱ Time is running!",
    "MSG_SUPPORT": "💁 If you have any problem, you can contact us via email at historictrento@gmail.com or on Facebook at https://www.facebook.com/historictrento/",
    "MSG_SURVEY_INTRO": "📋 Before telling you how long it took you to complete the game, I would like to ask you few questions...",

@@ -3,7 +3,7 @@ import telegram
 import json
 import random
 from historic.config import params, settings
-from historic.bot import airtable_utils, bot_telegram, utility, ndb_person, bot_ui, game, geoUtils
+from historic.bot import airtable_utils, bot_telegram, utility, ndb_person, bot_ui, game, geo_utils
 from historic.bot import date_time_util as dtu
 from historic.bot.bot_telegram import BOT, send_message, send_location, send_typing_action, \
     report_admins, send_text_document, send_media_url, \
@@ -97,13 +97,17 @@ def state_INITIAL(p, message_obj=None, **kwargs):
                 hunt_password = text_input.lower().split()[1]
             else: 
                 hunt_password = text_input.lower()
-            correct_password = check_hunt_password(p, hunt_password, send_msg_if_wrong_pw=False)
+            correct_password = access_hunt_via_password(p, hunt_password, send_msg_if_wrong_pw=False)
             if not correct_password:
                 send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)    
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
-def check_hunt_password(p, hunt_password, send_msg_if_wrong_pw):
+# ================================
+# ACCESS HUNT VIA PASSWORD
+# ================================
+  
+def access_hunt_via_password(p, hunt_password, send_msg_if_wrong_pw):
     if hunt_password in game.HUNTS_PW:   
         if (
             game.HUNTS_PW[hunt_password].get('Active', False) 
@@ -112,7 +116,6 @@ def check_hunt_password(p, hunt_password, send_msg_if_wrong_pw):
         ):
             hunt_name = game.HUNTS_PW[hunt_password]['Name']
             game.reset_game(p, hunt_name, hunt_password)                    
-            # send_message(p, p.ui().MSG_WELCOME.format(game_name), remove_keyboard=True)
             hunt_settings = p.tmp_variables['SETTINGS']
             skip_instructions = get_str_param_boolean(hunt_settings, 'SKIP_INSTRUCTIONS')
             if not skip_instructions:
@@ -133,6 +136,47 @@ def check_hunt_password(p, hunt_password, send_msg_if_wrong_pw):
             send_typing_action(p, 1)
             repeat_state(p)
         return False
+
+# ================================
+# ACCESS HUNT VIA GPS
+# ================================
+
+def state_ACCESS_HUNT_VIA_GPS(p, message_obj=None, **kwargs):    
+    give_instruction = message_obj is None
+    if give_instruction:                
+        lat_lon = p.get_tmp_variable('INITIAL_GPS_POSITION')
+        open_hunts = [
+            hunt for hunt in game.HUNTS_NAME.values()
+            if 'GPS' in hunt and 
+            geo_utils.distance_km(
+                [float(x) for x in hunt['GPS'].split(',')], 
+                lat_lon
+            ) <= params.MAX_DISTANCE_KM_HUNT_GPS
+        ]
+        if len(open_hunts) > 0:
+            kb = [
+                [hunt['Name']] for hunt in open_hunts           
+            ]     
+            kb.append(
+                [p.ui().BUTTON_BACK]
+            )
+            send_message(p, "Seleziona una caccia aperta", kb)
+        else:
+            send_message(p, "Nessuna caccia aperta nelle vicinanze")
+            send_typing_action(p, 1)
+            redirect_to_state(p, state_START_HUNT)
+
+    else:
+        text_input = message_obj.text
+        kb = p.get_keyboard()
+        if text_input in flatten(kb):
+            if text_input == p.ui().BUTTON_BACK:
+                redirect_to_state(p, state_START_HUNT)
+            else:
+                hunt_password = game.HUNTS_NAME[text_input]['Password']
+                access_hunt_via_password(p, hunt_password, send_msg_if_wrong_pw=True)
+        else:
+            send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
 # ================================
 # Admin State
@@ -294,12 +338,14 @@ def state_START_HUNT(p, message_obj=None, **kwargs):
     if give_instruction:                
         switch_language_button = p.ui().BUTTON_ENGLISH if p.language=='IT' else p.ui().BUTTON_ITALIAN
         kb = [
+            [bot_ui.BUTTON_LOCATION(p.language)],            
             [switch_language_button],
-            [p.ui().BUTTON_BACK]
+            [p.ui().BUTTON_BACK],            
         ]     
         send_message(p, p.ui().MSG_START_INSTRUCTIONS, kb)
     else:
         text_input = message_obj.text
+        location = message_obj.location        
         kb = p.get_keyboard()
         if text_input:            
             if text_input in flatten(kb):
@@ -313,7 +359,11 @@ def state_START_HUNT(p, message_obj=None, **kwargs):
                     repeat_state(p)      
             else:
                 hunt_password = text_input.lower()
-                check_hunt_password(p, hunt_password, send_msg_if_wrong_pw=True)
+                access_hunt_via_password(p, hunt_password, send_msg_if_wrong_pw=True)
+        elif location:            
+            lat_lon = (location['latitude'], location['longitude'])
+            p.set_tmp_variable('INITIAL_GPS_POSITION', lat_lon)            
+            redirect_to_state(p, state_ACCESS_HUNT_VIA_GPS)
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT, kb)
             send_typing_action(p, 1)
@@ -507,7 +557,7 @@ def state_GPS(p, message_obj=None, **kwargs):
             lat, lon = location['latitude'], location['longitude']
             p.set_location(lat, lon)
             given_position = [lat, lon]
-            distance = geoUtils.distance_meters(goal_position, given_position)
+            distance = geo_utils.distance_meters(goal_position, given_position)
             GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
             if distance <= GPS_TOLERANCE_METERS:
                 send_message(p, p.ui().MSG_GPS_OK, remove_keyboard=True)
