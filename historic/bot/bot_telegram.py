@@ -7,6 +7,7 @@ import time
 from historic.config import settings
 from historic.bot import game, utility
 from historic.bot.ndb_person import Person
+from io import BytesIO
 
 BOT = telegram.Bot(token=settings.TELEGRAM_API_TOKEN)
 
@@ -71,6 +72,17 @@ def send_typing_action(p, sleep_time=None):
     if sleep_time:
         time.sleep(sleep_time)
 
+def send_photo_data(p, img_content, kb=None, caption=None,
+    remove_keyboard=False, inline_keyboard=False, markdown=True):
+    
+    rm = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)      
+    chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
+    parse_mode = telegram.ParseMode.MARKDOWN if markdown else None 
+    data = BytesIO(img_content)
+    BOT.send_photo(
+        chat_id, photo=data, caption=caption, 
+        reply_markup=rm, parse_mode=parse_mode
+    )
 
 def send_media_url(p, url_attachment, kb=None, caption=None,
     remove_keyboard=False, inline_keyboard=False):

@@ -62,6 +62,7 @@ class RoutePlanner:
     num_best: int = 1
     stop_when_num_best_reached: bool = False
     num_discarded: int = None    
+    show_progress_bar: bool = True
 
     def __post_init__(self):
         self.__check_params()        
@@ -83,8 +84,8 @@ class RoutePlanner:
             f'and max_overalapping ({self.max_overalapping}) ' \
             'must be both None or both different from None'
 
-    def get_routes_and_plots(self, show_map=True, log=True):
-        """Get best routes of trento dataset
+    def get_routes(self, show_map=True, log=False):
+        """Display best routes
 
         Args:
             plot (bool): show plots
@@ -92,61 +93,79 @@ class RoutePlanner:
             log (bool): log to std out
         """
 
-        dst_matrix = self.dst_matrix
+        info = []
 
-        rs = RandomState(123)
-        colors = rs.rand(self.num_points)   
-        points = self.points
-        x = points[:,0]
-        y = points[:,1]
-        xlim = [np.min(x)-0.001, np.max(x)+0.001]
-        ylim = [np.min(y)-0.001, np.max(y)+0.001]
+        def print_info(s):
+            info.append(s)
+            if log:
+                print(s)
 
-        self.__build_routes() # into self.solutions
+        def print_info_list(s_list):
+            info.append('')
+            info.extend(s_list)
+            if log:
+                print('')
+                for s in s_list:
+                    print(s)
 
-        print(f'Routes found/total: {self.total_solutions}/{self.total_attempts}')
+        print_info(f'Routes found/total: {self.total_solutions}/{self.total_attempts}')
 
-        if len(self.solutions) == 0:            
-            print('No solution found!')            
+        best_route_idx = None
+        best_stop_names = None
+        best_route_img = None        
+
+        if len(self.solutions) == 0:                  
+            print_info('No solution found!')            
             if self.save_discarded and len(self.discarded_solutions)>0:
-                print('!!!!!!!!!!')
-                print('Showing discarded solutions.')
-                print('!!!!!!!!!!')
+                print_info('!!!!!!!!!!')
+                print_info('Showing discarded solutions.')
+                print_info('!!!!!!!!!!')
                 displayed_solutions = self.discarded_solutions
             else:
-                return
+                return best_route_idx, best_stop_names, info, best_route_img
         else:
             displayed_solutions = self.solutions
+        
         # plot at most first x results
+        first = True
         for (error, _), route_idx in displayed_solutions.items():    
-            route_points = np.take(points, route_idx, axis=0)            
-            if log:
-                self.print_route_info(route_points, route_idx, dst_matrix, error, self.point_names)                            
-            if show_map:      
+            if first:
+                best_route_idx = route_idx
+                best_stop_names = [self.point_names[i] for i in route_idx]
+            route_points = np.take(self.points, route_idx, axis=0)            
+            route_info = self.get_route_info(
+                route_points, route_idx, self.dst_matrix, error, self.point_names)
+            print_info_list(route_info)
+            if show_map or first:      
                 overlapping_dst, path_points, unique_segments, segments_counts = \
                     locations_utils.compute_overlapping_path_segments(
                         self.dm, route_points, self.profile
-                    )                
+                    )  
+            if show_map:              
                 overlapping_dst_int = int(round(overlapping_dst,0))
-                print(f'Overlapping dst: {overlapping_dst_int} m')
+                print_info(f'Overlapping dst: {overlapping_dst_int} m')
                 
                 grid_counter = locations_utils.compute_grid_counter(self.dm, route_idx, self.profile)
                 overlapping_grids = np.sum(x-1 for x in grid_counter.values() if x>1)
-                print(f'Overlapping grids: {overlapping_grids}')
+                print_info(f'Overlapping grids: {overlapping_grids}')
                 
-
                 locations_utils.plot_route_points(route_points)
                 locations_utils.plot_route_graph(
-                    points, route_points, path_points, unique_segments, segments_counts,                     
-                    colors, xlim, ylim,                    
+                    self.points, route_points, path_points, unique_segments, segments_counts,
                     grid_counter=grid_counter,
                     print_dots=False, 
                     print_path_numbers=False
-                )                
-                # directions_json = api_ors.run_directions_api(route_points.tolist(), self.profile)
-                render_map(route_points, path_points, unique_segments, segments_counts, points)
+                )             
+            if show_map or first:         
+                map_img = render_map(route_points, path_points, unique_segments, segments_counts, self.points, show=show_map)
+                if first:
+                    best_route_img = map_img
+            
+            first = False
 
-    def __build_routes(self):
+        return best_route_idx, best_stop_names, info, best_route_img
+
+    def build_routes(self):
         """Get all routes satisfying specific constraints
 
         Args:
@@ -181,7 +200,8 @@ class RoutePlanner:
         remaining_idx = list(range(self.num_points))        
         route_idx = [start_idx]
         
-        self.pbar = tqdm(total=self.num_attempts)
+        if self.show_progress_bar:
+            self.pbar = tqdm(total=self.num_attempts)
 
         grid_counter = Counter() if self.overlapping_criteria == 'GRID' else None
         
@@ -190,7 +210,8 @@ class RoutePlanner:
             tot_dst=self.stop_duration, remaining_idx=remaining_idx,
             grid_counter=grid_counter)
         
-        self.pbar.close()
+        if self.show_progress_bar:
+            self.pbar.close()
 
     def get_pair_dst(self, idx_a, idx_b, add_stop_duration):
     
@@ -284,7 +305,8 @@ class RoutePlanner:
 
         if len(remaining_idx)==0:                     
             self.total_attempts += 1  
-            self.pbar.update(1)  
+            if self.show_progress_bar:
+                self.pbar.update(1)  
             return False # no more options
 
         self.rs.shuffle(remaining_idx)
@@ -298,7 +320,8 @@ class RoutePlanner:
             if self.is_time_to_stop():
                 break
             
-            self.pbar.update(1)            
+            if self.show_progress_bar:
+                self.pbar.update(1)            
             
             pair_dst = self.get_pair_dst(prev_idx, next_idx, add_stop_duration=True)
 
@@ -375,7 +398,7 @@ class RoutePlanner:
 
         return found_solution
 
-    def print_route_info(self, route_points, route_idx, dst_matrix, error, point_names):
+    def get_route_info(self, route_points, route_idx, dst_matrix, error, point_names):
         """[summary]
 
         Args:
@@ -385,6 +408,7 @@ class RoutePlanner:
             error ([type]): [description]
             point_names ([type]): [description]
         """
+        info = []
         route_size = len(route_points)
         route_points_num = [i+1 for i in route_idx]
         dist = [dst_matrix[route_idx[i],route_idx[i+1]] for i in range(route_size-1)]
@@ -394,9 +418,8 @@ class RoutePlanner:
         tot_dst = np.sum(dist) + stop_duration_factor * self.stop_duration
         check_error = np.abs(tot_dst-self.goal_tot_dst)
         assert np.abs(check_error - error) < 1E-5
-        print()
         route_num = [i+1 for i in route_idx]
-        print('route_num:', route_num)
+        info.append(f'route_num: {route_num}')        
         if point_names is not None:
             route_names_stop = '\n'.join(
                 [
@@ -404,8 +427,9 @@ class RoutePlanner:
                     for n,i in enumerate(route_idx,1)
                 ]
             )
-            print(f'route names stop:\n{route_names_stop}')
-        print('route points:', route_points_num)
-        print('legs duration:', ["{:.1f}".format(d) for d in dist])
-        print('total duration:', "{:.1f}".format(tot_dst))
-        print('(duration error):', "{:.1f}".format(error))
+            info.append(f'route names stop:\n{route_names_stop}')
+        info.append(f'route points: {route_points_num}')
+        info.append(f'legs duration: {["{:.1f}".format(d) for d in dist]}')
+        info.append(f'total duration: {"{:.1f}".format(tot_dst)}')
+        info.append(f'(duration error): {"{:.1f}".format(error)}')
+        return info

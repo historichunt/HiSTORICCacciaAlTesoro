@@ -115,7 +115,9 @@ def access_hunt_via_password(p, hunt_password, send_msg_if_wrong_pw):
             game.is_person_hunt_admin(p, hunt_password)
         ):
             hunt_name = game.HUNTS_PW[hunt_password]['Name']
-            game.reset_game(p, hunt_name, hunt_password)                    
+            success = game.reset_game(p, hunt_name, hunt_password)                    
+            if not success:
+                return True # not a pw error
             hunt_settings = p.tmp_variables['SETTINGS']
             skip_instructions = get_str_param_boolean(hunt_settings, 'SKIP_INSTRUCTIONS')
             if not skip_instructions:

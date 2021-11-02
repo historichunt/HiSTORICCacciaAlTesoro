@@ -98,7 +98,7 @@ def render_map_with_coordinates(coordinates, width=1200, height=800):
     show_image(r.content)
 
 def render_map(route_points, path_points, unique_segments, segments_counts, all_coordinates,
-    width=1200, height=800, path_width=4):    
+    width=1200, height=800, path_width=4, show=True):    
     """[summary]
 
     Args:
@@ -177,7 +177,9 @@ def render_map(route_points, path_points, unique_segments, segments_counts, all_
     assert len(url) < 8192, 'URL TOO LONG'
     r = requests.get(url)
     assert r.status_code == 200, r.content
-    show_image(r.content)
+    if show:
+        show_image(r.content)
+    return r.content
 
 def test_render_map():    
     from historic.hunt_route.routing_wikidata import read_wikidata_locations

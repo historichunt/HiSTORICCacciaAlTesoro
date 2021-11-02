@@ -4,6 +4,9 @@ from random import shuffle, choice
 from historic.config import params, settings
 from historic.bot import utility, airtable_utils
 import historic.bot.date_time_util as dtu
+from historic.hunt_route import api_google, hunt_params
+from historic.hunt_route.data_matrices import DataMatrices
+from historic.hunt_route.routing import RoutePlanner
 
 #################
 # GAMES CONFIG
@@ -53,7 +56,7 @@ reload_config_hunt()
 # MISSIONI TABLE
 #################
 '''
-NOME, ACTIVE, FINALE, NEXT, CATEGORIA, 
+NOME, ACTIVE, FINALE, NEXT, 
 INTRO_MEDIA, INTRO_MEDIA_CAPTION, 
 INTRODUZIONE_LOCATION, GPS, 
 DOMANDA_MEDIA, DOMANDA_MEDIA_CAPTION, DOMANDA,
@@ -73,7 +76,7 @@ def get_hunt_settings(p, airtable_game_id):
     return SETTINGS
 
 def get_hunt_ui(p, airtable_game_id, multilingual):    
-    UI_TABLE = Airtable(airtable_game_id, 'UX', api_key=settings.AIRTABLE_API_KEY)
+    UI_TABLE = Airtable(airtable_game_id, 'UI', api_key=settings.AIRTABLE_API_KEY)
     table_rows = [
         row['fields'] 
         for row in UI_TABLE.get_all() 
@@ -88,74 +91,107 @@ def get_hunt_ui(p, airtable_game_id, multilingual):
     }
     return UI
 
-def get_random_missioni(p, airtable_game_id, mission_tab_name, initial_cat):
-    import itertools
+def get_all_missioni_random(p, airtable_game_id, mission_tab_name):
     MISSIONI_TABLE = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_API_KEY)
     MISSIONI_ALL = [row['fields'] for row in MISSIONI_TABLE.get_all() if row['fields'].get('ACTIVE',False)]    
-    for row in MISSIONI_ALL:
-        if 'FINALE' not in row:
-            row['FINALE'] = False
-        if 'CATEGORIA' not in row:
-            row['CATEGORIA'] = ''
-    NEXT_MISSIONI = [
+    next_missioni = [
         m for m in MISSIONI_ALL if m['NOME'] in \
         [row.get('NEXT') for row in MISSIONI_ALL if row.get('NEXT',False)]
     ]
-    MISSIONI_NOT_NEXT = [m for m in MISSIONI_ALL if m not in NEXT_MISSIONI]    
-    missioni_categories = list(set(row['CATEGORIA'] for row in MISSIONI_NOT_NEXT))
-    missioni_tmp = [row for row in MISSIONI_NOT_NEXT if not row['FINALE']]
-    missioni_finali = [row for row in MISSIONI_NOT_NEXT if row['FINALE']]    
+    missioni_not_next = [m for m in MISSIONI_ALL if m not in next_missioni]    
+    
+    missioni_tmp = [row for row in missioni_not_next if not row.get('FINALE',False)]
+    missioni_finali = [row for row in missioni_not_next if row.get('FINALE',False)]    
     missione_finale = choice(missioni_finali) if missioni_finali else None    
 
     if missione_finale:
         missioni_finali.remove(missione_finale)
         missioni_tmp.extend(missioni_finali) # adding all missini_finali except one (the actual final one)
-    missioni_cat_bucket = {
-        cat:[row for row in missioni_tmp if row['CATEGORIA']==cat]
-        for cat in missioni_categories
-    }
-    for missioni_list_cat in missioni_cat_bucket.values():
-        shuffle(missioni_list_cat)   
-    
-    if initial_cat in missioni_categories and len(missioni_categories)>1:
-        missioni_categories.remove(initial_cat)
-        missioni_categories.insert(0, initial_cat)
-    elif missione_finale:
-        missione_finale_cat = missione_finale['CATEGORIA']
-        missioni_categories.remove(missione_finale_cat)
-        shuffle(missioni_categories)
-        missioni_categories.append(missione_finale_cat)
-    else:
-        shuffle(missioni_categories)
+
+    shuffle(missioni_tmp)
+
     missioni_random = []
-    round_robin_cat = itertools.cycle(missioni_categories)
-    while sum(len(bucket) for bucket in missioni_cat_bucket.values()) > 0:
-        cat = next(round_robin_cat)
-        if len(missioni_cat_bucket[cat])>0:
-            chosen_mission = missioni_cat_bucket[cat].pop()
-            missioni_random.append(chosen_mission)
-            next_mission_name = chosen_mission.get('NEXT',None)
-            while next_mission_name:
-                next_mission = next(m for m in NEXT_MISSIONI if next_mission_name==m.get('NOME',None))
-                missioni_random.append(next_mission)
-                next_mission_cat = next_mission['CATEGORIA']      
-                expected_cat = next(round_robin_cat)
-                while expected_cat != next_mission_cat:
-                    expected_cat = next(round_robin_cat)
-                # assert expected_cat == next_mission_cat, \
-                #     f"Unexpected cat of NEXT mission: {expected_cat}/{next_mission_cat} (expected/found)"
-                next_mission_name = next_mission.get('NEXT',None)
-        elif missione_finale and missione_finale['CATEGORIA']==cat:
-            missioni_random.append(missione_finale)
-            missione_finale = None
+    while len(missioni_tmp) > 0:
+        chosen_mission = missioni_tmp.pop()
+        missioni_random.append(chosen_mission)
+        next_mission_name = chosen_mission.get('NEXT',None)
+        while next_mission_name:
+            next_mission = next(m for m in next_missioni if next_mission_name==m.get('NOME',None))
+            missioni_random.append(next_mission)            
+            next_mission_name = next_mission.get('NEXT',None)
     if missione_finale:
         missioni_random.append(missione_finale)
-    # debug
+
     if p.is_admin_current_hunt(): 
         from historic.bot.bot_telegram import send_message   
         random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_random,1)])
         send_message(p, "DEBUG Random missioni:\n{}".format(random_missioni_names))
+
     return missioni_random
+
+def get_missioni_routing(p, airtable_game_id, mission_tab_name):
+    
+    from historic.bot.bot_telegram import send_message, send_photo_data
+
+    MISSIONI_TABLE = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_API_KEY)
+    MISSIONI_ALL = [row['fields'] for row in MISSIONI_TABLE.get_all() if row['fields'].get('ACTIVE',False)]    
+
+    game_dm = DataMatrices(
+        dataset_name = airtable_game_id,
+        api = api_google
+    )      
+
+    route_planner = RoutePlanner(
+        dm = game_dm,
+        profile = api_google.PROFILE_FOOT_WALKING,
+        metric = hunt_params.METRIC_DURATION,
+        start_num = 1, 
+        min_dst = 60, # 2 min
+        max_dst = 600, # 10 min
+        goal_tot_dst = 3600, # 1 h
+        tot_dst_tolerance = 600, # ± 10 min
+        min_route_size = None,
+        max_route_size = None,
+        check_convexity = False,
+        overlapping_criteria = 'GRID',
+        max_overalapping = 20, # 300, # in meters/grids, None to ignore this constraint
+        stop_duration = 300, # da cambiare in 300 per 5 min
+        num_attempts = 100000, # set to None for exaustive search
+        random_seed = None, # only relevan if num_attempts is not None (non exhaustive serach)
+        exclude_neighbor_dst = 60,    
+        circular_route = True,
+        num_best = 1,
+        stop_when_num_best_reached = True,
+        num_discarded = None,
+        show_progress_bar = False
+    )
+
+    route_planner.build_routes()
+
+    best_route_idx, stop_names, info, best_route_img = route_planner.get_routes(
+        show_map=False,
+        log=False
+    )      
+
+    if best_route_idx is None:
+        send_message(p, "Problema selezione percorso")
+        return None
+
+    missioni_route = [
+        next(m for m in MISSIONI_ALL if mission_name==m.get('NOME',None))
+        for mission_name in stop_names
+    ]
+
+    if p.is_admin_current_hunt():                 
+        info_text = '\n'.join(info)
+        send_message(p, f"*DEBUG Routing missioni*:\n{info_text}", markdown=False)
+        send_photo_data(p, best_route_img)
+        selected_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_route,1)])
+        send_message(p, "DEBUG Selected missioni:\n{}".format(selected_missioni_names))
+
+    return missioni_route
+
+
 
 #################
 # RESULT GAME TABLE
@@ -216,9 +252,16 @@ def reset_game(p, hunt_name, hunt_password):
     instructions_table = Airtable(airtable_game_id, 'Instructions', api_key=settings.AIRTABLE_API_KEY)    
     survey_table = Airtable(airtable_game_id, 'Survey', api_key=settings.AIRTABLE_API_KEY)        
     p.current_hunt = hunt_password         
-    initial_cat = hunt_settings.get('INITIAL_CAT', None)    
-    mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni'
-    missioni = get_random_missioni(p, airtable_game_id, mission_tab_name, initial_cat)
+    # TODO: improve multilingual implementation
+    mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni' 
+    if hunt_settings.get('MISSIONS_SELECTION', None) == 'ROUTING':
+        missioni = get_missioni_routing(p, airtable_game_id, mission_tab_name)
+        if missioni is None:
+            # problema selezione percorso
+            return False
+    else:
+        # RANDOM - default
+        missioni = get_all_missioni_random(p, airtable_game_id, mission_tab_name)        
     instructions_steps = airtable_utils.get_rows(
         instructions_table, view='Grid view',
         filter=lambda r: not r.get('Skip',False), 
@@ -252,6 +295,7 @@ def reset_game(p, hunt_name, hunt_password):
     tvar['PENALTIES'] = 0    
     tvar['PENALTY TIME'] = 0 # seconds
     tvar['FINISHED'] = False # seconds
+    return True
 
 def user_in_game(p):
     return p.current_hunt is not None

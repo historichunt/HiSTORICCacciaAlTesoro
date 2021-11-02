@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.random import RandomState
 import matplotlib.pyplot as plt
 from geopy import distance
 from math import pi, atan2
@@ -139,7 +140,7 @@ def plot_route_points(route_points, grid_counter=None, markersize=15, annotate_n
 
 
 def plot_route_graph(points, route_points, path_points, unique_segments, segments_counts,
-    colors, xlim, ylim, grid_counter=None, print_dots=False, print_path_numbers=False):
+    grid_counter=None, print_dots=False, print_path_numbers=False):
     """[summary]
 
     Args:
@@ -154,9 +155,15 @@ def plot_route_graph(points, route_points, path_points, unique_segments, segment
         print_dots (bool): 
         print_path_numbers (bool): 
     """
+    num_points = len(points)
     route_size = len(route_points)
-
     x, y = points[:,0], points[:,1]
+
+    rs = RandomState(123)
+    colors = rs.rand(num_points)   
+    xlim = [np.min(x)-0.001, np.max(x)+0.001]
+    ylim = [np.min(y)-0.001, np.max(y)+0.001]
+
     selected_x, selected_y = route_points[:,0], route_points[:,1]
 
     _, ax = plt.subplots()    

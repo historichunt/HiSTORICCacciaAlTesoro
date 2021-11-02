@@ -72,7 +72,9 @@ def get_routes(api, profile, plot_dm_stats=False):
         num_discarded = None
     )
 
-    route_planner.get_routes_and_plots(
+    route_planner.build_routes()
+
+    route_planner.get_routes(
         show_map=True,
         log=True
     )      
