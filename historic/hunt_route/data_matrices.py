@@ -10,6 +10,9 @@ from historic.hunt_route import api_google
 from historic.hunt_route.mgrs_utils import get_grid_id_set_from_route
 from historic.hunt_route import hunt_params
 from historic.hunt_route import plot_utils
+from historic.config.params import ROOT_DIR
+
+ROUTING_DIR = os.path.join(ROOT_DIR, 'routing_data')
 
 @dataclass
 class DataMatrices:  
@@ -28,7 +31,7 @@ class DataMatrices:
         self.api = api
         self.__check_params()        
         self.modified = False
-        self.json_file = os.path.join('data', f'{self.dataset_name}_DM_{self.api.API_NAME}.json') 
+        self.json_file = os.path.join(ROUTING_DIR, f'{self.dataset_name}_DM_{self.api.API_NAME}.json') 
         if points_name_coordinate is None:
             assert os.path.exists(self.json_file), \
                 f'File {self.json_file} does not exist, so you should pass points_name_coordinate in args'
