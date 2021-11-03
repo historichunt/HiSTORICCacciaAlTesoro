@@ -8,6 +8,14 @@ from historic.hunt_route import locations_utils
 from historic.hunt_route.render_map import render_map
 from collections import Counter
 
+METRIC_DISTANCE = 'distance'
+METRIC_DURATION = 'duration'
+
+METRICS = [
+    METRIC_DISTANCE,
+    METRIC_DURATION
+]
+
 @dataclass
 class RoutePlanner:    
     """This is the class responsible for the route planning
@@ -15,7 +23,7 @@ class RoutePlanner:
     Attributes:
         dm (DataMatrices): object with data
         profile (str): one of api.PROFILES ('walking', 'cycling') / differs for ORS/GOOGLE 
-        metric (str): one of hunt_params.METRICS ('duration', 'distance')
+        metric (str): one of routing.METRICS ('duration', 'distance')
         start_num (int): start point number (1-based index in list of points)        
         max_attempts (int): max number of attempts (upper bound on the number of correct routes being returned)        
         min_dst (int): min distance (or duration) between consecutive points in the route
@@ -428,8 +436,13 @@ class RoutePlanner:
                 ]
             )
             info.append(f'route names stop:\n{route_names_stop}')
-        info.append(f'route points: {route_points_num}')
+        # info.append(f'route points: {route_points_num}')
+        if self.metric == METRIC_DURATION:
+            # show distances in minutes (instead of seconds)
+            dist = [d/60 for d in dist]
+            tot_dst /= 60
+            error /= 60
         info.append(f'legs duration: {["{:.1f}".format(d) for d in dist]}')
         info.append(f'total duration: {"{:.1f}".format(tot_dst)}')
-        info.append(f'(duration error): {"{:.1f}".format(error)}')
+        info.append(f'duration error: {"{:.1f}".format(error)}')
         return info

@@ -4,7 +4,7 @@ from random import shuffle, choice
 from historic.config import params, settings
 from historic.bot import utility, airtable_utils
 import historic.bot.date_time_util as dtu
-from historic.hunt_route import api_google, hunt_params
+from historic.hunt_route import api_google, routing
 from historic.hunt_route.data_matrices import DataMatrices
 from historic.hunt_route.routing import RoutePlanner
 
@@ -144,7 +144,7 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
     route_planner = RoutePlanner(
         dm = game_dm,
         profile = api_google.PROFILE_FOOT_WALKING,
-        metric = hunt_params.METRIC_DURATION,
+        metric = routing.METRIC_DURATION,
         start_num = 1, 
         min_dst = 60, # 2 min
         max_dst = 600, # 10 min
@@ -186,8 +186,8 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
         info_text = '\n'.join(info)
         send_message(p, f"*DEBUG Routing missioni*:\n{info_text}", markdown=False)
         send_photo_data(p, best_route_img)
-        selected_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_route,1)])
-        send_message(p, "DEBUG Selected missioni:\n{}".format(selected_missioni_names))
+        # selected_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_route,1)])
+        # send_message(p, "DEBUG Selected missioni:\n{}".format(selected_missioni_names))
 
     return missioni_route
 

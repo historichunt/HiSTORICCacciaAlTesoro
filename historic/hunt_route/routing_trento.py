@@ -6,7 +6,7 @@ from historic.hunt_route import api_ors
 from historic.hunt_route import api_google
 from historic.hunt_route.render_map import render_map_with_coordinates
 from historic.hunt_route.routing import RoutePlanner
-from historic.hunt_route import hunt_params
+from historic.hunt_route import routing
 from historic.config.settings import ENV_VARS
 
 def read_data_from_spreadsheet(max_points=None):
@@ -43,7 +43,7 @@ def get_trento_dm(api):
 def get_routes(api, profile, plot_dm_stats=False):
     
     trento_dm = get_trento_dm(api)
-    metric = hunt_params.METRIC_DURATION
+    metric = routing.METRIC_DURATION
 
     if plot_dm_stats:
         trento_dm.plot(profile, metric)

@@ -8,7 +8,7 @@ from numpy.random import RandomState
 from historic.hunt_route import api_ors
 from historic.hunt_route import api_google
 from historic.hunt_route.mgrs_utils import get_grid_id_set_from_route
-from historic.hunt_route import hunt_params
+from historic.hunt_route import routing
 from historic.hunt_route import plot_utils
 from historic.config.params import ROOT_DIR
 
@@ -85,7 +85,7 @@ class DataMatrices:
         self.dst_matrices = {
             profile: {
                 metric: {}
-                for metric in hunt_params.METRICS
+                for metric in routing.METRICS
             }
             for profile in self.api.PROFILES                        
         }
@@ -98,8 +98,8 @@ class DataMatrices:
                 coordinates_lat_long = np.flip(self.coordinates, axis=1).tolist()
                 distances_matrix, durations_matrix = \
                     api_google.get_distance_matrix(coordinates_lat_long, profile)
-            self.dst_matrices[profile][hunt_params.METRIC_DURATION] = durations_matrix
-            self.dst_matrices[profile][hunt_params.METRIC_DISTANCE] = distances_matrix
+            self.dst_matrices[profile][routing.METRIC_DURATION] = durations_matrix
+            self.dst_matrices[profile][routing.METRIC_DISTANCE] = distances_matrix
             
         self.modified = True
 

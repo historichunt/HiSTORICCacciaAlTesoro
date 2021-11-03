@@ -162,9 +162,9 @@ def state_ACCESS_HUNT_VIA_GPS(p, message_obj=None, **kwargs):
             kb.append(
                 [p.ui().BUTTON_BACK]
             )
-            send_message(p, "Seleziona una caccia aperta", kb)
+            send_message(p, "Seleziona una caccia aperta", kb) # TODO: fix in UI
         else:
-            send_message(p, "Nessuna caccia aperta nelle vicinanze")
+            send_message(p, "Nessuna caccia aperta nelle vicinanze")  # TODO: fix in UI
             send_typing_action(p, 1)
             redirect_to_state(p, state_START_HUNT)
 
