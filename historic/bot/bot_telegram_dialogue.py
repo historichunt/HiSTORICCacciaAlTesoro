@@ -357,19 +357,17 @@ def state_START_HUNT(p, message_obj=None, **kwargs):
                     p.set_language('IT')
                     repeat_state(p)
                 elif text_input == p.ui().BUTTON_ENGLISH:
-                    p.set_language('EN')                
+                    p.set_language('EN')
                     repeat_state(p)      
-            else:
-                hunt_password = text_input.lower()
-                access_hunt_via_password(p, hunt_password, send_msg_if_wrong_pw=True)
+            # else:
+            #     hunt_password = text_input.lower()
+            #     access_hunt_via_password(p, hunt_password, send_msg_if_wrong_pw=True)
         elif location:            
             lat_lon = (location['latitude'], location['longitude'])
             p.set_tmp_variable('INITIAL_GPS_POSITION', lat_lon)            
             redirect_to_state(p, state_ACCESS_HUNT_VIA_GPS)
         else:
-            send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT, kb)
-            send_typing_action(p, 1)
-            repeat_state(p)
+            send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
             
 
 # ================================
