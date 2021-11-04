@@ -206,6 +206,11 @@ class DataMatrices:
             bar.close()            
             self.modified = True
 
+    def get_coordinate_index(self, lat, lon):        
+        target = [lon, lat]
+        assert target in self.data['coordinates']
+        return self.data['coordinates'].index(target)
+
     def get_direction_path_coordinates(self, c1, c2, profile):
         i = self.coordinates.index(c1)
         j = self.coordinates.index(c2)

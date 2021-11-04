@@ -95,7 +95,8 @@ MSG_FINAL_RESET_ON,,"📜 Pubblicheremo i risultati sulla nostra [pagina Faceboo
 
 🏆 If you are among the winners, you will be contacted by email to receive the award!"
 MSG_GO,,🏃‍♂️🏃‍♀️ Si parte!,🏃‍♂️🏃‍♀️ Let's go!,🏃‍♂️🏃‍♀️ Let's go!
-MSG_GO_TO_PLACE,,📍 Recatevi nel seguente luogo e quando siete arrivati mandatemi la vostra posizione!,📍 Go to the following place and when you are there send me your position!,📍 Go to the following place and when you are there send me your position!
+MSG_GO_TO_PLACE,,📍 Recatevi nel seguente luogo e quando siete arrivati mandatemi la vostra posizione.,📍 Go to the following place and when you are there send me your position!,📍 Go to the following place and when you are there send me your position!
+MSG_GO_TO_START_LOCATION,,"📍 Per iniziare la caccia, recatevi nel seguente luogo. Quando siete arrivati mandatemi la vostra posizione!","📍 To start the hunt, go to the following place and when you are there send me your position!","📍 To start the hunt, go to the following place and when you are there send me your position!"
 MSG_GPS_OK,,"👏 Bravi, siete arrivati!","👏 Great, you have arrived!","👏 Great, you have arrived!"
 MSG_GROUP_NAME,,🏷️ Come prima cosa scegliete un *nome per la vostra squadra*.,"🏷️ First, you need to choose a  *name of your team*.","🏷️ First, you need to choose a  *name of your team*."
 MSG_GROUP_NAME_INVALID,,"❌ Il nome che avete inserito deve contenere *solo lettere o spazi*.
@@ -175,7 +176,7 @@ MSG_SELFIE_MISSIONE_WRONG,,"🤔 Mi dispiace, il selfie non è stato accettato p
 📷 Try to send us a new selfie!","🤔 Unfortunately the selfie hasn't been accepted because it doesn't include the object of the riddle, or we cannot see you clearly.
 
 📷 Try to send us a new selfie!"
-MSG_START_INSTRUCTIONS,,📍Inviami la tua *posizione* per vedere se ci sono cacce attive nelle vicinanze.,📍Send me your *position* to see if there are treasure hunts nearby.,📍Send me your *position* to see if there are treasure hunts nearby.
+MSG_LIST_HUNTS_FROM_GPS,,📍Inviami la tua *posizione* per vedere se ci sono cacce attive nelle vicinanze.,📍Send me your *position* to see if there are treasure hunts nearby.,📍Send me your *position* to see if there are treasure hunts nearby.
 MSG_START_TIME,,⏱ Via al tempo!,⏱ Time is running!,⏱ Time is running!
 MSG_SUPPORT,,"💁 Se hai problemi, ci puoi contattare via email a historictrento@gmail.com oppure su Facebook a https://www.facebook.com/historictrento/","💁 If you have any problem, you can contact us via email at historictrento@gmail.com or on Facebook at https://www.facebook.com/historictrento/","💁 If you have any problem, you can contact us via email at historictrento@gmail.com or on Facebook at https://www.facebook.com/historictrento/"
 MSG_SURVEY_INTRO,,"📋 Prima di dirvi quanto ci avete messo, vorrei farvi alcune domande...","📋 Before telling you how long it took you to complete the game, I would like to ask you few questions...","📋 Before telling you how long it took you to complete the game, I would like to ask you few questions..."

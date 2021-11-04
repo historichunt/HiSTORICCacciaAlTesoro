@@ -82,6 +82,9 @@ class Person(ndb.Model):
             result += ' @' + self.get_username(escape_markdown)
         return result
 
+    def get_location(self):
+        return self.latitude, self.longitude
+
     def get_state(self):
         return self.state
 

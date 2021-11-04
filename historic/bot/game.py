@@ -7,6 +7,7 @@ import historic.bot.date_time_util as dtu
 from historic.hunt_route import api_google, routing
 from historic.hunt_route.data_matrices import DataMatrices
 from historic.hunt_route.routing import RoutePlanner
+import numpy as np
 
 #################
 # GAMES CONFIG
@@ -91,6 +92,18 @@ def get_hunt_ui(p, airtable_game_id, multilingual):
     }
     return UI
 
+def get_closest_mission(p, airtable_game_id, mission_tab_name):    
+    MISSIONI_TABLE = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_API_KEY)
+    all_gps = np.asarray([
+        utility.get_lat_lon_from_string(row['fields']['GPS']) for row in MISSIONI_TABLE.get_all() 
+        if row['fields'].get('ACTIVE',False) and row['fields'].get('GPS',False)
+    ])
+    current_pos = np.asarray(p.get_location())
+    dist_2 = np.sum((all_gps - current_pos)**2, axis=1)
+    return all_gps[np.argmin(dist_2)].tolist()
+
+    
+
 def get_all_missioni_random(p, airtable_game_id, mission_tab_name):
     MISSIONI_TABLE = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_API_KEY)
     MISSIONI_ALL = [row['fields'] for row in MISSIONI_TABLE.get_all() if row['fields'].get('ACTIVE',False)]    
@@ -141,11 +154,14 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
         api = api_google
     )      
 
+    lat, lon = p.get_tmp_variable('HUNT_START_GPS')
+    start_num = game_dm.get_coordinate_index(lat=lat, lon=lon) + 1
+
     route_planner = RoutePlanner(
         dm = game_dm,
         profile = api_google.PROFILE_FOOT_WALKING,
         metric = routing.METRIC_DURATION,
-        start_num = 1, 
+        start_num = start_num, 
         min_dst = 60, # 2 min
         max_dst = 600, # 10 min
         goal_tot_dst = 3600, # 1 h
@@ -239,36 +255,29 @@ def save_survey_data_in_airtable(p):
 # GAME MANAGEMENT FUNCTIONS
 ################################
 
-def reset_game(p, hunt_name, hunt_password):    
+def load_game(p, hunt_password):    
     '''
     Save current game info user tmp_variable
     '''    
 
+    p.current_hunt = hunt_password         
     hunt_info = HUNTS_PW[hunt_password]
     airtable_game_id = hunt_info['Airtable_Game_ID']
     hunt_settings = get_hunt_settings(p, airtable_game_id)
     multilingual =  utility.get_str_param_boolean(hunt_settings, 'MULTILINGUAL')
     hunt_ui = get_hunt_ui(p, airtable_game_id, multilingual)
     instructions_table = Airtable(airtable_game_id, 'Instructions', api_key=settings.AIRTABLE_API_KEY)    
-    survey_table = Airtable(airtable_game_id, 'Survey', api_key=settings.AIRTABLE_API_KEY)        
-    p.current_hunt = hunt_password         
-    # TODO: improve multilingual implementation
-    mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni' 
-    if hunt_settings.get('MISSIONS_SELECTION', None) == 'ROUTING':
-        missioni = get_missioni_routing(p, airtable_game_id, mission_tab_name)
-        if missioni is None:
-            # problema selezione percorso
-            return False
-    else:
-        # RANDOM - default
-        missioni = get_all_missioni_random(p, airtable_game_id, mission_tab_name)        
+    survey_table = Airtable(airtable_game_id, 'Survey', api_key=settings.AIRTABLE_API_KEY)                
     instructions_steps = airtable_utils.get_rows(
         instructions_table, view='Grid view',
         filter=lambda r: not r.get('Skip',False), 
     )
+    # TODO: improve multilingual implementation
+    mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni' 
     survey = airtable_utils.get_rows(survey_table, view='Grid view')
-    tvar = p.tmp_variables = {}  
-    tvar['HUNT_NAME'] = hunt_name
+    tvar = p.tmp_variables = {}      
+    tvar['HUNT_NAME'] = hunt_info['Name']
+    tvar['HUNT_START_GPS'] = get_closest_mission(p, airtable_game_id, mission_tab_name)
     tvar['SETTINGS'] = hunt_settings    
     tvar['UI'] = hunt_ui    
     tvar['HUNT_INFO'] = hunt_info
@@ -280,8 +289,7 @@ def reset_game(p, hunt_name, hunt_password):
     tvar['USERNAME'] = p.get_username(escape_markdown=False)
     tvar['EMAIL'] = ''
     tvar['MISSION_TIMES'] = []
-    tvar['INSTRUCTIONS'] = {'STEPS': instructions_steps, 'COMPLETED': 0}
-    tvar['MISSIONI_INFO'] = {'TODO': missioni, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(missioni)}
+    tvar['INSTRUCTIONS'] = {'STEPS': instructions_steps, 'COMPLETED': 0}    
     tvar['SURVEY_INFO'] = {'TODO': survey, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(survey)}
     tvar['GROUP_NAME'] = ''
     tvar['GROUP_MEDIA_FILE_IDS'] = []
@@ -295,6 +303,23 @@ def reset_game(p, hunt_name, hunt_password):
     tvar['PENALTIES'] = 0    
     tvar['PENALTY TIME'] = 0 # seconds
     tvar['FINISHED'] = False # seconds
+
+def build_missions(p):
+    tvar = p.tmp_variables
+    hunt_settings = tvar['SETTINGS']
+    airtable_game_id = tvar['HUNT_INFO']['Airtable_Game_ID']
+    multilingual =  utility.get_str_param_boolean(hunt_settings, 'MULTILINGUAL')
+    # TODO: improve multilingual implementation
+    mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni' 
+    if hunt_settings.get('MISSIONS_SELECTION', None) == 'ROUTING':
+        missioni = get_missioni_routing(p, airtable_game_id, mission_tab_name)
+        if missioni is None:
+            # problema selezione percorso
+            return False
+    else:
+        # RANDOM - default
+        missioni = get_all_missioni_random(p, airtable_game_id, mission_tab_name)            
+    tvar['MISSIONI_INFO'] = {'TODO': missioni, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(missioni)}
     return True
 
 def user_in_game(p):

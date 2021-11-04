@@ -249,3 +249,6 @@ def sec_to_hms(elapsed_sec):
 
 def get_str_param_boolean(d, param):
     return d.get(param, 'False').lower() in ['true', '1', 't', 'y', 'yes']
+
+def get_lat_lon_from_string(latlong_string):
+    return [float(x) for x in latlong_string.split(',')]

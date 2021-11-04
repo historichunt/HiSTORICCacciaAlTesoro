@@ -76,7 +76,7 @@ def state_INITIAL(p, message_obj=None, **kwargs):
         if text_input:            
             if text_input in flatten(kb):
                 if text_input == p.ui().BUTTON_START_HUNT:
-                    redirect_to_state(p, state_START_HUNT)
+                    redirect_to_state(p, state_ASK_GPS_TO_LIST_HUNTS)
                 elif text_input == p.ui().BUTTON_INFO:
                     send_message(p, p.ui().MSG_HISTORIC_INFO, remove_keyboard=True)
                     send_typing_action(p, sleep_time=5)
@@ -103,28 +103,15 @@ def state_INITIAL(p, message_obj=None, **kwargs):
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
-# ================================
-# ACCESS HUNT VIA PASSWORD
-# ================================
-  
+
 def access_hunt_via_password(p, hunt_password, send_msg_if_wrong_pw):
     if hunt_password in game.HUNTS_PW:   
         if (
             game.HUNTS_PW[hunt_password].get('Active', False) 
-            or 
-            game.is_person_hunt_admin(p, hunt_password)
+            or game.is_person_hunt_admin(p, hunt_password)
         ):
-            hunt_name = game.HUNTS_PW[hunt_password]['Name']
-            success = game.reset_game(p, hunt_name, hunt_password)                    
-            if not success:
-                return True # not a pw error
-            hunt_settings = p.tmp_variables['SETTINGS']
-            skip_instructions = get_str_param_boolean(hunt_settings, 'SKIP_INSTRUCTIONS')
-            if not skip_instructions:
-                redirect_to_state(p, state_INSTRUCTIONS)
-            else:
-                # start the hunt
-                redirect_to_state(p, state_MISSION_INTRO)
+            p.set_tmp_variable('HUNT_PW', hunt_password)
+            redirect_to_state(p, state_ASK_GPS_TO_START_HUNT)
             return True
         else:
             if send_msg_if_wrong_pw:
@@ -138,47 +125,6 @@ def access_hunt_via_password(p, hunt_password, send_msg_if_wrong_pw):
             send_typing_action(p, 1)
             repeat_state(p)
         return False
-
-# ================================
-# ACCESS HUNT VIA GPS
-# ================================
-
-def state_ACCESS_HUNT_VIA_GPS(p, message_obj=None, **kwargs):    
-    give_instruction = message_obj is None
-    if give_instruction:                
-        lat_lon = p.get_tmp_variable('INITIAL_GPS_POSITION')
-        open_hunts = [
-            hunt for hunt in game.HUNTS_NAME.values()
-            if 'GPS' in hunt and 
-            geo_utils.distance_km(
-                [float(x) for x in hunt['GPS'].split(',')], 
-                lat_lon
-            ) <= params.MAX_DISTANCE_KM_HUNT_GPS
-        ]
-        if len(open_hunts) > 0:
-            kb = [
-                [hunt['Name']] for hunt in open_hunts           
-            ]     
-            kb.append(
-                [p.ui().BUTTON_BACK]
-            )
-            send_message(p, "Seleziona una caccia aperta", kb) # TODO: fix in UI
-        else:
-            send_message(p, "Nessuna caccia aperta nelle vicinanze")  # TODO: fix in UI
-            send_typing_action(p, 1)
-            redirect_to_state(p, state_START_HUNT)
-
-    else:
-        text_input = message_obj.text
-        kb = p.get_keyboard()
-        if text_input in flatten(kb):
-            if text_input == p.ui().BUTTON_BACK:
-                redirect_to_state(p, state_START_HUNT)
-            else:
-                hunt_password = game.HUNTS_NAME[text_input]['Password']
-                access_hunt_via_password(p, hunt_password, send_msg_if_wrong_pw=True)
-        else:
-            send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
 # ================================
 # Admin State
@@ -331,20 +277,21 @@ def state_TERMINATE_HUNT_CONFIRM(p, message_obj=None, **kwargs):
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)    
 
+
 # ================================
-# Start Hunt
+# ASK_GPS_TO_LIST_HUNTS (accessed via pw)
 # ================================
 
-def state_START_HUNT(p, message_obj=None, **kwargs):    
+def state_ASK_GPS_TO_START_HUNT(p, message_obj=None, **kwargs):    
     give_instruction = message_obj is None
+
     if give_instruction:                
-        switch_language_button = p.ui().BUTTON_ENGLISH if p.language=='IT' else p.ui().BUTTON_ITALIAN
         kb = [
             [bot_ui.BUTTON_LOCATION(p.language)],            
-            [switch_language_button],
             [p.ui().BUTTON_BACK],            
-        ]     
-        send_message(p, p.ui().MSG_START_INSTRUCTIONS, kb)
+        ] 
+        msg = '📍 Inviami la tua posizione per impostare il punto di partenza della caccia' # TODO: fix ui
+        send_message(p, msg, kb)
     else:
         text_input = message_obj.text
         location = message_obj.location        
@@ -353,22 +300,93 @@ def state_START_HUNT(p, message_obj=None, **kwargs):
             if text_input in flatten(kb):
                 if text_input == p.ui().BUTTON_BACK:
                     restart(p)
-                elif text_input == p.ui().BUTTON_ITALIAN:
-                    p.set_language('IT')
-                    repeat_state(p)
-                elif text_input == p.ui().BUTTON_ENGLISH:
-                    p.set_language('EN')
-                    repeat_state(p)      
-            # else:
-            #     hunt_password = text_input.lower()
-            #     access_hunt_via_password(p, hunt_password, send_msg_if_wrong_pw=True)
+            else:
+                send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
         elif location:            
-            lat_lon = (location['latitude'], location['longitude'])
-            p.set_tmp_variable('INITIAL_GPS_POSITION', lat_lon)            
-            redirect_to_state(p, state_ACCESS_HUNT_VIA_GPS)
+            p.set_location(location['latitude'], location['longitude'])
+            hunt_password = p.get_tmp_variable('HUNT_PW')
+            start_hunt(p, hunt_password)
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
-            
+
+# ================================
+# ASK_GPS_TO_LIST_HUNTS
+# ================================
+
+def state_ASK_GPS_TO_LIST_HUNTS(p, message_obj=None, **kwargs):    
+    give_instruction = message_obj is None
+    if give_instruction:                
+        kb = [
+            [bot_ui.BUTTON_LOCATION(p.language)],            
+            [p.ui().BUTTON_BACK],            
+        ] 
+        send_message(p, p.ui().MSG_LIST_HUNTS_FROM_GPS, kb)
+    else:
+        text_input = message_obj.text
+        location = message_obj.location        
+        kb = p.get_keyboard()
+        if text_input:            
+            if text_input in flatten(kb):
+                if text_input == p.ui().BUTTON_BACK:
+                    restart(p)
+            else:
+                send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
+        elif location:            
+            p.set_location(location['latitude'], location['longitude'], put=True)
+            redirect_to_state(p, state_SHOW_AVAILABLE_HUNTS_NEARBY)
+        else:
+            send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
+
+# ================================
+# SHOW_AVAILABLE_HUNTS_NEARBY
+# ================================
+
+def state_SHOW_AVAILABLE_HUNTS_NEARBY(p, message_obj=None, **kwargs):    
+    give_instruction = message_obj is None
+    if give_instruction:                
+        lat_lon = p.get_location()
+        open_hunts = [
+            hunt for hunt in game.HUNTS_NAME.values()
+            if 'GPS' in hunt and 
+            geo_utils.distance_km(
+                utility.get_lat_lon_from_string(hunt['GPS']), 
+                lat_lon
+            ) <= params.MAX_DISTANCE_KM_HUNT_GPS
+        ]
+        if len(open_hunts) > 0:
+            kb = [
+                [hunt['Name']] for hunt in open_hunts           
+            ]     
+            kb.append(
+                [p.ui().BUTTON_BACK]
+            )
+            send_message(p, "Seleziona una caccia aperta", kb) # TODO: fix in UI
+        else:
+            send_message(p, "Nessuna caccia aperta nelle vicinanze")  # TODO: fix in UI
+            send_typing_action(p, 1)
+            redirect_to_state(p, state_ASK_GPS_TO_LIST_HUNTS)
+
+    else:
+        text_input = message_obj.text
+        kb = p.get_keyboard()
+        if text_input in flatten(kb):
+            if text_input == p.ui().BUTTON_BACK:
+                redirect_to_state(p, state_ASK_GPS_TO_LIST_HUNTS)
+            else:
+                hunt_password = game.HUNTS_NAME[text_input]['Password']
+                start_hunt(p, hunt_password)
+        else:
+            send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)
+
+def start_hunt(p, hunt_password):
+    game.load_game(p, hunt_password)                    
+    hunt_settings = p.tmp_variables['SETTINGS']
+    skip_instructions = get_str_param_boolean(hunt_settings, 'SKIP_INSTRUCTIONS')
+    if not skip_instructions:
+        redirect_to_state(p, state_INSTRUCTIONS)
+    else:
+        # start the hunt
+        redirect_to_state(p, state_GO_TO_START)
 
 # ================================
 # Intro - Instructions
@@ -383,7 +401,7 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
     steps = instructions['STEPS']
     if len(steps) == completed:
         # start the hunt
-        redirect_to_state(p, state_MISSION_INTRO)
+        redirect_to_state(p, state_GO_TO_START)
         return
     current_step = steps[completed]
     input_type = current_step.get('Input_Type','')
@@ -495,7 +513,50 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                     send_message(p, p.ui().MSG_WRONG_INPUT_SEND_VIDEO)
 
 # ================================
-# MISSION INSTRUCTIONS
+# GO TO START
+# ================================
+
+def state_GO_TO_START(p, message_obj=None, **kwargs):        
+    give_instruction = message_obj is None
+    goal_position = p.get_tmp_variable('HUNT_START_GPS')
+    if give_instruction:  
+        current_position = p.get_location()
+        distance = geo_utils.distance_meters(goal_position, current_position)
+        GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
+        if distance <= GPS_TOLERANCE_METERS:            
+            send_message(p, 'Calcolo percorso...')  # TODO: fix ui
+            game.build_missions(p)
+            redirect_to_state(p, state_MISSION_INTRO)
+        else:
+            msg = p.ui().MSG_GO_TO_START_LOCATION
+            kb = [[bot_ui.BUTTON_LOCATION(p.language)]]
+            send_message(p, msg, kb)
+            send_location(p, goal_position[0], goal_position[1])
+    else:
+        location = message_obj.location
+        if location:          
+            lat, lon = location['latitude'], location['longitude']
+            p.set_location(location['latitude'], location['longitude'])
+            given_position = [lat, lon]
+            distance = geo_utils.distance_meters(goal_position, given_position)
+            GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
+            if distance <= GPS_TOLERANCE_METERS:
+                send_message(p, p.ui().MSG_GPS_OK, remove_keyboard=True)
+                send_typing_action(p, sleep_time=1)
+                send_message(p, 'Calcolo percorso...') # TODO: fix ui
+                game.build_missions(p)
+                redirect_to_state(p, state_MISSION_INTRO)
+            else:
+                msg = p.ui().MSG_TOO_FAR.format(distance)
+                send_message(p, msg)
+                send_typing_action(p, sleep_time=1)
+                repeat_state(p)
+        else:
+            send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
+
+
+# ================================
+# MISSION INTRO
 # ================================
 
 def state_MISSION_INTRO(p, message_obj=None, **kwargs):        
@@ -544,16 +605,21 @@ def state_GPS(p, message_obj=None, **kwargs):
     if 'GPS' not in current_indovinello:
         redirect_to_state(p, state_DOMANDA)
         return
-    if give_instruction:
-        goal_position = [float(x) for x in current_indovinello['GPS'].split(',')]
-        msg = p.ui().MSG_GO_TO_PLACE
-        kb = [[bot_ui.BUTTON_LOCATION(p.language)]]
-        send_message(p, msg, kb)
-        send_location(p, goal_position[0], goal_position[1])
+    goal_position = utility.get_lat_lon_from_string(current_indovinello['GPS'])
+    if give_instruction:        
+        current_position = p.get_location()
+        distance = geo_utils.distance_meters(goal_position, current_position)
+        GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
+        if distance <= GPS_TOLERANCE_METERS:
+            redirect_to_state(p, state_DOMANDA)
+        else:
+            msg = p.ui().MSG_GO_TO_PLACE
+            kb = [[bot_ui.BUTTON_LOCATION(p.language)]]
+            send_message(p, msg, kb)
+            send_location(p, goal_position[0], goal_position[1])
     else:
         location = message_obj.location
         if location:            
-            goal_position = [float(x) for x in current_indovinello['GPS'].split(',')]
             lat, lon = location['latitude'], location['longitude']
             p.set_location(lat, lon)
             given_position = [lat, lon]
