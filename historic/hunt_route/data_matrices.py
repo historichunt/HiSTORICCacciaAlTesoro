@@ -8,7 +8,6 @@ from numpy.random import RandomState
 from historic.hunt_route import api_ors
 from historic.hunt_route import api_google
 from historic.hunt_route.mgrs_utils import get_grid_id_set_from_route
-from historic.hunt_route import routing
 from historic.hunt_route import plot_utils
 from historic.config.params import ROOT_DIR
 
@@ -82,6 +81,7 @@ class DataMatrices:
         ]
 
     def __build_dst_matrices(self):
+        from historic.hunt_route import routing
         self.dst_matrices = {
             profile: {
                 metric: {}

@@ -1,7 +1,6 @@
 import os
 from re import A
 import pandas as pd
-from historic.hunt_route.data_matrices import DataMatrices
 from historic.hunt_route import api_ors
 from historic.hunt_route import api_google
 from historic.hunt_route.render_map import render_map_with_coordinates
@@ -27,6 +26,7 @@ def read_data_from_spreadsheet(max_points=None):
     return name_coordinates
 
 def build_trento_dm(api, max_points=None):    
+    from historic.hunt_route.data_matrices import DataMatrices
     coordinates = read_data_from_spreadsheet(max_points)
     return DataMatrices(
         dataset_name = 'Trento',
@@ -35,6 +35,7 @@ def build_trento_dm(api, max_points=None):
     )        
 
 def get_trento_dm(api):
+    from historic.hunt_route.data_matrices import DataMatrices
     return DataMatrices(
         dataset_name = 'Trento',
         api = api
@@ -42,19 +43,28 @@ def get_trento_dm(api):
 
 def get_routes(api, profile, plot_dm_stats=False):
     
-    trento_dm = get_trento_dm(api)
+    from historic.hunt_route.data_matrices import DataMatrices
+    
+    trento_dm = DataMatrices(
+        dataset_name = 'apph7gGu4AAOgcbdA',
+        api = api
+    )  
+
     metric = routing.METRIC_DURATION
 
     if plot_dm_stats:
         trento_dm.plot(profile, metric)
 
+    start_lat, start_lon = 46.067307, 11.139093
+    start_num = trento_dm.get_coordinate_index(lat=start_lat, lon=start_lon) + 1
+
     route_planner = RoutePlanner(
         dm = trento_dm,
         profile = profile,
         metric = metric,
-        start_num = 1, # fontana netturno
-        min_dst = 60, # 2 min
-        max_dst = 600, # 10 min
+        start_num = start_num, 
+        min_dst = 60, # 1 min
+        max_dst = 1200, # 20 min
         goal_tot_dst = 3600, # 1 h
         tot_dst_tolerance = 600, # ± 10 min
         min_route_size = None,
@@ -63,13 +73,14 @@ def get_routes(api, profile, plot_dm_stats=False):
         overlapping_criteria = 'GRID',
         max_overalapping = 20, # 300, # in meters/grids, None to ignore this constraint
         stop_duration = 300, # da cambiare in 300 per 5 min
-        num_attempts = 1000, # set to None for exaustive search
+        num_attempts = 100000, # set to None for exaustive search
         random_seed = None, # only relevan if num_attempts is not None (non exhaustive serach)
         exclude_neighbor_dst = 60,    
-        circular_route = True,
+        circular_route = False,
         num_best = 1,
         stop_when_num_best_reached = True,
-        num_discarded = None
+        num_discarded = 1,
+        show_progress_bar = True
     )
 
     route_planner.build_routes()
@@ -94,9 +105,9 @@ if __name__ == "__main__":
     # dm = get_trento_dm(api=api_google)
     # dm = get_trento_dm(api=api_ors)
 
-    get_routes(api=api_ors, profile = api_ors.PROFILE_FOOT_WALKING)
+    # get_routes(api=api_ors, profile = api_ors.PROFILE_FOOT_WALKING)
     # get_routes(api=api_ors, profile = api_ors.PROFILE_CYCLING_REGULAR)
-    # get_routes(api=api_google, profile = api_google.PROFILE_FOOT_WALKING)
+    get_routes(api=api_google, profile = api_google.PROFILE_FOOT_WALKING)
     # get_routes(api=api_google, profile = api_google.PROFILE_CYCLING_REGULAR)
     
     

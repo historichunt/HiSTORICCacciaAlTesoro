@@ -45,7 +45,7 @@ class RoutePlanner:
         circular_route (bool): ensure the route to be circular (going back to first point)
         num_best (int): num of best solutions to keep (defaults to None for all)
         stop_when_num_best_reached (bool): stop when the given number of solutions is reached (not optimized)
-        num_discarded (int): num of discarded solutions ot keep (for debugging purpose)
+        num_discarded (int): num of discarded solutions to keep (for debugging purpose)
     """
 
     dm: DataMatrices
@@ -224,9 +224,6 @@ class RoutePlanner:
     def get_pair_dst(self, idx_a, idx_b, add_stop_duration):
     
         pair_dst = self.dst_matrix[idx_a][idx_b]
-
-        if add_stop_duration:
-            pair_dst += self.stop_duration
         
         if pair_dst < self.min_dst:
             # pairwise distance too small
@@ -235,6 +232,9 @@ class RoutePlanner:
         if pair_dst > self.max_dst:
             # pairwise distance too big
             return None  
+
+        if add_stop_duration:
+            pair_dst += self.stop_duration
 
         return pair_dst          
 

@@ -517,6 +517,14 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
 # ================================
 
 def state_GO_TO_START(p, message_obj=None, **kwargs):        
+
+    def next():
+        send_message(p, 'Calcolo percorso...')  # TODO: fix ui
+        success = game.build_missions(p)
+        if not success:
+            return
+        redirect_to_state(p, state_MISSION_INTRO)
+
     give_instruction = message_obj is None
     goal_position = p.get_tmp_variable('HUNT_START_GPS')
     if give_instruction:  
@@ -524,9 +532,7 @@ def state_GO_TO_START(p, message_obj=None, **kwargs):
         distance = geo_utils.distance_meters(goal_position, current_position)
         GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
         if distance <= GPS_TOLERANCE_METERS:            
-            send_message(p, 'Calcolo percorso...')  # TODO: fix ui
-            game.build_missions(p)
-            redirect_to_state(p, state_MISSION_INTRO)
+            next()
         else:
             msg = p.ui().MSG_GO_TO_START_LOCATION
             kb = [[bot_ui.BUTTON_LOCATION(p.language)]]
@@ -543,9 +549,7 @@ def state_GO_TO_START(p, message_obj=None, **kwargs):
             if distance <= GPS_TOLERANCE_METERS:
                 send_message(p, p.ui().MSG_GPS_OK, remove_keyboard=True)
                 send_typing_action(p, sleep_time=1)
-                send_message(p, 'Calcolo percorso...') # TODO: fix ui
-                game.build_missions(p)
-                redirect_to_state(p, state_MISSION_INTRO)
+                next()
             else:
                 msg = p.ui().MSG_TOO_FAR.format(distance)
                 send_message(p, msg)
