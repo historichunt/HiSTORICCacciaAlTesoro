@@ -57,6 +57,30 @@ def is_int(s):
     except ValueError:
         return False
 
+def is_float(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
+def is_int_between(s, low, high):
+    if not is_int(s):
+        return False
+    sInt = int(s)
+    if sInt>=low and sInt<=high:
+        return True
+    return False
+
+def is_float_between(s, low, high):
+    if not is_float(s):
+        return False
+    sFloat = float(s)
+    if sFloat>=low and sFloat<=high:
+        return True
+    return False
+
 def append_num_to_filename(filename):
     if '_' in filename: 
         prefix, suffix = filename.rsplit('_', 1)
@@ -86,23 +110,6 @@ def representsFloat(s):
         return True
     except ValueError:
         return False
-
-def representsIntBetween(s, low, high):
-    if not is_int(s):
-        return False
-    sInt = int(s)
-    if sInt>=low and sInt<=high:
-        return True
-    return False
-
-
-def representsFloatBetween(s, low, high):
-    if not representsFloat(s):
-        return False
-    sFloat = float(s)
-    if sFloat>=low and sFloat<=high:
-        return True
-    return False
 
 
 def numberEnumeration(list):

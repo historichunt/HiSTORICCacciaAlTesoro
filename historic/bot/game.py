@@ -144,7 +144,7 @@ def get_all_missioni_random(p, airtable_game_id, mission_tab_name):
 
 def get_missioni_routing(p, airtable_game_id, mission_tab_name):
     
-    from historic.bot.bot_telegram import send_message, send_photo_data
+    from historic.bot.bot_telegram import report_admins, send_message, send_photo_data
 
     MISSIONI_TABLE = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_API_KEY)
     MISSIONI_ALL = [row['fields'] for row in MISSIONI_TABLE.get_all() if row['fields'].get('ACTIVE',False)]    
@@ -157,14 +157,19 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
     lat, lon = p.get_tmp_variable('HUNT_START_GPS')
     start_num = game_dm.get_coordinate_index(lat=lat, lon=lon) + 1
 
+    profile = p.get_tmp_variable('ROUTE_TRANSPORT', api_google.PROFILE_FOOT_WALKING)
+    duration_min = p.get_tmp_variable('ROUTE_DURATION_MIN', 60) # 1 h default
+    circular_route = p.get_tmp_variable('ROUTE_CIRCULAR', False)
+    duration_sec = duration_min * 60
+
     route_planner = RoutePlanner(
         dm = game_dm,
-        profile = api_google.PROFILE_FOOT_WALKING,
+        profile = profile,
         metric = routing.METRIC_DURATION,
         start_num = start_num, 
         min_dst = 60, # 2 min
         max_dst = 600, # 10 min
-        goal_tot_dst = 3600, # 1 h
+        goal_tot_dst = duration_sec,
         tot_dst_tolerance = 600, # ± 10 min
         min_route_size = None,
         max_route_size = None,
@@ -175,7 +180,7 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
         num_attempts = 100000, # set to None for exaustive search
         random_seed = None, # only relevan if num_attempts is not None (non exhaustive serach)
         exclude_neighbor_dst = 60,    
-        circular_route = True,
+        circular_route = circular_route,
         num_best = 1,
         stop_when_num_best_reached = True,
         num_discarded = None,
@@ -190,7 +195,13 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
     )      
 
     if best_route_idx is None:
-        send_message(p, "Problema selezione percorso")
+        error_msg = f'⚠️ User {p.get_id()} encountered error in routing:\n'\
+                    f'dataset name = {airtable_game_id}\n'\
+                    f'start num = {start_num}\n'\
+                    f'duration sec = {duration_sec}\n'\
+                    f'profile = {profile}\n'\
+                    f'circular route = {circular_route}\n'
+        report_admins(error_msg)
         return None
 
     missioni_route = [
@@ -200,7 +211,7 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
 
     if p.is_admin_current_hunt():                 
         info_text = '\n'.join(info)
-        send_message(p, f"*DEBUG Routing missioni*:\n{info_text}", markdown=False)
+        send_message(p, f"🐛 DEBUG:\n\n{info_text}", markdown=False)
         send_photo_data(p, best_route_img)
         # selected_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_route,1)])
         # send_message(p, "DEBUG Selected missioni:\n{}".format(selected_missioni_names))

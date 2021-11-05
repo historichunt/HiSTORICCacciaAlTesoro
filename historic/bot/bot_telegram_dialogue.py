@@ -12,6 +12,7 @@ from historic.config import params
 from historic.bot.utility import flatten, get_str_param_boolean
 from historic.bot.ndb_person import Person
 from historic.bot.ndb_utils import client_context
+from historic.hunt_route import api_google
 
 # ================================
 # RESTART
@@ -404,14 +405,15 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
         redirect_to_state(p, state_GO_TO_START)
         return
     current_step = steps[completed]
-    input_type = current_step.get('Input_Type','')
+    input_type = current_step.get('Input_Type',[])
     if give_instruction:                
         msg = current_step.get('Text','')
         media = current_step.get('Media', '')
-        if input_type.startswith('BUTTON_'):
-            kb = [[p.ui().BUTTON_UNDERSTOOD]] \
-                if input_type == 'BUTTON_UNDERSTOOD' \
-                else [[p.ui().BUTTON_START_GAME]]             
+        if input_type and input_type[0].startswith('BUTTON_'):
+            # BUTTON_UNDERSTOOD, BUTTON_START_GAME
+            # BUTTON_ROUTE_FOOT, BUTTON_ROUTE_BICYCLE
+            # BUTTON_ROUTE_CIRCULAR_YES, BUTTON_ROUTE_CIRCULAR_NO
+            kb = [[p.ui()[b] for b in input_type]]
             if media:
                 url_attachment = media[0]['url']
                 send_media_url(p, url_attachment, kb, caption=msg)
@@ -423,11 +425,12 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 send_media_url(p, url_attachment, caption=msg, remove_keyboard=True)
             else:
                 send_message(p, msg, remove_keyboard=True)        
-            if input_type == '':
+            if not input_type: # empty list
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)        
     else:
-        text_input = message_obj.text                
+        text_input = message_obj.text
+        input_type = input_type[0] # takinf first element in the list
         if input_type == 'EMAIL':
             if text_input:
                 if utility.check_email(text_input):                
@@ -460,12 +463,31 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
         elif input_type.startswith('BUTTON_'):
             # BUTTON_UNDERSTOOD, BUTTON_START_GAME
+            # BUTTON_ROUTE_FOOT, BUTTON_ROUTE_BICYCLE
+            # BUTTON_ROUTE_CIRCULAR_YES, BUTTON_ROUTE_CIRCULAR_NO
             kb = p.get_keyboard()
             if text_input in flatten(kb):
+                if text_input in [p.ui().BUTTON_ROUTE_FOOT]:
+                    p.set_tmp_variable('ROUTE_TRANSPORT', api_google.PROFILE_FOOT_WALKING, put=True)
+                elif text_input in [p.ui().BUTTON_ROUTE_BICYCLE]:
+                    p.set_tmp_variable('ROUTE_TRANSPORT', api_google.PROFILE_CYCLING_REGULAR, put=True)
+                elif text_input in [p.ui().BUTTON_ROUTE_CIRCULAR_YES]:
+                    p.set_tmp_variable('ROUTE_CIRCULAR', True, put=True)
+                elif text_input in [p.ui().BUTTON_ROUTE_CIRCULAR_NO]:
+                    p.set_tmp_variable('ROUTE_CIRCULAR', False, put=True)
+                # BUTTON_UNDERSTOOD, BUTTON_START_GAME: do nothing except for repeating state                
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:            
                 send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)                  
+        elif input_type == 'ROUTE_DURATION_MIN':
+            if utility.is_int_between(text_input, 30, 120):
+                duration_min = int(text_input)
+                p.set_tmp_variable('ROUTE_DURATION_MIN', duration_min, put=True)
+                send_typing_action(p, sleep_time=1)
+                repeat_state(p, next_step=True)
+            else:
+                send_message(p, "Input errato") #TODO: fix ui
         elif input_type == 'TEST_POSITION':
             location = message_obj.location
             if location:            
@@ -522,8 +544,11 @@ def state_GO_TO_START(p, message_obj=None, **kwargs):
         send_message(p, 'Calcolo percorso...')  # TODO: fix ui
         success = game.build_missions(p)
         if not success:
-            return
-        redirect_to_state(p, state_MISSION_INTRO)
+            send_message(p, "Problema selezione percorso") #TODO: fix ui
+            send_typing_action(p, sleep_time=1)
+            restart(p)
+        else:
+            redirect_to_state(p, state_MISSION_INTRO)
 
     give_instruction = message_obj is None
     goal_position = p.get_tmp_variable('HUNT_START_GPS')

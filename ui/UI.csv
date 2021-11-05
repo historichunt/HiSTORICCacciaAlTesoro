@@ -11,7 +11,7 @@ BUTTON_DOWNLOAD_MEDIA,,🗜️ DOWNLOAD MEDIA ZIP,🗜️ DOWNLOAD MEDIA ZIP,�
 BUTTON_DOWNLOAD_ERRORS,,✨ DOWNLOAD ERRORI,✨ DOWNLOAD ERRORS,✨ DOWNLOAD FEHLER
 BUTTON_END,,🎇 FINE,🎇 END,🎇 ENDE
 BUTTON_ENGLISH,,🇬🇧 Switch to English,🇬🇧 Switch to English,🇬🇧 Switch to English
-BUTTON_FIRST_HINT,,💡 PRIMO INDIZIO,💡 FIRST HINT,💡 ERSTE HINWEIS
+BUTTON_FIRST_HINT,,💡 PRIMO INDIZIO,💡 FIRST HINT,💡 ERSTER HINWEIS
 BUTTON_GPS,,📍 POSIZIONE,📍 LOCATION,📍 LAGE
 BUTTON_INDIETRO,,🔙 INDIETRO,🔙 BACK,🔙 ZURÜCK
 BUTTON_INFO,,ℹ INFO,ℹ INFO,ℹ INFO
@@ -22,10 +22,14 @@ BUTTON_NO,,❌ NO,❌ NO,❌ NEIN
 BUTTON_SECOND_HINT,,💡 SECONDO INDIZIO,💡 SECOND HINT,💡 ZWEITE HINWEIS
 BUTTON_SKIP_EMAIL,,⏩ SALTA,⏩ SKIP,⏩ ÜBERSPRINGEN
 BUTTON_START,,🎯 INIZIAMO!,🎯 LET'S START!,🎯 LASST UNS BEGINNEN!
-BUTTON_START_GAME,,🎯 INIZIAMO IL GIOCO!,🎯 LET'S START THE GAME!,🎯 JETZT BEGINNEN WIR DAS SPIEL!
-BUTTON_START_HUNT,,🏁 Inizia una caccia al tesoro,🏁 Start a treasure hunt,🏁 Beginn eine Schatzsuche
+BUTTON_START_GAME,,🎯 INIZIAMO IL GIOCO!,🎯 LET'S START THE GAME!,🎯 JETZT STARTEN WIR DAS SPIEL!
+BUTTON_START_HUNT,,🏁 Inizia una caccia al tesoro,🏁 Start a treasure hunt,🏁 Starte die Schatzsuche
 BUTTON_STATS,,📈 STATS,📈 STATS,📈 STATS
 BUTTON_TERMINATE,,✂️ TERMINA CACCIA,✂️ TERMINATE HUNT,✂️ ENDE DER SCHATZSUCHE
+BUTTON_ROUTE_BICYCLE,,🚲 IN BICI,🚲 BY BICYCLE,🚲 BY BICYCLE
+BUTTON_ROUTE_FOOT,,🦶 A PIEDI,🦶 ON FOOT,🦶 ON FOOT
+BUTTON_ROUTE_CIRCULAR_YES,,🔄 CIRCOLARE,🔄 CIRCULAR,🔄 CIRCULAR
+BUTTON_ROUTE_CIRCULAR_NO,,📏 LINEARE,📏 LINEAR,📏 LINEAR
 BUTTON_UNDERSTOOD,,👌 HO CAPITO,👌 UNDERSTOOD,👌 VERSTANDEN
 BUTTON_UPDATE_HUNTS_CONFIG,,💨 AGGIORNA CACCE,💨 UPDATE HUNTS,💨 UPDATE SCHATZSUCHE
 BUTTON_VERSION,,🏷️ VERSIONE,🏷️ VERSION,🏷️ AUSGABE
@@ -55,7 +59,7 @@ MSG_CONFIRM_PHOTO_INPUT,,👀 Provate a controllare la foto. Siete sicuri di vol
 MSG_CONFIRM_RECORDING_INPUT,,👂 Provate a riascoltare la registrazione. Siete sicuri di volerla inviare?,👂 Try to listen to the recording. Are you sure you want to send it to us?,👂 Hör dir die Aufnahme an. Willst du es wirchlich an uns schicken?
 MSG_CONGRATS_PRE_SURVEY,,"🎉 Bravissimi, avete concluso la caccia al tesoro! 🎊","🎉 Congratulations, you have finished the treasure hunt! 🎊","🎉 Super, ihr habt die Schatzsuche beendet! 🎊"
 MSG_EMAIL,,📧 Potete lasciarci i vostri indirizzi email (separati da spazio) per informarvi di altre iniziative simili?,📧 Can you send me your email addresses (space separated) so that we can inform you about future treasure hunts?,📧 Kannst du mir deine E-Mail-Adresse senden? So können wir dich über zukünftige Schatzsuchen informieren.
-MSG_EMAIL_WRONG,,"⛔️ Input non valido, devi inserire un indirizzo email.","⛔️ Not a valid input, you have to insert email addresses or press on ⏩ SALTA.","⛔️ Ungültige Eingabe, schreibe deine E-Mail-Adresse in das Feld oder klicke auf ⏩ WEITER."
+MSG_EMAIL_WRONG,,"⛔️ Input non valido, devi inserire un indirizzo email.","⛔️ Not a valid input, you have to insert email addresses or press on ⏩ SALTA.","⛔️ Ungültige Eingabe, schreib deine E-Mail-Adresse ins Feld oder klicke auf ⏩ WEITER."
 MSG_END,,"🏆 Bravi! Che soddisfazione!
 
 🏁 Avete completato la caccia al tesoro in *{1}*!!
@@ -66,12 +70,12 @@ MSG_END,,"🏆 Bravi! Che soddisfazione!
 🏁 You have completed the treasure hunt in *{1}*!!
 ({2} time + {0} penalty)
 
-🏁 You have completed the missions in *{3}*!! ({4} time + {0} penalty)","🏆 Alle Achtung!
+🏁 You have completed the missions in *{3}*!! ({4} time + {0} penalty)","🏆 Bravo!
 
-🏁 ihr habt in *{1}* Sekunde die Schatzsuche fertig gemacht!!
+🏁 ihr habt in *{1}* Sekunde die Schatzsuche beendet!!
 ({2} time + {0} penalty)
 
-🏁 You have completed the missions in *{3}*!! ({4} time + {0} penalty)"
+🏁 Ihr habt in *{3}* die Herausforderungen beendet!! ({4} time + {0} penalty)"
 MSG_END_NO_PENALTY,,"🏆 Bravi! Che soddisfazione!
 
 🏁 Avete completato la caccia al tesoro in *{}*!!
@@ -80,13 +84,13 @@ MSG_END_NO_PENALTY,,"🏆 Bravi! Che soddisfazione!
 
 🏁 You have completed the treasure hunt in *{}*!!
 
-🏁 You have completed the missions in *{}*!!","🏆 Congratulations!
+🏁 You have completed the missions in *{}*!!","🏆 Herzliche Glückwünsche!
 
-🏁 You have completed the treasure hunt in *{}*!!
+🏁 Ihr habt die Schatzsuche in *{}* beendet!!
 
-🏁 You have completed the missions in *{}*!!"
-MSG_EXITED_FROM_GAME,,🚪 Sei uscito/a dalla caccia al tesoro!,🚪 You have exited the treasure hunt.,🚪 You have exited the treasure hunt.
-MSG_FINAL_RESET_OFF,,🔔 Verrete avvisati quando ritornare al punto di partenza per la premiazione!,🔔 We will let you know when to go back to the starting point for the awarding!,🔔 We will let you know when to go back to the starting point for the awarding!
+🏁  Ihr habt in *{}* die Herausforderungen beendet!!"
+MSG_EXITED_FROM_GAME,,🚪 Sei uscito/a dalla caccia al tesoro!,🚪 You have exited the treasure hunt.,🚪 Ihr habt die Schatzsuche verlassen.
+MSG_FINAL_RESET_OFF,,🔔 Verrete avvisati quando ritornare al punto di partenza per la premiazione!,🔔 We will let you know when to go back to the starting point for the awarding!,"🔔 Wir geben euch Bescheid, wann ihr wieder zum Ausgangspunkt zur Erhaltung der Preise zurückkehren könnt!"
 MSG_FINAL_RESET_ON,,"📜 Pubblicheremo i risultati sulla nostra [pagina Facebook](https://www.facebook.com/historictrento).
 
 🏆","📜 We will publish the result on our [Facebook page](https://www.facebook.com/historictrento). 

@@ -10,6 +10,7 @@ class Person(ndb.Model):
     application = ndb.StringProperty() # 'telegram', 'messenger'
     username = ndb.StringProperty()
     last_mod = ndb.DateTimeProperty(auto_now=True)
+    last_state = ndb.StringProperty()
     state = ndb.StringProperty()
     enabled = ndb.BooleanProperty(default=True)
     current_hunt = ndb.StringProperty()
@@ -107,6 +108,7 @@ class Person(ndb.Model):
             self.put()
 
     def set_state(self, newstate, put=True):
+        self.last_state = self.state
         self.state = newstate
         if put:
             self.put()

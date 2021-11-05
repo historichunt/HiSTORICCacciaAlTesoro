@@ -101,7 +101,15 @@ class RoutePlanner:
             log (bool): log to std out
         """
 
-        info = []
+        info = [
+            'PARAMETERS:',
+            f'dataset name = {self.dm.dataset_name}',
+            f'start num = {self.start_num}',
+            f'duration min = {self.goal_tot_dst / 60}',
+            f'profile = {self.profile}',
+            f'circular route = {self.circular_route}',
+            ''
+        ]
 
         def print_info(s):
             info.append(s)
@@ -418,7 +426,7 @@ class RoutePlanner:
         """
         info = []
         route_size = len(route_points)
-        route_points_num = [i+1 for i in route_idx]
+        # route_points_num = [i+1 for i in route_idx]
         dist = [dst_matrix[route_idx[i],route_idx[i+1]] for i in range(route_size-1)]
         stop_duration_factor = route_size
         if self.circular_route:
@@ -426,8 +434,8 @@ class RoutePlanner:
         tot_dst = np.sum(dist) + stop_duration_factor * self.stop_duration
         check_error = np.abs(tot_dst-self.goal_tot_dst)
         assert np.abs(check_error - error) < 1E-5
-        route_num = [i+1 for i in route_idx]
-        info.append(f'route_num: {route_num}')        
+        # route_num = [i+1 for i in route_idx]
+        # info.append(f'route_num: {route_num}')        
         if point_names is not None:
             route_names_stop = '\n'.join(
                 [
@@ -442,7 +450,8 @@ class RoutePlanner:
             dist = [d/60 for d in dist]
             tot_dst /= 60
             error /= 60
-        info.append(f'legs duration: {["{:.1f}".format(d) for d in dist]}')
+        legs_str = ', '.join(["{:.1f}".format(d) for d in dist])
+        info.append(f'legs duration: {legs_str}')
         info.append(f'total duration: {"{:.1f}".format(tot_dst)}')
         info.append(f'duration error: {"{:.1f}".format(error)}')
         return info

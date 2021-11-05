@@ -124,7 +124,7 @@ def get_photo_url_from_telegram(file_id):
     return url
 
 def report_admins(message):
-    logging.debug('Reporting to master: {}'.format(message))
+    logging.debug('Reporting to admin: {}'.format(message))
     max_length = 2000
     if len(message)>max_length:
         chunks = (message[0+i:max_length+i] for i in range(0, len(message), max_length))
