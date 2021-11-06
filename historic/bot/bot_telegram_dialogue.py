@@ -434,11 +434,25 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
         if input_type == 'EMAIL':
             if text_input:
                 if utility.check_email(text_input):                
-                    game.set_email(p, text_input)
+                    p.set_tmp_variable('EMAIL', text_input, put=True)
                     send_typing_action(p, sleep_time=1)
                     repeat_state(p, next_step=True)
                 else:
                     send_message(p, p.ui().MSG_EMAIL_WRONG)
+            else:
+                send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
+        elif input_type == 'CONTACT_PERSON_NAME':
+            if text_input:
+                p.set_tmp_variable('CONTACT_PERSON_NAME', text_input, put=True)
+                send_typing_action(p, sleep_time=1)
+                repeat_state(p, next_step=True)                    
+            else:
+                send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
+        elif input_type == 'CONTACT_PERSON_PHONE':
+            if text_input:
+                p.set_tmp_variable('CONTACT_PERSON_PHONE', text_input, put=True)
+                send_typing_action(p, sleep_time=1)
+                repeat_state(p, next_step=True)
             else:
                 send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
         elif input_type == 'TEAM_NAME':
@@ -484,6 +498,14 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
             if utility.is_int_between(text_input, 30, 120):
                 duration_min = int(text_input)
                 p.set_tmp_variable('ROUTE_DURATION_MIN', duration_min, put=True)
+                send_typing_action(p, sleep_time=1)
+                repeat_state(p, next_step=True)
+            else:
+                send_message(p, "Input errato") #TODO: fix ui
+        elif input_type == 'GROUP_SIZE':
+            if utility.is_int(text_input):
+                group_size = int(text_input)
+                p.set_tmp_variable('GROUP_SIZE', group_size, put=True)
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:
@@ -541,13 +563,14 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
 def state_GO_TO_START(p, message_obj=None, **kwargs):        
 
     def next():
-        send_message(p, 'Calcolo percorso...')  # TODO: fix ui
+        send_message(p, 'Calcolo percorso...')  # TODO: fix ui        
         success = game.build_missions(p)
         if not success:
             send_message(p, "Problema selezione percorso") #TODO: fix ui
             send_typing_action(p, sleep_time=1)
             restart(p)
         else:
+            send_message(p, p.ui().MSG_GO)
             redirect_to_state(p, state_MISSION_INTRO)
 
     give_instruction = message_obj is None

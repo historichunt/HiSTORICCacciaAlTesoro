@@ -177,7 +177,7 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
         overlapping_criteria = 'GRID',
         max_overalapping = 20, # 300, # in meters/grids, None to ignore this constraint
         stop_duration = 300, # da cambiare in 300 per 5 min
-        num_attempts = 100000, # set to None for exaustive search
+        num_attempts = 1000000, # set to None for exaustive search
         random_seed = None, # only relevan if num_attempts is not None (non exhaustive serach)
         exclude_neighbor_dst = 60,    
         circular_route = circular_route,
@@ -551,9 +551,6 @@ def set_current_survey_question_as_completed(p, answer):
 def get_remaing_survey_questions_number(p):
     survey_info = p.tmp_variables['SURVEY_INFO']
     return len(survey_info['TODO'])
-
-def set_email(p, email):
-    p.tmp_variables['EMAIL'] = email
 
 def debug_tmp_vars(p):
     import json
