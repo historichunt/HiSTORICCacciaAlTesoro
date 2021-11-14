@@ -59,7 +59,7 @@ def get_routes(api, profile, plot_dm_stats=False):
 
     start_idx = 9
 
-    duration_min = 120
+    duration_min = 60
     duration_sec = duration_min * 60
 
     route_planner = RoutePlanner(
@@ -73,12 +73,13 @@ def get_routes(api, profile, plot_dm_stats=False):
         tot_dst_tolerance = 600, # ± 10 min
         min_route_size = None,
         max_route_size = None,
+        skip_points_idx = [39],
         check_convexity = False,
         overlapping_criteria = 'GRID',
         max_overalapping = 20, # 300, # in meters/grids, None to ignore this constraint
         stop_duration = 300, # da cambiare in 300 per 5 min
         num_attempts = 1000000, # set to None for exaustive search
-        random_seed = None, # only relevan if num_attempts is not None (non exhaustive serach)
+        random_seed = 1, # only relevan if num_attempts is not None (non exhaustive serach)
         exclude_neighbor_dst = 60,    
         circular_route = False,
         num_best = 1,

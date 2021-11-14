@@ -157,6 +157,10 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
 
     lat, lon = p.get_tmp_variable('HUNT_START_GPS')
     start_idx = game_dm.get_coordinate_index(lat=lat, lon=lon)
+    skip_points_idx = [
+        game_dm.get_stop_name_index(m['NAME'])
+        for m in MISSIONI_SKIP
+    ]
 
     profile = p.get_tmp_variable('ROUTE_TRANSPORT', api_google.PROFILE_FOOT_WALKING)
     duration_min = p.get_tmp_variable('ROUTE_DURATION_MIN', 60) # 1 h default
@@ -174,6 +178,7 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
         tot_dst_tolerance = 600, # ± 10 min
         min_route_size = None,
         max_route_size = None,
+        skip_points_idx = skip_points_idx,
         check_convexity = False,
         overlapping_criteria = 'GRID',
         max_overalapping = 20, # 300, # in meters/grids, None to ignore this constraint

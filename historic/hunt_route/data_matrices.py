@@ -206,6 +206,10 @@ class DataMatrices:
             bar.close()            
             self.modified = True
 
+    def get_stop_name_index(self, point_name):
+        assert point_name in self.data['point_names']
+        return self.data['point_names'].index(point_name)
+
     def get_coordinate_index(self, lat, lon):        
         target = [lon, lat]
         assert target in self.data['coordinates']

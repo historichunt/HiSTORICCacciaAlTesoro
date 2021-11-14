@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.random import RandomState
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import List
 from tqdm import tqdm
 from historic.hunt_route.data_matrices import DataMatrices
 from historic.hunt_route.limited_size_sorted_dict import LimitedSizeSortedDict
@@ -58,7 +59,7 @@ class RoutePlanner:
     max_dst: int = float('inf')
     min_route_size: int = 1
     max_route_size: int = float('inf')
-    skip_points_idx: list = []
+    skip_points_idx: List = field(default_factory=lambda: [])
     check_convexity: bool = False
     overlapping_criteria: str = None # 'SEGMENT', 'GRID'
     max_overalapping: int = None
@@ -213,7 +214,11 @@ class RoutePlanner:
                 for p in self.all_points_idx
             }
 
-        remaining_idx = list(range(self.num_points))        
+        remaining_idx = [
+            i for i in range(self.num_points)
+            if i not in self.skip_points_idx
+        ]
+
         route_idx = [self.start_idx]
         
         if self.show_progress_bar:
