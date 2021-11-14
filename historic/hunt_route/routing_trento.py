@@ -55,13 +55,9 @@ def get_routes(api, profile, plot_dm_stats=False):
     if plot_dm_stats:
         trento_dm.plot(profile, metric)
 
-    # start_lat, start_lon = 46.067307, 11.139093
-    # start_num = trento_dm.get_coordinate_index(lat=start_lat, lon=start_lon) + 1
-
-    # profile = api_google.PROFILE_FOOT_WALKING
     profile = api_google.PROFILE_CYCLING_REGULAR
 
-    start_num = 10
+    start_idx = 9
 
     duration_min = 120
     duration_sec = duration_min * 60
@@ -70,7 +66,7 @@ def get_routes(api, profile, plot_dm_stats=False):
         dm = trento_dm,
         profile = profile,
         metric = metric,
-        start_num = start_num, 
+        start_idx = start_idx, 
         min_dst = 60, # 1 min
         max_dst = 600, # 10 min
         goal_tot_dst = duration_sec,
@@ -96,9 +92,7 @@ def get_routes(api, profile, plot_dm_stats=False):
     route_planner.get_routes(
         show_map=True,
         log=True
-    )      
-
-    trento_dm.save_data()
+    )
 
 def test_trento_map():
     import numpy as np

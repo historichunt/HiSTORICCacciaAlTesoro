@@ -148,6 +148,7 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
 
     MISSIONI_TABLE = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_API_KEY)
     MISSIONI_ALL = [row['fields'] for row in MISSIONI_TABLE.get_all() if row['fields'].get('ACTIVE',False)]    
+    MISSIONI_SKIP = [row['fields'] for row in MISSIONI_TABLE.get_all() if not row['fields'].get('ACTIVE',False)]    
 
     game_dm = DataMatrices(
         dataset_name = airtable_game_id,
@@ -155,7 +156,7 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
     )      
 
     lat, lon = p.get_tmp_variable('HUNT_START_GPS')
-    start_num = game_dm.get_coordinate_index(lat=lat, lon=lon) + 1
+    start_idx = game_dm.get_coordinate_index(lat=lat, lon=lon)
 
     profile = p.get_tmp_variable('ROUTE_TRANSPORT', api_google.PROFILE_FOOT_WALKING)
     duration_min = p.get_tmp_variable('ROUTE_DURATION_MIN', 60) # 1 h default
@@ -166,7 +167,7 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
         dm = game_dm,
         profile = profile,
         metric = routing.METRIC_DURATION,
-        start_num = start_num, 
+        start_idx = start_idx, 
         min_dst = 60, # 2 min
         max_dst = 600, # 10 min
         goal_tot_dst = duration_sec,
@@ -197,7 +198,7 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
     if best_route_idx is None:
         error_msg = f'⚠️ User {p.get_id()} encountered error in routing:\n'\
                     f'dataset name = {airtable_game_id}\n'\
-                    f'start num = {start_num}\n'\
+                    f'start num = {start_idx + 1}\n'\
                     f'duration sec = {duration_sec}\n'\
                     f'profile = {profile}\n'\
                     f'circular route = {circular_route}\n'

@@ -24,7 +24,7 @@ class RoutePlanner:
         dm (DataMatrices): object with data
         profile (str): one of api.PROFILES ('walking', 'cycling') / differs for ORS/GOOGLE 
         metric (str): one of routing.METRICS ('duration', 'distance')
-        start_num (int): start point number (1-based index in list of points)        
+        start_idx (int): start point index (0-based in list of points)        
         max_attempts (int): max number of attempts (upper bound on the number of correct routes being returned)        
         min_dst (int): min distance (or duration) between consecutive points in the route
         max_dst (int): max distance (or duration) between consecutive points in the route
@@ -51,13 +51,14 @@ class RoutePlanner:
     dm: DataMatrices
     profile: str
     metric: str
-    start_num:int     
+    start_idx: int     
     goal_tot_dst: int
     tot_dst_tolerance: int
     min_dst: int = 0
     max_dst: int = float('inf')
     min_route_size: int = 1
     max_route_size: int = float('inf')
+    skip_points_idx: list = []
     check_convexity: bool = False
     overlapping_criteria: str = None # 'SEGMENT', 'GRID'
     max_overalapping: int = None
@@ -104,7 +105,7 @@ class RoutePlanner:
         info = [
             'PARAMETERS:',
             f'dataset name = {self.dm.dataset_name}',
-            f'start num = {self.start_num}',
+            f'start num = {self.start_idx} + 1',
             f'duration min = {self.goal_tot_dst / 60}',
             f'profile = {self.profile}',
             f'circular route = {self.circular_route}',
@@ -201,7 +202,6 @@ class RoutePlanner:
         self.total_solutions = 0
         self.total_discarded_solutions = 0
 
-        start_idx = self.start_num - 1
         self.goal_tot_dst_min = self.goal_tot_dst - self.tot_dst_tolerance
         self.goal_tot_dst_max = self.goal_tot_dst + self.tot_dst_tolerance        
         self.all_points_idx = list(range(self.num_points))
@@ -214,7 +214,7 @@ class RoutePlanner:
             }
 
         remaining_idx = list(range(self.num_points))        
-        route_idx = [start_idx]
+        route_idx = [self.start_idx]
         
         if self.show_progress_bar:
             self.pbar = tqdm(total=self.num_attempts)
@@ -222,7 +222,7 @@ class RoutePlanner:
         grid_counter = Counter() if self.overlapping_criteria == 'GRID' else None
         
         self.__search_route_recursive(
-            route_idx, route_size=1, prev_idx=start_idx,
+            route_idx, route_size=1, prev_idx=self.start_idx,
             tot_dst=self.stop_duration, remaining_idx=remaining_idx,
             grid_counter=grid_counter)
         
