@@ -40,9 +40,10 @@ class DataMatrices:
             self.dst_matrices = self.data['dst_matrices'] # profile -> metric -> dst_matrix
             self.poly_matrices = self.data['poly_matrices']   # profile -> poly_matrix
             self.grid_matrices = self.data.get('grid_matrices', None) # profile -> grid_matrix
-
+            self.num_points = len(self.point_names)
         else:
             self.point_names = list(points_name_coordinate.keys())
+            self.num_points = len(self.point_names)
             self.coordinates = list(points_name_coordinate.values())
             self.__build_dst_matrices() # setting modified to true
             self.poly_matrices = {
@@ -66,8 +67,7 @@ class DataMatrices:
                 'grid_matrices': self.grid_matrices_list
             }
             self.save_data()
-
-        self.num_points = len(self.point_names)
+        
         self.__build_direction_matrices()
 
     def __check_params(self):
@@ -247,4 +247,4 @@ class DataMatrices:
         if not self.modified:
             return
         with open(self.json_file, 'w') as f:
-            json.dump(self.data, f, indent=3, ensure_ascii=False)
+            json.dump(self.data, f, ensure_ascii=False) # indent=3, 

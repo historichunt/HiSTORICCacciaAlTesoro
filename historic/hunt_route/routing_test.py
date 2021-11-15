@@ -1,45 +1,6 @@
-import os
-from re import A
-import pandas as pd
-from historic.hunt_route import api_ors
 from historic.hunt_route import api_google
-from historic.hunt_route.render_map import render_map_with_coordinates
 from historic.hunt_route.routing import RoutePlanner
 from historic.hunt_route import routing
-from historic.config.settings import ENV_VARS
-
-def read_data_from_spreadsheet(max_points=None):
-    trento_key = ENV_VARS.get('TRENTO_SPREADSHEET_KEY')
-    trento_gid = ENV_VARS.get('TRENTO_SPREADSHEET_GID')
-    url = f'https://docs.google.com/spreadsheets/d/{trento_key}/export?gid={trento_gid}&format=csv'
-    df = pd.read_csv(url)
-    
-    # each row becomes a dictionary where key is column name and value is the data in the cell
-    records = df.to_dict('records') 
-    if max_points is not None:
-        records = records[:max_points]
-    name_coordinates = {
-        r['storia']: [r['long'],r['lat']]
-        for r in records
-        if not any(pd.isnull(r[c]) for c in ['storia','lat','long'])
-    }
-    return name_coordinates
-
-def build_trento_dm(api, max_points=None):    
-    from historic.hunt_route.data_matrices import DataMatrices
-    coordinates = read_data_from_spreadsheet(max_points)
-    return DataMatrices(
-        dataset_name = 'Trento',
-        points_name_coordinate = coordinates,
-        api = api
-    )        
-
-def get_trento_dm(api):
-    from historic.hunt_route.data_matrices import DataMatrices
-    return DataMatrices(
-        dataset_name = 'Trento',
-        api = api
-    )        
 
 def get_routes(api, profile, plot_dm_stats=False):
     
@@ -95,19 +56,7 @@ def get_routes(api, profile, plot_dm_stats=False):
         log=True
     )
 
-def test_trento_map():
-    import numpy as np
-    names_longlat = read_data_from_spreadsheet()
-    coordinates = np.array(list(names_longlat.values()))
-    render_map_with_coordinates(coordinates)
-
 if __name__ == "__main__":
-    # build_trento_dm(api=api_google)
-    # build_trento_dm(api=api_ors)
-    # test_trento_map()
-    # dm = get_trento_dm(api=api_google)
-    # dm = get_trento_dm(api=api_ors)
-
     # get_routes(api=api_ors, profile = api_ors.PROFILE_FOOT_WALKING)
     # get_routes(api=api_ors, profile = api_ors.PROFILE_CYCLING_REGULAR)
     get_routes(api=api_google, profile = api_google.PROFILE_FOOT_WALKING)
