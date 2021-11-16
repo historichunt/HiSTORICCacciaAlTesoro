@@ -64,5 +64,5 @@ def test_airtable_map(table_id, max_points=None):
 
 if __name__ == "__main__":
     # test_airtable_map('apph7gGu4AAOgcbdA', 4)
-    build_data_from_airtable(api_google, 'apph7gGu4AAOgcbdA', max_points=3)
+    build_data_from_airtable(api_google, 'apph7gGu4AAOgcbdA') # max_points=3
     
