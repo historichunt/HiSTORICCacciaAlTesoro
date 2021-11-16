@@ -165,7 +165,12 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
     profile = p.get_tmp_variable('ROUTE_TRANSPORT', api_google.PROFILE_FOOT_WALKING)
     duration_min = p.get_tmp_variable('ROUTE_DURATION_MIN', 60) # 1 h default
     circular_route = p.get_tmp_variable('ROUTE_CIRCULAR', False)
+
+    max_grid_overalapping = 20 if profile == api_google.PROFILE_FOOT_WALKING else duration_min/30 * 20
+    duration_tolerance_min = duration_min/30 * 5 if profile == api_google.PROFILE_FOOT_WALKING else duration_min/30 * 8
+
     duration_sec = duration_min * 60
+    duration_tolerance_sec = duration_tolerance_min * 60
 
     route_planner = RoutePlanner(
         dm = game_dm,
@@ -173,15 +178,15 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
         metric = routing.METRIC_DURATION,
         start_idx = start_idx, 
         min_dst = 60, # 2 min
-        max_dst = 600, # 10 min
+        max_dst = 720, # 12 min
         goal_tot_dst = duration_sec,
-        tot_dst_tolerance = 600, # ± 10 min
+        tot_dst_tolerance = duration_tolerance_sec,
         min_route_size = None,
         max_route_size = None,
         skip_points_idx = skip_points_idx,
         check_convexity = False,
         overlapping_criteria = 'GRID',
-        max_overalapping = 20, # 300, # in meters/grids, None to ignore this constraint
+        max_overalapping = max_grid_overalapping, # in meters/grids, None to ignore this constraint
         stop_duration = 300, # da cambiare in 300 per 5 min
         num_attempts = 1000000, # set to None for exaustive search
         random_seed = None, # only relevan if num_attempts is not None (non exhaustive serach)
