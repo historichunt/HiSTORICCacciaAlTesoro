@@ -166,6 +166,7 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
     duration_min = p.get_tmp_variable('ROUTE_DURATION_MIN', 60) # 1 h default
     circular_route = p.get_tmp_variable('ROUTE_CIRCULAR', False)
 
+    # manual fine tuning - TODO: make it more robust
     max_grid_overalapping = 20 if profile == api_google.PROFILE_FOOT_WALKING else duration_min/30 * 20
     duration_tolerance_min = duration_min/30 * 5 if profile == api_google.PROFILE_FOOT_WALKING else duration_min/30 * 8
 

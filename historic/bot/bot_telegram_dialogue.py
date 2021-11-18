@@ -495,21 +495,27 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
             else:            
                 send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)                  
         elif input_type == 'ROUTE_DURATION_MIN':
-            if utility.is_int_between(text_input, 30, 120):
-                duration_min = int(text_input)
-                p.set_tmp_variable('ROUTE_DURATION_MIN', duration_min, put=True)
-                send_typing_action(p, sleep_time=1)
-                repeat_state(p, next_step=True)
+            if text_input: 
+                if utility.is_int_between(text_input, 30, 120):
+                    duration_min = int(text_input)
+                    p.set_tmp_variable('ROUTE_DURATION_MIN', duration_min, put=True)
+                    send_typing_action(p, sleep_time=1)
+                    repeat_state(p, next_step=True)
+                else:
+                    send_message(p, "Input errato") #TODO: fix ui
             else:
-                send_message(p, "Input errato") #TODO: fix ui
+                send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
         elif input_type == 'GROUP_SIZE':
-            if utility.is_int(text_input):
-                group_size = int(text_input)
-                p.set_tmp_variable('GROUP_SIZE', group_size, put=True)
-                send_typing_action(p, sleep_time=1)
-                repeat_state(p, next_step=True)
+            if text_input: 
+                if utility.is_int(text_input):
+                    group_size = int(text_input)
+                    p.set_tmp_variable('GROUP_SIZE', group_size, put=True)
+                    send_typing_action(p, sleep_time=1)
+                    repeat_state(p, next_step=True)
+                else:
+                    send_message(p, "Input errato") #TODO: fix ui
             else:
-                send_message(p, "Input errato") #TODO: fix ui
+                send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
         elif input_type == 'TEST_POSITION':
             location = message_obj.location
             if location:            
