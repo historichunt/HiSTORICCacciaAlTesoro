@@ -1,4 +1,8 @@
 {
+   "BUTTON_120_MIN": "⏲️ 120 MIN",
+   "BUTTON_30_MIN": "⏲️ 30 MIN",
+   "BUTTON_60_MIN": "⏲️ 60 MIN",
+   "BUTTON_90_MIN": "⏲️ 90 MIN",
    "BUTTON_ADMIN": "🔑 Admin",
    "BUTTON_ANNULLA": "❌ABBRECHEN",
    "BUTTON_BACK": "🔙 ZURÜCK",

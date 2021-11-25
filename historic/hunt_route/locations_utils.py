@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from geopy import distance
 from math import pi, atan2
 from collections import Counter
-import matplotlib.patches as patches
 from historic.hunt_route import mgrs_utils
 
 

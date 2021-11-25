@@ -413,7 +413,8 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
             # BUTTON_UNDERSTOOD, BUTTON_START_GAME
             # BUTTON_ROUTE_FOOT, BUTTON_ROUTE_BICYCLE
             # BUTTON_ROUTE_CIRCULAR_YES, BUTTON_ROUTE_CIRCULAR_NO
-            kb = [[p.ui()[b] for b in input_type]]
+            # BUTTON_30_MIN, ..., BUTTON_120_MIN
+            kb = [[p.ui()[b]] for b in input_type]
             if media:
                 url_attachment = media[0]['url']
                 send_media_url(p, url_attachment, kb, caption=msg)
@@ -489,22 +490,17 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                     p.set_tmp_variable('ROUTE_CIRCULAR', True, put=True)
                 elif text_input in [p.ui().BUTTON_ROUTE_CIRCULAR_NO]:
                     p.set_tmp_variable('ROUTE_CIRCULAR', False, put=True)
-                # BUTTON_UNDERSTOOD, BUTTON_START_GAME: do nothing except for repeating state                
+                elif text_input in [p.ui().BUTTON_30_MIN, p.ui().BUTTON_60_MIN,
+                                    p.ui().BUTTON_90_MIN, p.ui().BUTTON_120_MIN]:                    
+                    duration_min = int(text_input.split()[1])
+                    p.set_tmp_variable('ROUTE_DURATION_MIN', duration_min, put=True)
+                else:
+                    # BUTTON_UNDERSTOOD, BUTTON_START_GAME: do nothing except for repeating state                
+                    pass                    
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:            
                 send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)                  
-        elif input_type == 'ROUTE_DURATION_MIN':
-            if text_input: 
-                if utility.is_int_between(text_input, 30, 120):
-                    duration_min = int(text_input)
-                    p.set_tmp_variable('ROUTE_DURATION_MIN', duration_min, put=True)
-                    send_typing_action(p, sleep_time=1)
-                    repeat_state(p, next_step=True)
-                else:
-                    send_message(p, "Input errato") #TODO: fix ui
-            else:
-                send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
         elif input_type == 'GROUP_SIZE':
             if text_input: 
                 if utility.is_int(text_input):

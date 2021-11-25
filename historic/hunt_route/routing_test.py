@@ -83,13 +83,19 @@ def test_routes():
 
         for duration_min in [30, 60, 90, 120]:
 
-            for circular_route in [False]: # True
+            for circular_route in [True]: # 
 
                 print(f'Using profile {profile}, duration {duration_min}, circular {circular_route}')
 
+                # manual fine tuning
                 max_grid_overalapping = 20 if profile == api_google.PROFILE_FOOT_WALKING else duration_min/30 * 20
-
                 duration_tolerance_min = duration_min/30 * 5 if profile == api_google.PROFILE_FOOT_WALKING else duration_min/30 * 8
+
+                if circular_route:
+                    duration_tolerance_min += duration_min/30 * 5
+                    max_grid_overalapping += 80
+
+                route_errors_idx = []
 
                 for start_idx in tqdm(range(trento_dm.num_points)):
 
@@ -106,12 +112,16 @@ def test_routes():
                     route_planner.build_routes()
 
                     if len(route_planner.solutions) == 0:
-                        print(f'Missing route for start_idx {start_idx}')
-                        route_planner.get_routes(
-                            show_map=False,
-                            log=True
-                        )            
-                        return
+                        route_errors_idx.append(start_idx)
+                        # print(f'Missing route for start_idx {start_idx}')
+                        # route_planner.get_routes(
+                        #     show_map=False,
+                        #     log=True
+                        # )            
+                        # return
+
+                if route_errors_idx:
+                    print('route_errors_idx', route_errors_idx)
 
 
 if __name__ == "__main__":
