@@ -361,9 +361,9 @@ def state_SHOW_AVAILABLE_HUNTS_NEARBY(p, message_obj=None, **kwargs):
             kb.append(
                 [p.ui().BUTTON_BACK]
             )
-            send_message(p, "Seleziona una caccia aperta", kb) # TODO: fix in UI
+            send_message(p, "Molto bene, ci sono cacce al tesoro attive vicino a te! Puoi selezionarne una tra quelle qui sotto.", kb) # TODO: fix in UI
         else:
-            send_message(p, "Nessuna caccia aperta nelle vicinanze")  # TODO: fix in UI
+            send_message(p, "Purtroppo non ci sono cacce al tesoro attive vicino a te. In futuro forniro' un modo per vedere dove sono le cacce attive piu' vicine in modo che possiate giocare in caso vi rechiate in quelle zone.")  # TODO: fix in UI
             send_typing_action(p, 1)
             redirect_to_state(p, state_ASK_GPS_TO_LIST_HUNTS)
 
