@@ -3,6 +3,7 @@ from historic.hunt_route import api_google
 from historic.hunt_route.routing import RoutePlanner
 from historic.hunt_route import routing
 from historic.hunt_route.data_matrices import DataMatrices
+from historic.hunt_route.trento_open_params import fine_tuning_trento_open
 
 
 def get_route_planner(datamatrix, profile, metric, start_idx, duration_sec, tot_dst_tolerance,
@@ -38,9 +39,9 @@ def test_single_route():
 
     api = api_google
     metric = routing.METRIC_DURATION
-    profile = api_google.PROFILE_FOOT_WALKING
-    # profile = api_google.PROFILE_CYCLING_REGULAR    
-    start_idx = 6
+    # profile = api_google.PROFILE_FOOT_WALKING
+    profile = api_google.PROFILE_CYCLING_REGULAR    
+    start_idx = 24
     duration_min = 30
     circular_route = True
     plot_dm_stats = False
@@ -57,8 +58,8 @@ def test_single_route():
 
     route_planner = get_route_planner(
         trento_dm, profile, metric, start_idx, duration_sec, 
-        tot_dst_tolerance=100*60,
-        max_grid_overalapping=200,
+        tot_dst_tolerance=10*60,
+        max_grid_overalapping=100,
         circular_route=circular_route, 
         show_progress_bar=True)
 
@@ -68,6 +69,13 @@ def test_single_route():
         show_map=True,
         log=True
     )
+
+    if len(route_planner.solutions) == 0:
+        print(f'Missing route for start_idx {start_idx}')
+        route_planner.get_routes(
+            show_map=False,
+            log=True
+        )            
 
 def test_multi_routes():
 
@@ -83,18 +91,16 @@ def test_multi_routes():
 
         for duration_min in [30, 60, 90, 120]:
 
-            for circular_route in [True]: # 
+            for circular_route in [False, True]: # 
 
                 print(f'Using profile {profile}, duration {duration_min}, circular {circular_route}')
 
-                # manual fine tuning
-                max_grid_overalapping = 20 if profile == api_google.PROFILE_FOOT_WALKING else duration_min/30 * 20
-                duration_tolerance_min = duration_min/30 * 5 if profile == api_google.PROFILE_FOOT_WALKING else duration_min/30 * 8
+                max_grid_overalapping, duration_tolerance_min = \
+                    fine_tuning_trento_open(profile, circular_route, duration_min)
 
-                if circular_route:
-                    duration_tolerance_min += duration_min/30 * 5
-                    max_grid_overalapping += 80
-
+                # print('max_grid_overalapping', max_grid_overalapping)
+                # print('duration_tolerance_min', duration_tolerance_min)
+                
                 route_errors_idx = []
 
                 for start_idx in tqdm(range(trento_dm.num_points)):
@@ -112,13 +118,13 @@ def test_multi_routes():
                     route_planner.build_routes()
 
                     if len(route_planner.solutions) == 0:
-                        route_errors_idx.append(start_idx)
-                        # print(f'Missing route for start_idx {start_idx}')
-                        # route_planner.get_routes(
-                        #     show_map=False,
-                        #     log=True
-                        # )            
-                        # return
+                        # route_errors_idx.append(start_idx)
+                        print(f'Missing route for start_idx {start_idx}')
+                        route_planner.get_routes(
+                            show_map=False,
+                            log=True
+                        )            
+                        return
 
                 if route_errors_idx:
                     print('route_errors_idx', route_errors_idx)

@@ -9,6 +9,8 @@ from historic.hunt_route.data_matrices import DataMatrices
 from historic.hunt_route.routing import RoutePlanner
 import numpy as np
 
+from historic.hunt_route.trento_open_params import fine_tuning_trento_open
+
 #################
 # GAMES CONFIG
 #################
@@ -167,8 +169,8 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
     circular_route = p.get_tmp_variable('ROUTE_CIRCULAR', False)
 
     # manual fine tuning - TODO: make it more robust
-    max_grid_overalapping = 20 if profile == api_google.PROFILE_FOOT_WALKING else duration_min/30 * 20
-    duration_tolerance_min = duration_min/30 * 5 if profile == api_google.PROFILE_FOOT_WALKING else duration_min/30 * 8
+    max_grid_overalapping, duration_tolerance_min = \
+        fine_tuning_trento_open(profile, circular_route, duration_min)
 
     duration_sec = duration_min * 60
     duration_tolerance_sec = duration_tolerance_min * 60

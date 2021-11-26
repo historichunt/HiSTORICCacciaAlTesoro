@@ -106,7 +106,7 @@ class RoutePlanner:
         info = [
             'PARAMETERS:',
             f'dataset name = {self.dm.dataset_name}',
-            f'start num = {self.start_idx} + 1',
+            f'start num = {self.start_idx + 1}',
             f'duration min = {self.goal_tot_dst / 60}',
             f'profile = {self.profile}',
             f'circular route = {self.circular_route}',
