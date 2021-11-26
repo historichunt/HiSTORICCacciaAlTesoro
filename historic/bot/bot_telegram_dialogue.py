@@ -381,16 +381,55 @@ def state_SHOW_AVAILABLE_HUNTS_NEARBY(p, message_obj=None, **kwargs):
 
 def start_hunt(p, hunt_password):
     game.load_game(p, hunt_password)                    
-    hunt_settings = p.tmp_variables['SETTINGS']
-    skip_instructions = get_str_param_boolean(hunt_settings, 'SKIP_INSTRUCTIONS')
-    if not skip_instructions:
-        redirect_to_state(p, state_INSTRUCTIONS)
-    else:
-        # start the hunt
-        redirect_to_state(p, state_GO_TO_START)
+    redirect_to_state(p, state_CHECK_INITIAL_POSITION)    
 
 # ================================
-# Intro - Instructions
+# Check Initial Position
+# ================================
+
+def state_CHECK_INITIAL_POSITION(p, message_obj=None, **kwargs):
+    
+    def next():
+        skip_instructions = get_str_param_boolean(p.tmp_variables['SETTINGS'], 'SKIP_INSTRUCTIONS')
+        if skip_instructions:
+            load_missions(p)
+        else:
+            redirect_to_state(p, state_INSTRUCTIONS)
+
+    give_instruction = message_obj is None
+    goal_position = p.get_tmp_variable('HUNT_START_GPS')
+    GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
+    if give_instruction:  
+        current_position = p.get_location()
+        distance = geo_utils.distance_meters(goal_position, current_position)        
+        if distance <= GPS_TOLERANCE_METERS:            
+            next()
+        else:
+            msg = p.ui().MSG_GO_TO_START_LOCATION
+            kb = [[bot_ui.BUTTON_LOCATION(p.language)]]
+            send_message(p, msg, kb)
+            send_location(p, goal_position[0], goal_position[1])
+    else:
+        location = message_obj.location
+        if location:          
+            lat, lon = location['latitude'], location['longitude']
+            p.set_location(location['latitude'], location['longitude'])
+            given_position = [lat, lon]
+            distance = geo_utils.distance_meters(goal_position, given_position)
+            if distance <= GPS_TOLERANCE_METERS:
+                send_message(p, p.ui().MSG_GPS_OK, remove_keyboard=True)
+                send_typing_action(p, sleep_time=1)
+                next()
+            else:
+                msg = p.ui().MSG_TOO_FAR.format(distance)
+                send_message(p, msg)
+                send_typing_action(p, sleep_time=1)
+                repeat_state(p)
+        else:
+            send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)    
+
+# ================================
+# Instructions
 # ================================
 
 def state_INSTRUCTIONS(p, message_obj=None, **kwargs):    
@@ -402,7 +441,7 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
     steps = instructions['STEPS']
     if len(steps) == completed:
         # start the hunt
-        redirect_to_state(p, state_GO_TO_START)
+        load_missions(p)
         return
     current_step = steps[completed]
     input_type = current_step.get('Input_Type',[])
@@ -559,54 +598,18 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                     send_message(p, p.ui().MSG_WRONG_INPUT_SEND_VIDEO)
 
 # ================================
-# GO TO START
+# LOAD MISSIONS
 # ================================
 
-def state_GO_TO_START(p, message_obj=None, **kwargs):        
-
-    def next():
-        send_message(p, 'Calcolo percorso...')  # TODO: fix ui        
-        success = game.build_missions(p)
-        if not success:
-            send_message(p, "Problema selezione percorso") #TODO: fix ui
-            send_typing_action(p, sleep_time=1)
-            restart(p)
-        else:
-            send_message(p, p.ui().MSG_GO)
-            redirect_to_state(p, state_MISSION_INTRO)
-
-    give_instruction = message_obj is None
-    goal_position = p.get_tmp_variable('HUNT_START_GPS')
-    if give_instruction:  
-        current_position = p.get_location()
-        distance = geo_utils.distance_meters(goal_position, current_position)
-        GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
-        if distance <= GPS_TOLERANCE_METERS:            
-            next()
-        else:
-            msg = p.ui().MSG_GO_TO_START_LOCATION
-            kb = [[bot_ui.BUTTON_LOCATION(p.language)]]
-            send_message(p, msg, kb)
-            send_location(p, goal_position[0], goal_position[1])
+def load_missions(p):        
+    success = game.build_missions(p)
+    if not success:
+        send_message(p, "Problema selezione percorso") #TODO: fix ui
+        send_typing_action(p, sleep_time=1)
+        restart(p)
     else:
-        location = message_obj.location
-        if location:          
-            lat, lon = location['latitude'], location['longitude']
-            p.set_location(location['latitude'], location['longitude'])
-            given_position = [lat, lon]
-            distance = geo_utils.distance_meters(goal_position, given_position)
-            GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
-            if distance <= GPS_TOLERANCE_METERS:
-                send_message(p, p.ui().MSG_GPS_OK, remove_keyboard=True)
-                send_typing_action(p, sleep_time=1)
-                next()
-            else:
-                msg = p.ui().MSG_TOO_FAR.format(distance)
-                send_message(p, msg)
-                send_typing_action(p, sleep_time=1)
-                repeat_state(p)
-        else:
-            send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
+        send_message(p, p.ui().MSG_GO)
+        redirect_to_state(p, state_MISSION_INTRO)
 
 
 # ================================
