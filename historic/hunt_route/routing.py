@@ -130,7 +130,8 @@ class RoutePlanner:
 
         best_route_idx = None
         best_stop_names = None
-        best_route_img = None        
+        best_route_img = None    
+        duration_min = None    
 
         if len(self.solutions) == 0:                  
             print_info('No solution found!')            
@@ -151,7 +152,7 @@ class RoutePlanner:
                 best_route_idx = route_idx
                 best_stop_names = [self.point_names[i] for i in route_idx]
             route_points = np.take(self.points, route_idx, axis=0)            
-            route_info = self.get_route_info(
+            route_info, duration_min = self.get_route_info(
                 route_points, route_idx, self.dst_matrix, error, self.point_names)
             print_info_list(route_info)
             if show_map or first:      
@@ -181,7 +182,7 @@ class RoutePlanner:
             
             first = False
 
-        return best_route_idx, best_stop_names, info, best_route_img
+        return best_route_idx, best_stop_names, info, best_route_img, duration_min
 
     def build_routes(self):
         """Get all routes satisfying specific constraints
@@ -459,4 +460,5 @@ class RoutePlanner:
         info.append(f'legs duration: {legs_str}')
         info.append(f'total duration: {"{:.1f}".format(tot_dst)}')
         info.append(f'duration error: {"{:.1f}".format(error)}')
-        return info
+        duration_min = int(np.ceil(tot_dst))
+        return info, duration_min

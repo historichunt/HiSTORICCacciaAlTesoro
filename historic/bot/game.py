@@ -201,10 +201,11 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
 
     route_planner.build_routes()
 
-    best_route_idx, stop_names, info, best_route_img = route_planner.get_routes(
-        show_map=False,
-        log=False
-    )      
+    best_route_idx, stop_names, info, best_route_img, duration_min = \
+        route_planner.get_routes(
+            show_map=False,
+            log=False
+        )      
 
     if best_route_idx is None:
         error_msg = f'⚠️ User {p.get_id()} encountered error in routing:\n'\
@@ -220,6 +221,11 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
         next(m for m in MISSIONI_ALL if mission_name==m.get('NOME',None))
         for mission_name in stop_names
     ]
+
+    info_msg = \
+        f'Ho selezionato per voi {len(stop_names)} tappe e dovreste metterci circa {duration_min} minuti. '\
+        'Ovviamente dipende da quanto sarete veloci e abili a risolvere gli indovinelli! 😉'     
+    send_message(p, info_msg)
 
     if p.is_admin_current_hunt():                 
         info_text = '\n'.join(info)

@@ -34,7 +34,7 @@ def get_route_planner(datamatrix, profile, metric, start_idx, duration_sec, tot_
         show_progress_bar = show_progress_bar
     )
 
-def get_routes():
+def test_single_route():
 
     api = api_google
     metric = routing.METRIC_DURATION
@@ -69,7 +69,7 @@ def get_routes():
         log=True
     )
 
-def test_routes():
+def test_multi_routes():
 
     api = api_google
     metric = routing.METRIC_DURATION
@@ -125,7 +125,7 @@ def test_routes():
 
 
 if __name__ == "__main__":
-    # get_routes()
-    test_routes()
+    # test_single_route()
+    test_multi_routes()
     
     

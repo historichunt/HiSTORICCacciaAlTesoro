@@ -548,7 +548,7 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                     send_typing_action(p, sleep_time=1)
                     repeat_state(p, next_step=True)
                 else:
-                    send_message(p, "Input errato") #TODO: fix ui
+                    send_message(p, "Non ho capito. Ti prego di inserire il numero di persone (in cifre) ad esempio 3.") #TODO: fix ui
             else:
                 send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
         elif input_type == 'TEST_POSITION':
