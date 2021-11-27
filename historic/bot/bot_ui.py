@@ -27,7 +27,10 @@ class UI_LANG:
         self.ui_custom_dict = ui_custom_dict
 
     def get_var(self, var):
-        if self.ui_custom_dict and var in self.ui_custom_dict[self.lang]:
+        if (self.ui_custom_dict and 
+            self.lang in self.ui_custom_dict and 
+            var in self.ui_custom_dict[self.lang]):            
+            
             return self.ui_custom_dict[self.lang][var]
         return UI_DICT[self.lang].get(var, None)
 
