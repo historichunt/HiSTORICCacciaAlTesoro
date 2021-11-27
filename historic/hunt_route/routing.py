@@ -141,7 +141,7 @@ class RoutePlanner:
                 print_info('!!!!!!!!!!')
                 displayed_solutions = self.discarded_solutions
             else:
-                return best_route_idx, best_stop_names, info, best_route_img
+                return best_route_idx, best_stop_names, info, best_route_img, duration_min
         else:
             displayed_solutions = self.solutions
         
