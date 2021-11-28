@@ -131,11 +131,11 @@ class Person(ndb.Model):
         self.tmp_variables[var_name] = value
         if put: self.put()
 
-    def get_tmp_variable(self, var_name, initValue=None):
+    def get_tmp_variable(self, var_name, init_value=None):
         if var_name in self.tmp_variables:
             return self.tmp_variables[var_name]
-        self.tmp_variables[var_name] = initValue
-        return initValue
+        self.tmp_variables[var_name] = init_value
+        return init_value
 
     def switch_notifications(self):
         self.enabled = not self.enabled

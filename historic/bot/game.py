@@ -104,11 +104,17 @@ def get_closest_mission(p, airtable_game_id, mission_tab_name):
     dist_2 = np.sum((all_gps - current_pos)**2, axis=1)
     return all_gps[np.argmin(dist_2)].tolist()
 
-    
 
-def get_all_missioni_random(p, airtable_game_id, mission_tab_name):
-    MISSIONI_TABLE = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_API_KEY)
-    MISSIONI_ALL = [row['fields'] for row in MISSIONI_TABLE.get_all() if row['fields'].get('ACTIVE',False)]    
+def get_all_missions(airtable_game_id, mission_tab_name):
+    table = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_API_KEY)
+    all_missions = [row['fields'] for row in table.get_all() if row['fields'].get('ACTIVE',False)]    
+    return all_missions
+
+
+def get_random_missions(p, airtable_game_id, mission_tab_name):
+
+    MISSIONI_ALL = get_all_missions(airtable_game_id, mission_tab_name)
+    
     next_missioni = [
         m for m in MISSIONI_ALL if m['NOME'] in \
         [row.get('NEXT') for row in MISSIONI_ALL if row.get('NEXT',False)]
@@ -286,12 +292,13 @@ def save_survey_data_in_airtable(p):
 # GAME MANAGEMENT FUNCTIONS
 ################################
 
-def load_game(p, hunt_password):    
+def load_game(p, hunt_password, test_hunt_admin=False):    
     '''
     Save current game info user tmp_variable
     '''    
 
-    p.current_hunt = hunt_password         
+    if not test_hunt_admin:        
+        p.current_hunt = hunt_password  # avoid when testing
     hunt_info = HUNTS_PW[hunt_password]
     airtable_game_id = hunt_info['Airtable_Game_ID']
     hunt_settings = get_hunt_settings(p, airtable_game_id)
@@ -308,6 +315,7 @@ def load_game(p, hunt_password):
     survey = airtable_utils.get_rows(survey_table, view='Grid view')
     tvar = p.tmp_variables = {}      
     tvar['HUNT_NAME'] = hunt_info['Name']
+    tvar['TEST_HUNT_MISSION_ADMIN'] = test_hunt_admin
     tvar['HUNT_START_GPS'] = get_closest_mission(p, airtable_game_id, mission_tab_name)
     tvar['SETTINGS'] = hunt_settings    
     tvar['UI'] = hunt_ui    
@@ -335,22 +343,23 @@ def load_game(p, hunt_password):
     tvar['PENALTY TIME'] = 0 # seconds
     tvar['FINISHED'] = False # seconds
 
-def build_missions(p):
+def build_missions(p, test_all=False):
     tvar = p.tmp_variables
     hunt_settings = tvar['SETTINGS']
     airtable_game_id = tvar['HUNT_INFO']['Airtable_Game_ID']
     multilingual =  utility.get_str_param_boolean(hunt_settings, 'MULTILINGUAL')
     # TODO: improve multilingual implementation
     mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni' 
-    if hunt_settings.get('MISSIONS_SELECTION', None) == 'ROUTING':
-        missioni = get_missioni_routing(p, airtable_game_id, mission_tab_name)
-        if missioni is None:
-            # problema selezione percorso
-            return False
+    if test_all:
+        missions = get_all_missions(airtable_game_id, mission_tab_name)    
+    elif hunt_settings.get('MISSIONS_SELECTION', None) == 'ROUTING':
+        missions = get_missioni_routing(p, airtable_game_id, mission_tab_name)
+        if missions is None:            
+            return False # problema selezione percorso
     else:
         # RANDOM - default
-        missioni = get_all_missioni_random(p, airtable_game_id, mission_tab_name)            
-    tvar['MISSIONI_INFO'] = {'TODO': missioni, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(missioni)}
+        missions = get_random_missions(p, airtable_game_id, mission_tab_name)            
+    tvar['MISSIONI_INFO'] = {'TODO': missions, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(missions)}
     return True
 
 def user_in_game(p):
@@ -426,14 +435,14 @@ def set_game_end_time(p, finished):
 
 def start_mission(p):
     start_time = dtu.nowUtcIsoFormat()    
-    current_indovinello = getCurrentIndovinello(p)
-    current_indovinello['wrong_answers'] = []
-    current_indovinello['start_time'] = start_time
+    current_mission = get_current_mission(p)
+    current_mission['wrong_answers'] = []
+    current_mission['start_time'] = start_time
     p.tmp_variables['MISSION_TIMES'].append([start_time])
 
 def set_end_mission_time(p):
-    current_indovinello = getCurrentIndovinello(p)
-    current_indovinello['end_time'] = dtu.nowUtcIsoFormat()
+    current_mission = get_current_mission(p)
+    current_mission['end_time'] = dtu.nowUtcIsoFormat()
 
 def set_mission_end_time(p):
     end_time = dtu.nowUtcIsoFormat()
@@ -481,51 +490,46 @@ def get_elapsed_and_penalty_and_total_hms(p):
         tvar['total_hms_missions'], \
         tvar['ellapsed_hms_missions'] \
 
-
-
 def get_end_time(p):
     return p.tmp_variables['END_TIME']
 
-def getTotalIndovinelli(p):
+def get_total_missions(p):
     return p.tmp_variables['MISSIONI_INFO']['TOTAL']
 
-def remainingIndovinelloNumber(p):
+def get_num_remaining_missions(p):
     indovinello_info = p.tmp_variables['MISSIONI_INFO']
     return len(indovinello_info['TODO'])
 
-def completed_indovinello_number(p):
+def get_num_compleded_missions(p):
     indovinello_info = p.tmp_variables['MISSIONI_INFO']
     return len(indovinello_info['COMPLETED'])
 
-def setNextIndovinello(p):
-    indovinello_info = p.tmp_variables['MISSIONI_INFO']
-    todo_missioni = indovinello_info['TODO']
-    current_indovinello = todo_missioni.pop(0)
-    indovinello_info['CURRENT'] = current_indovinello
-    current_indovinello['wrong_answers'] = []    
-    return current_indovinello
+def set_next_mission(p, current_mission=None):
+    indovinello_info = p.tmp_variables['MISSIONI_INFO']    
+    if current_mission is None:
+        todo_missioni = indovinello_info['TODO']
+        current_mission = todo_missioni.pop(0)
+    indovinello_info['CURRENT'] = current_mission
+    current_mission['wrong_answers'] = []    
+    return current_mission
 
-def getCurrentIndovinello(p):
+def get_current_mission(p):
     indovinello_info = p.tmp_variables['MISSIONI_INFO']
     return indovinello_info['CURRENT']
-
-def getCompletedIndovinello(p):
-    game_info = p.tmp_variables['MISSIONI_INFO']
-    return game_info['COMPLETED']
 
 def append_group_media_input_file_id(p, file_id):
     p.tmp_variables['GROUP_MEDIA_FILE_IDS'].append(file_id)
 
-def setCurrentIndovinelloAsCompleted(p):
+def set_current_mission_as_completed(p):
     indovinello_info = p.tmp_variables['MISSIONI_INFO']
-    current_indovinello = indovinello_info['CURRENT']
-    indovinello_info['COMPLETED'].append(current_indovinello)
+    current_mission = indovinello_info['CURRENT']
+    indovinello_info['COMPLETED'].append(current_mission)
     indovinello_info['CURRENT'] = None
 
 def increase_wrong_answers_current_indovinello(p, answer, give_penalty, put=True):
     indovinello_info = p.tmp_variables['MISSIONI_INFO']
-    current_indovinello = indovinello_info['CURRENT']
-    current_indovinello['wrong_answers'].append(answer)
+    current_mission = indovinello_info['CURRENT']
+    current_mission['wrong_answers'].append(answer)
     if give_penalty:
         p.tmp_variables['PENALTIES'] += 1
     if put:

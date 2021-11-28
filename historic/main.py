@@ -40,7 +40,7 @@ def new_deploy():
     # }
     branch = payload_json['ref'].split('/')[-1]
     # payload_json_str = json.dumps(payload_json, indent=3, ensure_ascii=False)
-    msg = f'🛎️ New {ENV_VERSION} Version {APP_VERSION}' 
+    msg = f'🛎️ New {ENV_VERSION} version {APP_VERSION}' 
     if ENV_VERSION != 'production':
         msg += f' ({branch})' # issue #
     # msg += f'\n{payload_json_str}'

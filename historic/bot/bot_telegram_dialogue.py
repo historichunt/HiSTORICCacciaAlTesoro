@@ -175,9 +175,9 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
     hunt_name = p.get_tmp_variable('ADMIN_HUNT_NAME')
     hunt_pw = game.HUNTS_NAME[hunt_name]['Password']
     if message_obj is None:
-        kb = [
+        kb = [            
             [p.ui().BUTTON_BACK],
-            [p.ui().BUTTON_CHECK_HUNT],
+            [p.ui().BUTTON_CHECK_HUNT, p.ui().BUTTON_TEST_MISSION],
             [p.ui().BUTTON_STATS, p.ui().BUTTON_TERMINATE],
             [p.ui().BUTTON_DOWNLOAD_MEDIA, p.ui().BUTTON_DOWNLOAD_ERRORS],
             [p.ui().BUTTON_BACK]
@@ -198,6 +198,11 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                         send_message(p, error, markdown=False)
                     else:
                         send_message(p, p.ui().MSG_CHECK_HUNT_OK)
+                elif text_input == p.ui().BUTTON_TEST_MISSION:                    
+                    send_message(p, "Caricamento missioni...")
+                    game.load_game(p, hunt_pw, test_hunt_admin=True)
+                    game.build_missions(p, test_all=True)
+                    redirect_to_state(p, state_TEST_HUNT_MISSION_ADMIN)                    
                 elif text_input == p.ui().BUTTON_STATS:
                     hunt_stats = ndb_person.get_people_on_hunt_stats(hunt_pw)
                     if hunt_stats:
@@ -228,6 +233,40 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                     timestamp = dtu.timestamp_yyyymmdd()
                     send_text_document(p, f'{file_name_prefix}_{timestamp}.txt', mission_errors)      
                     send_text_document(p, f'{file_name_prefix}_{timestamp}_digested.txt', errors_digested)      
+            else:
+                send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)     
+        else:
+            send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)
+
+# ================================
+# Test Hunt Mission Admin
+# ================================
+
+def state_TEST_HUNT_MISSION_ADMIN(p, message_obj=None, **kwargs):    
+    missions = p.tmp_variables['MISSIONI_INFO']['TODO']
+    if message_obj is None:        
+        kb = [
+            [m['NOME']] 
+            for m in missions
+        ]
+        kb.insert(0, [p.ui().BUTTON_BACK])
+        kb.insert(len(kb), [p.ui().BUTTON_BACK])
+        msg = "Seleziona una missione da testare."
+        send_message(p, msg, kb)
+    else: 
+        text_input = message_obj.text
+        kb = p.get_keyboard()
+        if text_input:
+            if text_input in flatten(kb):
+                if text_input == p.ui().BUTTON_BACK:
+                    redirect_to_state(p, state_HUNT_ADMIN) 
+                else:
+                    selected_mission = next(
+                        m for m in missions 
+                        if m['NOME']==text_input
+                    )
+                    game.set_next_mission(p, selected_mission)        
+                    redirect_to_state(p, state_MISSION_INTRO)
             else:
                 send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)     
         else:
@@ -616,26 +655,29 @@ def load_missions(p):
 def state_MISSION_INTRO(p, message_obj=None, **kwargs):        
     give_instruction = message_obj is None
     if give_instruction:
-        current_indovinello = game.setNextIndovinello(p)        
-        indovinello_number = game.completed_indovinello_number(p) + 1
-        if indovinello_number==1:
-            # first one
-            send_message(p, p.ui().MSG_START_TIME, remove_keyboard=True)            
-            game.set_game_start_time(p)
+        testing = p.get_tmp_variable('TEST_HUNT_MISSION_ADMIN', False)
+        # if testing next mission is already set up
+        current_mission = game.get_current_mission(p) if testing else game.set_next_mission(p)
+        indovinello_number = game.get_num_compleded_missions(p) + 1        
+        if not testing:
+            if indovinello_number==1:
+                # first one
+                send_message(p, p.ui().MSG_START_TIME, remove_keyboard=True)            
+                game.set_game_start_time(p)
+                send_typing_action(p, sleep_time=1)        
+            total_missioni = game.get_total_missions(p)
+            msg = p.ui().MSG_MISSION_N_TOT.format(indovinello_number, total_missioni)
+            send_message(p, msg, remove_keyboard=True)
             send_typing_action(p, sleep_time=1)        
-        total_missioni = game.getTotalIndovinelli(p)
-        msg = p.ui().MSG_MISSION_N_TOT.format(indovinello_number, total_missioni)
-        send_message(p, msg, remove_keyboard=True)
-        send_typing_action(p, sleep_time=1)        
-        if 'INTRODUZIONE_LOCATION' not in current_indovinello:
+        if 'INTRODUZIONE_LOCATION' not in current_mission:
             redirect_to_state(p, state_GPS)
             return
-        if 'INTRO_MEDIA' in current_indovinello:
-            caption = current_indovinello.get('INTRO_MEDIA_CAPTION',None)
-            url_attachment = current_indovinello['INTRO_MEDIA'][0]['url']
+        if 'INTRO_MEDIA' in current_mission:
+            caption = current_mission.get('INTRO_MEDIA_CAPTION',None)
+            url_attachment = current_mission['INTRO_MEDIA'][0]['url']
             send_media_url(p, url_attachment, caption=caption)
             send_typing_action(p, sleep_time=1)
-        msg = current_indovinello['INTRODUZIONE_LOCATION'] # '*Introduzione*: ' + 
+        msg = current_mission['INTRODUZIONE_LOCATION'] # '*Introduzione*: ' + 
         kb = [[random.choice(bot_ui.BUTTON_CONTINUE_MULTI(p.language))]]
         send_message(p, msg, kb)
         p.put()
@@ -644,7 +686,7 @@ def state_MISSION_INTRO(p, message_obj=None, **kwargs):
         kb = p.get_keyboard()
         if text_input in flatten(kb):
             if text_input in bot_ui.BUTTON_CONTINUE_MULTI(p.language):
-                current_indovinello = game.getCurrentIndovinello(p)
+                current_mission = game.get_current_mission(p)
                 redirect_to_state(p, state_GPS)
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)            
@@ -655,11 +697,11 @@ def state_MISSION_INTRO(p, message_obj=None, **kwargs):
 
 def state_GPS(p, message_obj=None, **kwargs):        
     give_instruction = message_obj is None
-    current_indovinello = game.getCurrentIndovinello(p)
-    if 'GPS' not in current_indovinello:
+    current_mission = game.get_current_mission(p)
+    if 'GPS' not in current_mission:
         redirect_to_state(p, state_DOMANDA)
         return
-    goal_position = utility.get_lat_lon_from_string(current_indovinello['GPS'])
+    goal_position = utility.get_lat_lon_from_string(current_mission['GPS'])
     if give_instruction:        
         current_position = p.get_location()
         distance = geo_utils.distance_meters(goal_position, current_position)
@@ -696,24 +738,24 @@ def state_GPS(p, message_obj=None, **kwargs):
 # ================================
 def state_DOMANDA(p, message_obj=None, **kwargs):    
     give_instruction = message_obj is None
-    current_indovinello = game.getCurrentIndovinello(p)
+    current_mission = game.get_current_mission(p)
     if give_instruction:
-        if 'DOMANDA_MEDIA' in current_indovinello:
-            caption = current_indovinello.get('DOMANDA_MEDIA_CAPTION',None)
-            url_attachment = current_indovinello['DOMANDA_MEDIA'][0]['url']
+        if 'DOMANDA_MEDIA' in current_mission:
+            caption = current_mission.get('DOMANDA_MEDIA_CAPTION',None)
+            url_attachment = current_mission['DOMANDA_MEDIA'][0]['url']
             send_media_url(p, url_attachment, caption=caption)
             send_typing_action(p, sleep_time=1)                
-        msg = current_indovinello['DOMANDA'] 
-        if current_indovinello.get('INDIZIO_1',False):
+        msg = current_mission['DOMANDA'] 
+        if current_mission.get('INDIZIO_1',False):
             kb = [[p.ui().BUTTON_FIRST_HINT]]
             send_message(p, msg, kb)
         else:
             send_message(p, msg, remove_keyboard=True)
         game.start_mission(p)
         p.put()
-        if 'SOLUZIONI' not in current_indovinello:
+        if 'SOLUZIONI' not in current_mission:
             # if there is no solution required go to required_input (photo or voice)
-            assert all(x in current_indovinello for x in ['INPUT_INSTRUCTIONS', 'INPUT_TYPE'])
+            assert all(x in current_mission for x in ['INPUT_INSTRUCTIONS', 'INPUT_TYPE'])
             redirect_to_state(p, state_MEDIA_INPUT_MISSION)
     else:
         text_input = message_obj.text
@@ -724,25 +766,25 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                 MIN_SEC_INDIZIO_1 = int(p.tmp_variables['SETTINGS']['MIN_SEC_INDIZIO_1'])
                 MIN_SEC_INDIZIO_2 = int(p.tmp_variables['SETTINGS']['MIN_SEC_INDIZIO_2'])
                 if text_input == p.ui().BUTTON_FIRST_HINT:
-                    before_string = current_indovinello['start_time']
+                    before_string = current_mission['start_time']
                     ellapsed = dtu.delta_seconds_iso(before_string, now_string)
-                    if ellapsed > MIN_SEC_INDIZIO_1 and current_indovinello.get('INDIZIO_1',False):
-                        msg = '💡 *Indizio 1*: {}'.format(current_indovinello['INDIZIO_1'])
-                        if current_indovinello.get('INDIZIO_2',False):
+                    if ellapsed > MIN_SEC_INDIZIO_1 and current_mission.get('INDIZIO_1',False):
+                        msg = '💡 *Indizio 1*: {}'.format(current_mission['INDIZIO_1'])
+                        if current_mission.get('INDIZIO_2',False):
                             kb = [[p.ui().BUTTON_SECOND_HINT]]
-                            current_indovinello['indizio1_time'] = now_string
+                            current_mission['indizio1_time'] = now_string
                             send_message(p, msg, kb)
                         else:
                             send_message(p, msg, remove_keyboard=True)
                     else:
                         remaining = MIN_SEC_INDIZIO_1 - ellapsed
                         send_message(p, p.ui().MSG_TOO_EARLY.format(remaining))
-                elif text_input == p.ui().BUTTON_SECOND_HINT and current_indovinello.get('INDIZIO_2',False):
-                    before_string = current_indovinello['indizio1_time']
+                elif text_input == p.ui().BUTTON_SECOND_HINT and current_mission.get('INDIZIO_2',False):
+                    before_string = current_mission['indizio1_time']
                     ellapsed = dtu.delta_seconds_iso(before_string, now_string)
-                    if ellapsed > MIN_SEC_INDIZIO_2 and current_indovinello.get('INDIZIO_2',False):
-                        msg = '💡 *Indizio 2*: {}'.format(current_indovinello['INDIZIO_2'])                    
-                        current_indovinello['indizio2_time'] = now_string
+                    if ellapsed > MIN_SEC_INDIZIO_2 and current_mission.get('INDIZIO_2',False):
+                        msg = '💡 *Indizio 2*: {}'.format(current_mission['INDIZIO_2'])                    
+                        current_mission['indizio2_time'] = now_string
                         send_message(p, msg, remove_keyboard=True)
                     else:
                         remaining = MIN_SEC_INDIZIO_1 - ellapsed
@@ -751,7 +793,7 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                 import functools, regex
                 soluzioni_list = [
                     x.strip() for x in 
-                    regex.split(r"(?<!\\)(?:\\{2})*\K,", current_indovinello['SOLUZIONI'])
+                    regex.split(r"(?<!\\)(?:\\{2})*\K,", current_mission['SOLUZIONI'])
                 ] # split on comma but not on /, (when comma is used in regex)
                 correct_answers_upper = [x.upper() for x in soluzioni_list if not regex.match(r'^/.*/$', x)]
                 correct_answers_regex = [x[1:-1].replace('\\,',',') for x in soluzioni_list if regex.match(r'^/.*/$', x)]
@@ -761,10 +803,10 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                 #correct_answers_upper_word_set = set(flatten([x.split() for x in correct_answers_upper]))
                 if text_input.upper() in correct_answers_upper or functools.reduce(lambda a, r: a or regex.match(r, text_input, regex.I), correct_answers_regex, False):
                     game.set_end_mission_time(p)
-                    if not send_post_message(p, current_indovinello):
+                    if not send_post_message(p, current_mission):
                         send_message(p, bot_ui.MSG_ANSWER_OK(p.language), remove_keyboard=True)
                         send_typing_action(p, sleep_time=1)                    
-                    if 'INPUT_INSTRUCTIONS' in current_indovinello:
+                    if 'INPUT_INSTRUCTIONS' in current_mission:
                         # only missioni with GPS require selfies
                         redirect_to_state(p, state_MEDIA_INPUT_MISSION)
                     else:
@@ -772,7 +814,7 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                 # elif utility.answer_is_almost_correct(text_input.upper(), correct_answers_upper_word_set):
                 #     send_message(p, p.ui().MSG_ANSWER_ALMOST)
                 else:
-                    give_penalty = current_indovinello.get('PENALTY',False)
+                    give_penalty = current_mission.get('PENALTY',False)
                     game.increase_wrong_answers_current_indovinello(p, text_input, give_penalty)
                     if give_penalty:
                         penalties, penalty_sec = game.get_total_penalty(p)
@@ -783,16 +825,16 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
 
-def send_post_message(p, current_indovinello):
-    post_msg_present = 'POST_MESSAGE' in current_indovinello
-    post_media_present = 'POST_MEDIA' in current_indovinello
+def send_post_message(p, current_mission):
+    post_msg_present = 'POST_MESSAGE' in current_mission
+    post_media_present = 'POST_MEDIA' in current_mission
     if post_msg_present or post_media_present:
         if post_media_present:
-            caption = current_indovinello.get('POST_MEDIA_CAPTION',None)
-            url_attachment = current_indovinello['POST_MEDIA'][0]['url']
+            caption = current_mission.get('POST_MEDIA_CAPTION',None)
+            url_attachment = current_mission['POST_MEDIA'][0]['url']
             send_media_url(p, url_attachment, caption=caption)
             send_typing_action(p, sleep_time=1)
-        msg = current_indovinello['POST_MESSAGE']
+        msg = current_mission['POST_MESSAGE']
         send_message(p, msg, remove_keyboard=True)
         send_typing_action(p, sleep_time=1)
         return True
@@ -805,11 +847,11 @@ def send_post_message(p, current_indovinello):
 
 def state_MEDIA_INPUT_MISSION(p, message_obj=None, **kwargs):    
     give_instruction = message_obj is None
-    current_indovinello = game.getCurrentIndovinello(p)
-    input_type = current_indovinello['INPUT_TYPE'] # PHOTO, VOICE
+    current_mission = game.get_current_mission(p)
+    input_type = current_mission['INPUT_TYPE'] # PHOTO, VOICE
     assert input_type in ['PHOTO','VOICE','VIDEO']
     if give_instruction:
-        msg = current_indovinello['INPUT_INSTRUCTIONS']
+        msg = current_mission['INPUT_INSTRUCTIONS']
         send_message(p, msg, remove_keyboard=True)
     else:
         photo = message_obj.photo
@@ -833,20 +875,20 @@ def state_MEDIA_INPUT_MISSION(p, message_obj=None, **kwargs):
                     send_message(p, p.ui().MSG_WRONG_INPUT_SEND_VIDEO)
                 return 
             file_id = video['file_id']
-        current_indovinello['MEDIA_INPUT_ID_TYPE'] = [file_id, input_type]
-        if current_indovinello.get('INPUT_CONFIRMATION', False):
+        current_mission['MEDIA_INPUT_ID_TYPE'] = [file_id, input_type]
+        if current_mission.get('INPUT_CONFIRMATION', False):
             redirect_to_state(p, state_CONFIRM_MEDIA_INPUT)
         elif game.manual_validation(p):
-            send_to_validator(p, game, current_indovinello, input_type)        
+            send_to_validator(p, game, current_mission, input_type)        
         else:
             approve_media_input_indovinello(p, approved=True, signature=None)
         p.put()
 
-def send_to_validator(p, game, current_indovinello, input_type):
+def send_to_validator(p, game, current_mission, input_type):
     assert input_type in ['PHOTO','VOICE', 'VIDEO']
     squadra_name = game.get_group_name(p)
-    indovinello_number = game.completed_indovinello_number(p) + 1
-    indovinello_name = current_indovinello['NOME']
+    indovinello_number = game.get_num_compleded_missions(p) + 1
+    indovinello_name = current_mission['NOME']
     replies_dict = {
         'PHOTO': {
             'reply': p.ui().MSG_WAIT_SELFIE_APPROVAL,
@@ -867,7 +909,7 @@ def send_to_validator(p, game, current_indovinello, input_type):
     # store a random password to make sure the approval is correct
     # (the team may have restarted the game in the meanwhile):
     approval_signature = utility.randomAlphaNumericString(5)
-    current_indovinello['sign'] = approval_signature
+    current_mission['sign'] = approval_signature
     send_message(p, replies_dict[input_type]['reply'])
     kb_markup = telegram.InlineKeyboardMarkup(
         [
@@ -881,7 +923,7 @@ def send_to_validator(p, game, current_indovinello, input_type):
             ]
         ]
     )
-    file_id = current_indovinello['MEDIA_INPUT_ID_TYPE'][0]
+    file_id = current_mission['MEDIA_INPUT_ID_TYPE'][0]
     caption = replies_dict[input_type]['caption']
     logging.debug('Sending group input ({}) to validator'.format(input_type))
     if input_type == 'PHOTO':
@@ -894,13 +936,13 @@ def send_to_validator(p, game, current_indovinello, input_type):
 def approve_media_input_indovinello(p, approved, signature):
     # need to double check if team is still waiting for approval
     # (e.g., could have restarted the game, or validator pressed approve twice in a row)
-    current_indovinello = game.getCurrentIndovinello(p)
-    if current_indovinello is None:
+    current_mission = game.get_current_mission(p)
+    if current_mission is None:
         return False
-    file_id, input_type = current_indovinello['MEDIA_INPUT_ID_TYPE']
+    file_id, input_type = current_mission['MEDIA_INPUT_ID_TYPE']
     assert input_type in ['PHOTO','VOICE', 'VIDEO']
-    if game.manual_validation(p) and signature != current_indovinello.get('sign', signature):
-        # if 'sign' is not in current_indovinello it means we are in INPUT_CONFIRMATION mode 
+    if game.manual_validation(p) and signature != current_mission.get('sign', signature):
+        # if 'sign' is not in current_mission it means we are in INPUT_CONFIRMATION mode 
         return False
     if approved:
         game.set_end_mission_time(p)
@@ -908,8 +950,8 @@ def approve_media_input_indovinello(p, approved, signature):
         notify_group_id = game.get_notify_group_id(p)
         if notify_group_id:
             squadra_name = game.get_group_name(p)
-            indovinello_number = game.completed_indovinello_number(p) + 1
-            indovinello_name = current_indovinello['NOME']     
+            indovinello_number = game.get_num_compleded_missions(p) + 1
+            indovinello_name = current_mission['NOME']     
             msg_type_str = {'PHOTO':'Selfie', 'VOICE': 'Registrazione', 'VIDEO': 'Video'}
             msg = '\n'.join([
                 f'Caccia {game.get_hunt_name(p)}:',
@@ -922,8 +964,8 @@ def approve_media_input_indovinello(p, approved, signature):
             else: # input_type=='VIDEO':
                 BOT.send_video(notify_group_id, video=file_id, caption=msg)
         game.append_group_media_input_file_id(p, file_id)        
-        if 'POST_INPUT' in current_indovinello:                        
-            msg = current_indovinello['POST_INPUT']
+        if 'POST_INPUT' in current_mission:                        
+            msg = current_mission['POST_INPUT']
             send_message(p, msg, remove_keyboard=True)
             send_typing_action(p, sleep_time=1)
         redirect_to_state(p, state_COMPLETE_MISSION)
@@ -943,8 +985,8 @@ def approve_media_input_indovinello(p, approved, signature):
 
 def state_CONFIRM_MEDIA_INPUT(p, message_obj=None, **kwargs):    
     give_instruction = message_obj is None
-    current_indovinello = game.getCurrentIndovinello(p)
-    input_type = current_indovinello['INPUT_TYPE'] # PHOTO, VOICE
+    current_mission = game.get_current_mission(p)
+    input_type = current_mission['INPUT_TYPE'] # PHOTO, VOICE
     if give_instruction:
         msg = p.ui().MSG_CONFIRM_PHOTO_INPUT if input_type == 'PHOTO' else p.ui().MSG_CONFIRM_RECORDING_INPUT
         kb = [[p.ui().BUTTON_YES, p.ui().BUTTON_NO]]
@@ -971,11 +1013,14 @@ def state_CONFIRM_MEDIA_INPUT(p, message_obj=None, **kwargs):
 def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
     give_instruction = message_obj is None        
     if give_instruction:
-        game.setCurrentIndovinelloAsCompleted(p)
+        if p.get_tmp_variable('TEST_HUNT_MISSION_ADMIN', False):
+            redirect_to_state(p, state_TEST_HUNT_MISSION_ADMIN)
+            return
+        game.set_current_mission_as_completed(p)
         survery_time = (
-            game.remainingIndovinelloNumber(p) == 0 or (
+            game.get_num_remaining_missions(p) == 0 or (
                 params.JUMP_TO_SURVEY_AFTER and
-                game.completed_indovinello_number(p) == params.JUMP_TO_SURVEY_AFTER
+                game.get_num_compleded_missions(p) == params.JUMP_TO_SURVEY_AFTER
             )
         )
         game.set_mission_end_time(p)
