@@ -89,7 +89,7 @@ def test_multi_routes():
 
     for profile in [api_google.PROFILE_FOOT_WALKING, api_google.PROFILE_CYCLING_REGULAR]:
 
-        for duration_min in [30, 60, 90, 120]:
+        for duration_min in [45, 60, 90, 120]:
 
             for circular_route in [False, True]: # 
 
