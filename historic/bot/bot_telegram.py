@@ -44,6 +44,7 @@ def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
             text = text,
             parse_mode = telegram.ParseMode.MARKDOWN if markdown else None,
             reply_markup = reply_markup,
+            disable_web_page_preview = True,
             **kwargs
         )
     except Unauthorized:

@@ -31,8 +31,13 @@ class UI_LANG:
             self.lang in self.ui_custom_dict and 
             var in self.ui_custom_dict[self.lang]):            
             
-            return self.ui_custom_dict[self.lang][var]
-        return UI_DICT[self.lang].get(var, None)
+            result = self.ui_custom_dict[self.lang][var]
+        else:
+            result = UI_DICT[self.lang].get(var, None)
+            if result is None:
+                from historic.bot.bot_telegram import report_admins
+                report_admins(f'⚠️ Missing UI VAR: {var}')
+        return result
 
     def __getattr__(self, attr):
         return self.get_var(attr)

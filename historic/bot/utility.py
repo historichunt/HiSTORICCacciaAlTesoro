@@ -130,10 +130,10 @@ def getIndexIfIntOrLetterInRange(input, max):
     return None
 
 
-def makeArray2D(data_list, length=2):
+def make_2d_array(data_list, length=2):
     return [data_list[i:i+length] for i in range(0, len(data_list), length)]
 
-def distributeElementMaxSize(seq, maxSize=5):
+def distribute_elements_max_size(seq, maxSize=5):
     if len(seq)==0:
         return []
     lines = len(seq) / maxSize
