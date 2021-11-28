@@ -62,10 +62,10 @@ def repeat_state(user, message_obj=None, **kwargs):
 
 def state_INITIAL(p, message_obj=None, **kwargs):    
     if message_obj is None:
-        switch_language_button = p.ui().BUTTON_ENGLISH if p.language=='IT' else p.ui().BUTTON_ITALIAN
+        # switch_language_button = p.ui().BUTTON_ENGLISH if p.language=='IT' else p.ui().BUTTON_ITALIAN
         kb = [
             [p.ui().BUTTON_START_HUNT],
-            [switch_language_button],
+            # [switch_language_button],
             [p.ui().BUTTON_INFO]
         ]     
         if p.is_global_admin() or p.is_hunt_admin():
@@ -82,12 +82,12 @@ def state_INITIAL(p, message_obj=None, **kwargs):
                     send_message(p, p.ui().MSG_HISTORIC_INFO, remove_keyboard=True)
                     send_typing_action(p, sleep_time=5)
                     repeat_state(p)
-                elif text_input == p.ui().BUTTON_ITALIAN:
-                    p.set_language('IT')
-                    repeat_state(p)
-                elif text_input == p.ui().BUTTON_ENGLISH:
-                    p.set_language('EN')                
-                    repeat_state(p)          
+                # elif text_input == p.ui().BUTTON_ITALIAN:
+                #     p.set_language('IT')
+                #     repeat_state(p)
+                # elif text_input == p.ui().BUTTON_ENGLISH:
+                #     p.set_language('EN')                
+                #     repeat_state(p)          
                 elif text_input == p.ui().BUTTON_ADMIN:
                     redirect_to_state(p, state_ADMIN)
                 return
