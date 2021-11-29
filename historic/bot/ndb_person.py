@@ -53,10 +53,11 @@ class Person(ndb.Model):
 
     def is_admin_current_hunt(self):
         from historic.bot import game
+        hunt_pw = self.current_hunt or self.get_tmp_variable('ADMIN_HUNT_PW')
         return (
-            self.current_hunt!=None 
+            hunt_pw!=None 
             and 
-            game.is_person_hunt_admin(self, self.current_hunt)
+            game.is_person_hunt_admin(self, hunt_pw)
         )
 
     def get_first_name(self, escape_markdown=True):

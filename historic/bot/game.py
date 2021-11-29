@@ -313,7 +313,9 @@ def load_game(p, hunt_password, test_hunt_admin=False):
     # TODO: improve multilingual implementation
     mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni' 
     survey = airtable_utils.get_rows(survey_table, view='Grid view')
-    tvar = p.tmp_variables = {}      
+    if not test_hunt_admin:
+        p.tmp_variables = {} # reset vars        
+    tvar = p.tmp_variables
     tvar['HUNT_NAME'] = hunt_info['Name']
     tvar['TEST_HUNT_MISSION_ADMIN'] = test_hunt_admin
     tvar['HUNT_START_GPS'] = get_closest_mission(p, airtable_game_id, mission_tab_name)

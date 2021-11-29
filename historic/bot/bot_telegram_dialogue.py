@@ -161,7 +161,9 @@ def state_ADMIN(p, message_obj=None, **kwargs):
                     game.reload_config_hunt()
                     send_message(p, p.ui().MSG_RELOADED_HUNTS_CONFIG)
                 else:
+                    hunt_pw = game.HUNTS_NAME[text_input]['Password']
                     p.set_tmp_variable('ADMIN_HUNT_NAME', text_input)
+                    p.set_tmp_variable('ADMIN_HUNT_PW', hunt_pw)
                     redirect_to_state(p, state_HUNT_ADMIN)
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)
@@ -173,7 +175,7 @@ def state_ADMIN(p, message_obj=None, **kwargs):
 
 def state_HUNT_ADMIN(p, message_obj=None, **kwargs):    
     hunt_name = p.get_tmp_variable('ADMIN_HUNT_NAME')
-    hunt_pw = game.HUNTS_NAME[hunt_name]['Password']
+    hunt_pw = p.get_tmp_variable('ADMIN_HUNT_PW')
     if message_obj is None:
         kb = [            
             [p.ui().BUTTON_BACK],
@@ -278,7 +280,7 @@ def state_TEST_HUNT_MISSION_ADMIN(p, message_obj=None, **kwargs):
 
 def state_TERMINATE_HUNT_CONFIRM(p, message_obj=None, **kwargs):    
     hunt_name = p.get_tmp_variable('ADMIN_HUNT_NAME')
-    hunt_pw = game.HUNTS_NAME[hunt_name]['Password']
+    hunt_pw = p.get_tmp_variable('ADMIN_HUNT_PW')
     if message_obj is None:
         kb = [
             [p.ui().BUTTON_YES],
