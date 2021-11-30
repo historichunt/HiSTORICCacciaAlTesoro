@@ -84,6 +84,11 @@ class Person(ndb.Model):
             result += ' @' + self.get_username(escape_markdown)
         return result
 
+    def get_first_last_username_id(self, escape_markdown=True):
+        result = self.get_first_last_username(escape_markdown)
+        result += f' ({self.chat_id})'
+        return result
+
     def get_location(self):
         return self.latitude, self.longitude
 

@@ -374,7 +374,7 @@ def state_ASK_GPS_TO_LIST_HUNTS(p, message_obj=None, **kwargs):
             else:
                 send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
         elif location:            
-            p.set_location(location['latitude'], location['longitude'], put=True)
+            p.set_location(location['latitude'], location['longitude'], put=True)            
             redirect_to_state(p, state_SHOW_AVAILABLE_HUNTS_NEARBY)
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
@@ -385,6 +385,7 @@ def state_ASK_GPS_TO_LIST_HUNTS(p, message_obj=None, **kwargs):
 
 def state_SHOW_AVAILABLE_HUNTS_NEARBY(p, message_obj=None, **kwargs):    
     give_instruction = message_obj is None
+    notify_group_id = game.get_notify_group_id(p)
     if give_instruction:                
         lat_lon = p.get_location()
         open_hunts = [
@@ -395,19 +396,25 @@ def state_SHOW_AVAILABLE_HUNTS_NEARBY(p, message_obj=None, **kwargs):
                 lat_lon
             ) <= params.MAX_DISTANCE_KM_HUNT_GPS
         ]
-        if len(open_hunts) > 0:
+        num_open_hunts = len(open_hunts)
+        if num_open_hunts > 0:
             kb = [
                 [hunt['Name']] for hunt in open_hunts           
             ]     
             kb.append(
                 [p.ui().BUTTON_BACK]
             )
-            send_message(p, "Molto bene, ci sono cacce al tesoro attive vicino a te! Puoi selezionarne una tra quelle qui sotto.", kb) # TODO: fix in UI
+            send_message(p, "Molto bene, ci sono cacce al tesoro attive vicino a te! Puoi selezionarne una tra quelle qui sotto.", kb) # TODO: fix in UI            
         else:
             send_message(p, "Purtroppo non ci sono cacce al tesoro attive vicino a te. In futuro fornirò un modo per vedere dove sono le cacce attive più vicine in modo che possiate giocare in caso vi rechiate in quelle zone.")  # TODO: fix in UI
             send_typing_action(p, 1)
-            redirect_to_state(p, state_ASK_GPS_TO_LIST_HUNTS)
-
+            redirect_to_state(p, state_ASK_GPS_TO_LIST_HUNTS)        
+        if notify_group_id:
+            p_name = p.get_first_last_username_id()
+            hunt_names_str = ', '.join([h['Name'] for h in open_hunts])
+            msg = f'{p_name} ha mandato GPS per inizio caccia (cacce aperte trovate {num_open_hunts}: {hunt_names_str})'
+            send_message(notify_group_id, msg)
+            send_location(notify_group_id, lat_lon[0], lat_lon[1])
     else:
         text_input = message_obj.text
         kb = p.get_keyboard()
@@ -417,6 +424,10 @@ def state_SHOW_AVAILABLE_HUNTS_NEARBY(p, message_obj=None, **kwargs):
             else:
                 hunt_password = game.HUNTS_NAME[text_input]['Password']
                 start_hunt(p, hunt_password)
+                if notify_group_id:
+                    p_name = p.get_first_last_username_id()
+                    msg = f'{p_name} ha iniziato la caccia: {text_input}'
+                    send_message(notify_group_id, msg)
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
@@ -505,7 +516,7 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                     send_message(p, p.ui().MSG_GROUP_NAME_INVALID)
                     return
                 game.set_group_name(p, text_input)
-                notify_group_id = game.get_notify_group_id(p)                
+                notify_group_id = game.get_notify_group_id(p)
                 if notify_group_id:
                     msg = '\n'.join([
                         f'Caccia {game.get_hunt_name(p)}:',

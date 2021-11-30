@@ -408,6 +408,14 @@ def get_notify_group_id(p):
         return None
     return str(id_list[0])
 
+def notify_group(p, msg):
+    from historic.bot.bot_telegram import send_message
+    id_list = p.tmp_variables['Notify_Group ID']
+    if id_list is None:
+        return False
+    return send_message(id_list, msg)
+
+
 def manual_validation(p):
     return p.tmp_variables['Validators IDs'] != None
 
