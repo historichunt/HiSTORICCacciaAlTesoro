@@ -659,16 +659,16 @@ def state_MISSION_INTRO(p, message_obj=None, **kwargs):
     if give_instruction:
         testing = p.get_tmp_variable('TEST_HUNT_MISSION_ADMIN', False)
         # if testing next mission is already set up
-        current_mission = game.get_current_mission(p) if testing else game.set_next_mission(p)
-        indovinello_number = game.get_num_compleded_missions(p) + 1        
+        current_mission = game.get_current_mission(p) if testing else game.set_next_mission(p)        
         if not testing:
-            if indovinello_number==1:
+            mission_number = game.get_num_compleded_missions(p) + 1        
+            if mission_number == 1:
                 # first one
                 send_message(p, p.ui().MSG_START_TIME, remove_keyboard=True)            
                 game.set_game_start_time(p)
                 send_typing_action(p, sleep_time=1)        
             total_missioni = game.get_total_missions(p)
-            msg = p.ui().MSG_MISSION_N_TOT.format(indovinello_number, total_missioni)
+            msg = p.ui().MSG_MISSION_N_TOT.format(mission_number, total_missioni)
             send_message(p, msg, remove_keyboard=True)
             send_typing_action(p, sleep_time=1)        
         if 'INTRODUZIONE_LOCATION' not in current_mission:
@@ -705,16 +705,22 @@ def state_GPS(p, message_obj=None, **kwargs):
         return
     goal_position = utility.get_lat_lon_from_string(current_mission['GPS'])
     if give_instruction:        
-        current_position = p.get_location()
-        distance = geo_utils.distance_meters(goal_position, current_position)
-        GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
-        if distance <= GPS_TOLERANCE_METERS:
-            redirect_to_state(p, state_DOMANDA)
-        else:
-            msg = p.ui().MSG_GO_TO_PLACE
-            kb = [[bot_ui.BUTTON_LOCATION(p.language)]]
-            send_message(p, msg, kb)
-            send_location(p, goal_position[0], goal_position[1])
+        # skip GPS if already there (only for first mission and ROUTING driven hunt)
+        testing = p.get_tmp_variable('TEST_HUNT_MISSION_ADMIN', False)
+        routing_mode = p.get_tmp_variable('TEST_HUNT_MISSION_ADMIN') == 'ROUTING'
+        mission_number = game.get_num_compleded_missions(p) + 1
+        first_mission = mission_number == 1
+        if not testing and first_mission and routing_mode:
+            current_position = p.get_location()
+            distance = geo_utils.distance_meters(goal_position, current_position)
+            GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
+            if distance <= GPS_TOLERANCE_METERS:
+                redirect_to_state(p, state_DOMANDA)
+                return
+        msg = p.ui().MSG_GO_TO_PLACE
+        kb = [[bot_ui.BUTTON_LOCATION(p.language)]]
+        send_message(p, msg, kb)
+        send_location(p, goal_position[0], goal_position[1])
     else:
         location = message_obj.location
         if location:            
@@ -889,23 +895,23 @@ def state_MEDIA_INPUT_MISSION(p, message_obj=None, **kwargs):
 def send_to_validator(p, game, current_mission, input_type):
     assert input_type in ['PHOTO','VOICE', 'VIDEO']
     squadra_name = game.get_group_name(p)
-    indovinello_number = game.get_num_compleded_missions(p) + 1
+    mission_number = game.get_num_compleded_missions(p) + 1
     indovinello_name = current_mission['NOME']
     replies_dict = {
         'PHOTO': {
             'reply': p.ui().MSG_WAIT_SELFIE_APPROVAL,
             'caption': 'Selfie indovinello {} squadra {} per indovinello {}'.format(\
-                indovinello_number, squadra_name, indovinello_name)
+                mission_number, squadra_name, indovinello_name)
         },
         'VOICE': {
             'reply': p.ui().MSG_WAIT_VOICE_APPROVAL,
             'caption': 'Registrazione indovinello {} squadra {} per indovinello {}'.format(\
-                indovinello_number, squadra_name, indovinello_name)
+                mission_number, squadra_name, indovinello_name)
         },
         'VIDEO': {
             'reply': p.ui().MSG_WAIT_VIDEO_APPROVAL,
             'caption': 'Video indovinello {} squadra {} per indovinello {}'.format(\
-                indovinello_number, squadra_name, indovinello_name)
+                mission_number, squadra_name, indovinello_name)
         }
     }
     # store a random password to make sure the approval is correct
@@ -952,12 +958,12 @@ def approve_media_input_indovinello(p, approved, signature):
         notify_group_id = game.get_notify_group_id(p)
         if notify_group_id:
             squadra_name = game.get_group_name(p)
-            indovinello_number = game.get_num_compleded_missions(p) + 1
+            mission_number = game.get_num_compleded_missions(p) + 1
             indovinello_name = current_mission['NOME']     
             msg_type_str = {'PHOTO':'Selfie', 'VOICE': 'Registrazione', 'VIDEO': 'Video'}
             msg = '\n'.join([
                 f'Caccia {game.get_hunt_name(p)}:',
-                f'{msg_type_str[input_type]} indovinello {indovinello_number} ({indovinello_name}) squadra {squadra_name}'
+                f'{msg_type_str[input_type]} indovinello {mission_number} ({indovinello_name}) squadra {squadra_name}'
             ])
             if input_type=='PHOTO':                
                 BOT.send_photo(notify_group_id, photo=file_id, caption=msg)

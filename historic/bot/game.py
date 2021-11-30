@@ -314,7 +314,8 @@ def load_game(p, hunt_password, test_hunt_admin=False):
     mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni' 
     survey = airtable_utils.get_rows(survey_table, view='Grid view')
     if not test_hunt_admin:
-        p.tmp_variables = {} # reset vars        
+        p.tmp_variables = {} # resetting vars 
+        # but we don't want to reset ADMIN_HUNT_NAME and ADMIN_HUNT_PW for admins (mission test)
     tvar = p.tmp_variables
     tvar['HUNT_NAME'] = hunt_info['Name']
     tvar['TEST_HUNT_MISSION_ADMIN'] = test_hunt_admin
@@ -363,6 +364,11 @@ def build_missions(p, test_all=False):
         missions = get_random_missions(p, airtable_game_id, mission_tab_name)            
     tvar['MISSIONI_INFO'] = {'TODO': missions, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(missions)}
     return True
+
+def is_mission_selection_routing_based(p):
+    tvar = p.tmp_variables
+    hunt_settings = tvar['SETTINGS']
+    return hunt_settings.get('MISSIONS_SELECTION', None) == 'ROUTING'
 
 def user_in_game(p):
     return p.current_hunt is not None
