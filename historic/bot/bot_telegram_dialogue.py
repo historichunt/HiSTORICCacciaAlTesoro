@@ -385,7 +385,6 @@ def state_ASK_GPS_TO_LIST_HUNTS(p, message_obj=None, **kwargs):
 
 def state_SHOW_AVAILABLE_HUNTS_NEARBY(p, message_obj=None, **kwargs):    
     give_instruction = message_obj is None
-    notify_group_id = game.get_notify_group_id(p)
     if give_instruction:                
         lat_lon = p.get_location()
         open_hunts = [
@@ -409,12 +408,12 @@ def state_SHOW_AVAILABLE_HUNTS_NEARBY(p, message_obj=None, **kwargs):
             send_message(p, "Purtroppo non ci sono cacce al tesoro attive vicino a te. In futuro fornirò un modo per vedere dove sono le cacce attive più vicine in modo che possiate giocare in caso vi rechiate in quelle zone.")  # TODO: fix in UI
             send_typing_action(p, 1)
             redirect_to_state(p, state_ASK_GPS_TO_LIST_HUNTS)        
-        if notify_group_id:
-            p_name = p.get_first_last_username_id()
-            hunt_names_str = ', '.join([h['Name'] for h in open_hunts])
-            msg = f'{p_name} ha mandato GPS per inizio caccia (cacce aperte trovate {num_open_hunts}: {hunt_names_str})'
-            send_message(notify_group_id, msg)
-            send_location(notify_group_id, lat_lon[0], lat_lon[1])
+        # if notify_group_id:
+        #     p_name = p.get_first_last_username_id()
+        #     hunt_names_str = ', '.join([h['Name'] for h in open_hunts])
+        #     msg = f'{p_name} ha mandato GPS per inizio caccia (cacce aperte trovate {num_open_hunts}: {hunt_names_str})'
+        #     send_message(notify_group_id, msg)
+        #     send_location(notify_group_id, lat_lon[0], lat_lon[1])
     else:
         text_input = message_obj.text
         kb = p.get_keyboard()
@@ -424,6 +423,7 @@ def state_SHOW_AVAILABLE_HUNTS_NEARBY(p, message_obj=None, **kwargs):
             else:
                 hunt_password = game.HUNTS_NAME[text_input]['Password']
                 start_hunt(p, hunt_password)
+                notify_group_id = game.get_notify_group_id(p)
                 if notify_group_id:
                     p_name = p.get_first_last_username_id()
                     msg = f'{p_name} ha iniziato la caccia: {text_input}'
