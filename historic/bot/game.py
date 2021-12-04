@@ -163,6 +163,8 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
         api = api_google
     )      
 
+    max_attempts = 15
+
     lat, lon = p.get_tmp_variable('HUNT_START_GPS')
     start_idx = game_dm.get_coordinate_index(lat=lat, lon=lon)
     skip_points_idx = [
@@ -175,74 +177,98 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
     circular_route = p.get_tmp_variable('ROUTE_CIRCULAR', False)
 
     # manual fine tuning - TODO: make it more robust
-    max_grid_overalapping, duration_tolerance_min = \
-        fine_tuning_trento_open(profile, circular_route, duration_min)
+    # max_grid_overalapping, duration_tolerance_min = \
+    #     fine_tuning_trento_open(profile, circular_route, duration_min)
 
-    duration_sec = duration_min * 60
-    duration_tolerance_sec = duration_tolerance_min * 60
+    max_grid_overalapping = 20
+    duration_tolerance_min = 10    
+    route_planner = None                
+    found_solution = False                    
+    
+    for attempt in range(1,max_attempts+1): # attempts
 
-    route_planner = RoutePlanner(
-        dm = game_dm,
-        profile = profile,
-        metric = routing.METRIC_DURATION,
-        start_idx = start_idx, 
-        min_dst = 60, # 2 min
-        max_dst = 720, # 12 min
-        goal_tot_dst = duration_sec,
-        tot_dst_tolerance = duration_tolerance_sec,
-        min_route_size = None,
-        max_route_size = None,
-        skip_points_idx = skip_points_idx,
-        check_convexity = False,
-        overlapping_criteria = 'GRID',
-        max_overalapping = max_grid_overalapping, # in meters/grids, None to ignore this constraint
-        stop_duration = 300, # da cambiare in 300 per 5 min
-        num_attempts = 1000000, # set to None for exaustive search
-        random_seed = None, # only relevan if num_attempts is not None (non exhaustive serach)
-        exclude_neighbor_dst = 60,    
-        circular_route = circular_route,
-        num_best = 1,
-        stop_when_num_best_reached = True,
-        num_discarded = None,
-        show_progress_bar = False
-    )
+        duration_sec = duration_min * 60
+        duration_tolerance_sec = duration_tolerance_min * 60
 
-    route_planner.build_routes()
+        route_planner = RoutePlanner(
+            dm = game_dm,
+            profile = profile,
+            metric = routing.METRIC_DURATION,
+            start_idx = start_idx, 
+            min_dst = 60, # 2 min
+            max_dst = 720, # 12 min
+            goal_tot_dst = duration_sec,
+            tot_dst_tolerance = duration_tolerance_sec,
+            min_route_size = None,
+            max_route_size = None,
+            skip_points_idx = skip_points_idx,
+            check_convexity = False,
+            overlapping_criteria = 'GRID',
+            max_overalapping = max_grid_overalapping, # in meters/grids, None to ignore this constraint
+            stop_duration = 300, # da cambiare in 300 per 5 min
+            num_attempts = 10000, # set to None for exaustive search
+            random_seed = None, # only relevan if num_attempts is not None (non exhaustive serach)
+            exclude_neighbor_dst = 60,    
+            circular_route = circular_route,
+            num_best = 1,
+            stop_when_num_best_reached = True,
+            num_discarded = None,
+            show_progress_bar = False
+        )
 
-    best_route_idx, stop_names, info, best_route_img, duration_min = \
-        route_planner.get_routes(
-            show_map=False,
-            log=False
-        )      
+        route_planner.build_routes()
 
-    if best_route_idx is None:
+        if len(route_planner.solutions) > 0:
+            found_solution = True
+            break
+        
+        max_grid_overalapping += 20
+        duration_tolerance_min += 10
+
+    if found_solution:
+
+        best_route_idx, stop_names, info, best_route_img, estimated_duration_min = \
+            route_planner.get_routes(
+                show_map=False,
+                log=False
+            )      
+
+        missioni_route = [
+            next(m for m in MISSIONI_ALL if mission_name==m.get('NOME',None))
+            for mission_name in stop_names
+        ]
+
+        info_msg = \
+            f'Ho selezionato per voi {len(stop_names)} tappe e dovreste metterci circa {estimated_duration_min} minuti. '\
+            'Ovviamente dipende da quanto sarete veloci e abili a risolvere gli indovinelli! 😉'     
+        send_message(p, info_msg)
+
+        if p.is_admin_current_hunt():                 
+            info_text = '\n'.join(info)
+            send_message(p, f"🐛 DEBUG:\n\n{info_text}", markdown=False)
+            send_photo_data(p, best_route_img)
+            # selected_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_route,1)])
+            # send_message(p, "DEBUG Selected missioni:\n{}".format(selected_missioni_names))
+        notify_group_id = get_notify_group_id(p)
+        if notify_group_id:
+            squadra_name = get_group_name(p)
+            info_text = f'La squadra {squadra_name} ha attenuto il seguente percorso:\n\n'
+            info_text += '\n'.join(info)
+            send_message(notify_group_id, info_text, markdown=False)
+            send_photo_data(notify_group_id, best_route_img)
+        return missioni_route
+
+    else:
         error_msg = f'⚠️ User {p.get_id()} encountered error in routing:\n'\
                     f'dataset name = {airtable_game_id}\n'\
                     f'start num = {start_idx + 1}\n'\
-                    f'duration sec = {duration_sec}\n'\
+                    f'duration min = {duration_min}\n'\
                     f'profile = {profile}\n'\
                     f'circular route = {circular_route}\n'
         report_admins(error_msg)
         return None
 
-    missioni_route = [
-        next(m for m in MISSIONI_ALL if mission_name==m.get('NOME',None))
-        for mission_name in stop_names
-    ]
 
-    info_msg = \
-        f'Ho selezionato per voi {len(stop_names)} tappe e dovreste metterci circa {duration_min} minuti. '\
-        'Ovviamente dipende da quanto sarete veloci e abili a risolvere gli indovinelli! 😉'     
-    send_message(p, info_msg)
-
-    if p.is_admin_current_hunt():                 
-        info_text = '\n'.join(info)
-        send_message(p, f"🐛 DEBUG:\n\n{info_text}", markdown=False)
-        send_photo_data(p, best_route_img)
-        # selected_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_route,1)])
-        # send_message(p, "DEBUG Selected missioni:\n{}".format(selected_missioni_names))
-
-    return missioni_route
 
 
 

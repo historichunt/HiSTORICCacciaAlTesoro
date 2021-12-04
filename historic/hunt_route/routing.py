@@ -110,6 +110,8 @@ class RoutePlanner:
             f'duration min = {self.goal_tot_dst / 60}',
             f'profile = {self.profile}',
             f'circular route = {self.circular_route}',
+            f'duration tolerance min = {int(self.tot_dst_tolerance / 60)}',
+            f'max overlapping = {self.max_overalapping}'
             ''
         ]
 

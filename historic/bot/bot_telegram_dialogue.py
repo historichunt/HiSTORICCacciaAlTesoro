@@ -3,7 +3,7 @@ import telegram
 import json
 import random
 from historic.config import params, settings
-from historic.bot import airtable_utils, bot_telegram, utility, ndb_person, bot_ui, game, geo_utils
+from historic.bot import airtable_utils, utility, ndb_person, bot_ui, game, geo_utils
 from historic.bot import date_time_util as dtu
 from historic.bot.bot_telegram import BOT, send_message, send_location, send_typing_action, \
     report_admins, send_text_document, send_media_url, \

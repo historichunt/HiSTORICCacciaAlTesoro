@@ -4,7 +4,7 @@ from historic.hunt_route.routing import RoutePlanner
 from historic.hunt_route import routing
 from historic.hunt_route.data_matrices import DataMatrices
 from historic.hunt_route.trento_open_params import fine_tuning_trento_open
-
+from collections import Counter
 
 def get_route_planner(datamatrix, profile, metric, start_idx, duration_sec, tot_dst_tolerance,
     max_grid_overalapping, circular_route, show_progress_bar):
@@ -24,8 +24,8 @@ def get_route_planner(datamatrix, profile, metric, start_idx, duration_sec, tot_
         check_convexity = False,
         overlapping_criteria = 'GRID', 
         max_overalapping = max_grid_overalapping, # 20, # in meters/grids, None to ignore this constraint
-        stop_duration = 300, # da cambiare in 300 per 5 min
-        num_attempts = 100000, # set to None for exaustive search
+        stop_duration = 300, # 5 min
+        num_attempts = 10000, # set to None for exaustive search
         random_seed = 1, # only relevan if num_attempts is not None (non exhaustive serach)
         exclude_neighbor_dst = 60,    
         circular_route = circular_route,
@@ -81,54 +81,75 @@ def test_multi_routes():
 
     api = api_google
     metric = routing.METRIC_DURATION
+    max_attempts = 10
 
     trento_dm = DataMatrices(
-        dataset_name = 'apph7gGu4AAOgcbdA',
+        dataset_name = 'apph7gGu4AAOgcbdA', # trento open
         api = api
     )  
 
-    for profile in [api_google.PROFILE_FOOT_WALKING, api_google.PROFILE_CYCLING_REGULAR]:
+    for profile in [api_google.PROFILE_FOOT_WALKING, api_google.PROFILE_CYCLING_REGULAR]:        
 
         for duration_min in [45, 60, 90, 120]:
 
-            for circular_route in [False, True]: # 
+            duration_sec = duration_min * 60
+
+            for circular_route in [False]: #                 
 
                 print(f'Using profile {profile}, duration {duration_min}, circular {circular_route}')
 
-                max_grid_overalapping, duration_tolerance_min = \
-                    fine_tuning_trento_open(profile, circular_route, duration_min)
+                # max_grid_overalapping, duration_tolerance_min = \
+                #     fine_tuning_trento_open(profile, circular_route, duration_min)
 
                 # print('max_grid_overalapping', max_grid_overalapping)
                 # print('duration_tolerance_min', duration_tolerance_min)
-                
-                route_errors_idx = []
+
+                # route_errors_idx = []                
+                solution_counter = Counter()
 
                 for start_idx in tqdm(range(trento_dm.num_points)):
 
-                    duration_sec = duration_min * 60
-                    duration_tolerance_sec = duration_tolerance_min * 60
+                    max_grid_overalapping = 20
+                    duration_tolerance_min = 10                    
+                    found_solution = False                    
+                    
+                    for attempt in range(1,max_attempts+1):
 
-                    route_planner = get_route_planner(
-                        trento_dm, profile, metric, start_idx, duration_sec, 
-                        tot_dst_tolerance=duration_tolerance_sec,
-                        max_grid_overalapping=max_grid_overalapping,
-                        circular_route=circular_route, 
-                        show_progress_bar=False)
+                        duration_tolerance_sec = duration_tolerance_min * 60
 
-                    route_planner.build_routes()
+                        route_planner = get_route_planner(
+                            trento_dm, profile, metric, start_idx, duration_sec, 
+                            tot_dst_tolerance=duration_tolerance_sec,
+                            max_grid_overalapping=max_grid_overalapping,
+                            circular_route=circular_route, 
+                            show_progress_bar=False)
 
-                    if len(route_planner.solutions) == 0:
+                        route_planner.build_routes()
+
+                        if len(route_planner.solutions) > 0:
+                            found_solution = True
+                            solution_counter[attempt]+=1
+                            break
+                        
+                        max_grid_overalapping += 20
+                        duration_tolerance_min += 10
+
+                        # if len(route_planner.solutions) == 0:
+                        
+
+                    if not found_solution:
                         # route_errors_idx.append(start_idx)
                         print(f'Missing route for start_idx {start_idx}')
-                        route_planner.get_routes(
-                            show_map=False,
-                            log=True
-                        )            
+                        # route_planner.get_routes(
+                        #     show_map=False,
+                        #     log=True
+                        # )            
                         return
 
-                if route_errors_idx:
-                    print('route_errors_idx', route_errors_idx)
+                    # if route_errors_idx:
+                    #     print('route_errors_idx', route_errors_idx)
 
+                print(sorted(solution_counter.items(), key=lambda x: x[0]))
 
 if __name__ == "__main__":
     # test_single_route()
