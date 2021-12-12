@@ -1,22 +1,27 @@
 from datetime import datetime
 from datetime import timedelta
 
-def nowUtcIsoFormat():
+def now_utc():
+    return datetime.utcnow()
+
+def delta_time_now_utc_hours(dt):
+    delta = datetime.utcnow() - dt
+    hours = round(delta.total_seconds() / 3600,1)
+    return hours
+
+def now_utc_iso_format():
     dt = datetime.utcnow()
     return dt.isoformat()
 
-def dateTimeFromUtcIsoFormat(str_dt):
+def datetime_from_utc_iso(str_dt):
     dt, _, us = str_dt.partition(".")
     dt = datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S")
     us = int(us.rstrip("Z"), 10)
     return dt + timedelta(microseconds=us)
 
-def nowUTC():
-    return datetime.now()
-
 def delta_seconds_iso(old_str, new_str):
-    new = dateTimeFromUtcIsoFormat(new_str)
-    old = dateTimeFromUtcIsoFormat(old_str)
+    new = datetime_from_utc_iso(new_str)
+    old = datetime_from_utc_iso(old_str)
     diff = new - old
     return diff.seconds
 
@@ -26,15 +31,13 @@ def delta_seconds_str(old_str, new_str, format='%d-%m-%Y %H:%M:%S'):
     diff = new - old
     return diff.seconds
 
-
 def formatDateTime(dt, format='%d-%m-%Y %H:%M'):
     if dt:
         return dt.strftime(format)
     return None
 
 def timestamp_yyyymmdd():
-    return nowUTC().strftime("%Y%m%d")
-
+    return now_utc().strftime("%Y%m%d")
 
 def delta_min(dt1, dt2):
     diff = dt2 - dt1

@@ -275,7 +275,7 @@ def state_TEST_HUNT_MISSION_ADMIN(p, message_obj=None, **kwargs):
             send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
 # ================================
-# Hunt Admin State
+# Terminate Hunt Admin State
 # ================================
 
 def state_TERMINATE_HUNT_CONFIRM(p, message_obj=None, **kwargs):    
@@ -298,18 +298,9 @@ def state_TERMINATE_HUNT_CONFIRM(p, message_obj=None, **kwargs):
                 elif text_input == p.ui().BUTTON_YES:
                     qry = Person.query(Person.current_hunt==hunt_pw)
                     remaining_people = qry.fetch()
-                    if remaining_people:                                                            
-                        for u in remaining_people:                     
-                            if not p.tmp_variables.get('FINISHED', False):                   
-                                game.exit_game(u, save_data=True, reset_current_hunt=True)
-                                restart(u)
-                            else:
-                                # people who have completed needs to be informed too
-                                # we already saved the data but current hunt wasn't reset
-                                u.reset_current_hunt()
-                            reset_hunt_after_completion = get_str_param_boolean(u.tmp_variables['SETTINGS'], 'RESET_HUNT_AFTER_COMPLETION')
-                            terminate_message_key = 'MSG_HUNT_TERMINATED_RESET_ON' if reset_hunt_after_completion else 'MSG_HUNT_TERMINATED_RESET_OFF'
-                            send_message(u, p.ui().get_var(terminate_message_key), remove_keyboard=True, sleep=True)
+                    if remaining_people:                                                        
+                        for remaining_person in remaining_people:                     
+                            teminate_hunt(remaining_person)
                     msg = "Mandato messaggio di termine a {} squadre.".format(len(remaining_people))
                     send_message(p, msg, remove_keyboard=True)
                     send_typing_action(p, sleep_time=1)
@@ -319,6 +310,18 @@ def state_TERMINATE_HUNT_CONFIRM(p, message_obj=None, **kwargs):
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)    
 
+def teminate_hunt(p):    
+    reset_hunt_after_completion = get_str_param_boolean(p.tmp_variables['SETTINGS'], 'RESET_HUNT_AFTER_COMPLETION')
+    terminate_message_key = 'MSG_HUNT_TERMINATED_RESET_ON' if reset_hunt_after_completion else 'MSG_HUNT_TERMINATED_RESET_OFF'
+    send_message(p, p.ui().get_var(terminate_message_key), remove_keyboard=True, sleep=True)
+    send_typing_action(p, sleep_time=1)
+    if not p.tmp_variables.get('FINISHED', False):                   
+        game.exit_game(p, save_data=True, reset_current_hunt=True)
+        restart(p)
+    else:
+        # people who have completed needs to be informed too
+        # we already saved the data but current hunt wasn't reset
+        p.reset_current_hunt()
 
 # ================================
 # ASK_GPS_TO_LIST_HUNTS (accessed via pw/qr code)
@@ -781,7 +784,7 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
         if text_input:            
             kb = p.get_keyboard()
             if text_input in flatten(kb):
-                now_string = dtu.nowUtcIsoFormat()
+                now_string = dtu.now_utc_iso_format()
                 MIN_SEC_INDIZIO_1 = int(p.tmp_variables['SETTINGS']['MIN_SEC_INDIZIO_1'])
                 MIN_SEC_INDIZIO_2 = int(p.tmp_variables['SETTINGS']['MIN_SEC_INDIZIO_2'])
                 if text_input == p.ui().BUTTON_FIRST_HINT:
@@ -806,7 +809,7 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                         current_mission['indizio2_time'] = now_string
                         send_message(p, msg, remove_keyboard=True)
                     else:
-                        remaining = MIN_SEC_INDIZIO_1 - ellapsed
+                        remaining = MIN_SEC_INDIZIO_2 - ellapsed
                         send_message(p, p.ui().MSG_TOO_EARLY.format(remaining))
             else:
                 import functools, regex
@@ -1210,6 +1213,24 @@ def deal_with_admin_commands(p, message_obj):
         if text_input == '/debug':
             #send_message(p, game.debug_tmp_vars(p), markdown=False)
             send_text_document(p, 'tmp_vars.json', game.debug_tmp_vars(p))
+            return True
+        if text_input.startswith('/debug '):
+            user_id = text_input.split()[1]
+            u = Person.get_by_id(user_id)
+            if u:
+                #send_message(p, game.debug_tmp_vars(p), markdown=False)
+                send_text_document(p, 'tmp_vars.json', game.debug_tmp_vars(u))
+            else:
+                send_message(p, f'User id {user_id} non valido')
+            return True
+        if text_input.startswith('/terminate_'):
+            user_id = text_input.lsplit('_',1)[1]
+            u = Person.get_by_id(user_id)
+            if u:                
+                teminate_hunt(u)
+                send_message(p, f'Caccia terminata per {u.get_first_last_username()}')
+            else:
+                send_message(p, f'User id {user_id} non valido')
             return True
         if text_input == '/version':
             msg = f'{settings.ENV_VERSION} {settings.APP_VERSION}'

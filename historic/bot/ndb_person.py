@@ -198,7 +198,7 @@ def reset_person_tmp_var(uid):
 
 def get_people_on_hunt_stats(hunt):
     from historic.bot import game
-    people_on_hunt = Person.query(Person.current_hunt==hunt).fetch()    
-    stats = '\n'.join(
+    people_on_hunt = Person.query(Person.current_hunt==hunt).order("__key__").fetch()    
+    stats = '\n\n'.join(
         [game.get_game_stats(p) for p in people_on_hunt])    #  if p.tmp_variables['GROUP_NAME']
     return stats

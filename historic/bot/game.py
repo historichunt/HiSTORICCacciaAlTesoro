@@ -414,16 +414,31 @@ def exit_game(p, save_data=True, reset_current_hunt=True, put=True):
     return True
 
 def get_game_stats(p):
-    name_username = p.get_first_last_username()
-    group_name = p.tmp_variables.get('GROUP_NAME','')
-    mission_info = p.tmp_variables.get('MISSIONI_INFO', None)
-    if mission_info:
-        completed = len(p.tmp_variables['MISSIONI_INFO']['COMPLETED'])
-        total = p.tmp_variables['MISSIONI_INFO']['TOTAL']
-        finished = p.tmp_variables['FINISHED']
-        return '- {} {} {}/{} Finished={}'.format(name_username, group_name, completed, total, finished)
+    name_username = p.get_first_last_username(escape_markdown=False)
+    vars = p.tmp_variables
+    group_name = vars.get('GROUP_NAME','') # gruppo non pervenuto
+    email = vars.get('EMAIL','')
+    mission_info = vars.get('MISSIONI_INFO', None)
+    last_mod_hours = dtu.delta_time_now_utc_hours(p.last_mod)
+    last_access_str = f'(ultimo accesso {last_mod_hours} ore fa)'
+    stats = ['➡', f'{name_username}']
+    if email:
+        stats.append(email)
+    if group_name:
+        stats.append(f'gruppo: {group_name}')
+    if mission_info:        
+        completed = len(vars['MISSIONI_INFO']['COMPLETED'])
+        total = vars['MISSIONI_INFO']['TOTAL']
+        finished = vars['FINISHED']                        
+        stats.append(f'{completed}/{total}')
+        if finished:
+            stats.append('COMPLETATA')
+        else:                         
+            stats.append(last_access_str)
     else:
-        return '- {} {} ?'.format(name_username, group_name)
+        stats.extend(['NON INIZIATA', last_access_str])
+    stats.append(f'❌ /terminate_{p.get_id()}')
+    return ' '.join(stats)
 
 def get_hunt_name(p):
     return p.tmp_variables['HUNT_NAME']
@@ -464,19 +479,19 @@ def get_group_name(p, escape_markdown=True):
 
 def set_game_start_time(p):
     
-    start_time = dtu.nowUtcIsoFormat()
+    start_time = dtu.now_utc_iso_format()
     p.tmp_variables['START_TIME'] = start_time
 
 def get_game_start_time(p):
     return p.tmp_variables['START_TIME']
 
 def set_game_end_time(p, finished):
-    end_time = dtu.nowUtcIsoFormat()
+    end_time = dtu.now_utc_iso_format()
     p.tmp_variables['END_TIME'] = end_time
     p.tmp_variables['FINISHED'] = finished
 
 def start_mission(p):
-    start_time = dtu.nowUtcIsoFormat()    
+    start_time = dtu.now_utc_iso_format()    
     current_mission = get_current_mission(p)
     current_mission['wrong_answers'] = []
     current_mission['start_time'] = start_time
@@ -484,10 +499,10 @@ def start_mission(p):
 
 def set_end_mission_time(p):
     current_mission = get_current_mission(p)
-    current_mission['end_time'] = dtu.nowUtcIsoFormat()
+    current_mission['end_time'] = dtu.now_utc_iso_format()
 
 def set_mission_end_time(p):
-    end_time = dtu.nowUtcIsoFormat()
+    end_time = dtu.now_utc_iso_format()
     last_mission_time = p.tmp_variables['MISSION_TIMES'][-1]
     last_mission_time.append(end_time)
     mission_ellapsed = dtu.delta_seconds_iso(*last_mission_time)
