@@ -437,6 +437,7 @@ def get_game_stats(p):
             stats.append(last_access_str)
     else:
         stats.extend(['NON INIZIATA', last_access_str])
+    stats.append(f'🐛 /debug_{p.get_id()}')
     stats.append(f'❌ /terminate_{p.get_id()}')
     return ' '.join(stats)
 

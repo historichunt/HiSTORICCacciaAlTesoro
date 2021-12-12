@@ -1214,8 +1214,8 @@ def deal_with_admin_commands(p, message_obj):
             #send_message(p, game.debug_tmp_vars(p), markdown=False)
             send_text_document(p, 'tmp_vars.json', game.debug_tmp_vars(p))
             return True
-        if text_input.startswith('/debug '):
-            user_id = text_input.split()[1]
+        if text_input.startswith('/debug_'):
+            user_id = text_input.split('_',1)[1]
             u = Person.get_by_id(user_id)
             if u:
                 #send_message(p, game.debug_tmp_vars(p), markdown=False)
