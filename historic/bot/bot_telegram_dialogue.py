@@ -1279,7 +1279,7 @@ def deal_with_admin_commands(p, message_obj):
                 time.sleep(i+1)
             send_message(p, "end")
             return True
-        if text_input.startswith('/testText '):
+        if text_input.startswith('/echo '):
             text = text_input.split(' ', 1)[1]
             msg = '🔔 *Messaggio da hiSTORIC* 🔔\n\n' + text
             logging.debug("Test broadcast " + msg)
@@ -1291,8 +1291,8 @@ def deal_with_admin_commands(p, message_obj):
             logging.debug("Starting to broadcast " + msg)
             broadcast(p, msg)
             return True
-        if text_input.startswith('/textUser '):
-            p_id, text = text_input.split(' ', 2)[1]
+        if text_input.startswith('/text '):
+            p_id, text = text_input.split(' ')[1:]
             p = Person.get_by_id(p_id)
             if send_message(p, text, kb=p.get_keyboard()):
                 msg_admin = 'Message sent successfully to {}'.format(p.get_first_last_username())
