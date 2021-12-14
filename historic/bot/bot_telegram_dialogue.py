@@ -1226,9 +1226,24 @@ def deal_with_admin_commands(p, message_obj):
         if text_input.startswith('/terminate_'):
             user_id = text_input.split('_',1)[1]
             u = Person.get_by_id(user_id)
-            if u:                
-                teminate_hunt(u)
-                send_message(p, f'Caccia terminata per {u.get_first_last_username()}')
+            if u:   
+                if game.user_in_game(u):
+                    teminate_hunt(u)
+                    send_message(p, f'Caccia terminata per {u.get_first_last_username()}')
+                else:
+                    send_message(p, f'User id {user_id} non è in una caccia')
+            else:
+                send_message(p, f'User id {user_id} non valido')
+            return True
+        if text_input.startswith('/save_'):
+            user_id = text_input.split('_',1)[1]
+            u = Person.get_by_id(user_id)
+            if u:   
+                if game.user_in_game(u):
+                    game.save_game_data_in_airtable(u)
+                    send_message(p, f'Dati salvati in airtable per {u.get_first_last_username()}')
+                else:
+                    send_message(p, f'User id {user_id} non è in una caccia')
             else:
                 send_message(p, f'User id {user_id} non valido')
             return True

@@ -49,8 +49,6 @@ def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
         )
     except Unauthorized:
         logging.debug('User has blocked Bot: {}'.format(chat_id))
-        if kwargs.get('switch_notifications', True):
-            p.switch_notifications()
         return False
     except TelegramError as e:
         logging.debug('Exception in reaching user {}: {}'.format(chat_id, e))
@@ -119,9 +117,13 @@ def get_photo_url_from_telegram(file_id):
     import requests    
     r = requests.post(settings.TELEGRAM_API_URL + 'getFile', data={'file_id': file_id})
     r_json = r.json()
-    r_result = r_json['result']
-    file_path = r_result['file_path']
-    url = settings.TELEGRAM_BASE_URL_FILE + file_path
+    success = r_json['ok']
+    if success:
+        r_result = r_json['result']
+        file_path = r_result['file_path']
+        url = settings.TELEGRAM_BASE_URL_FILE + file_path
+    else:
+        url = 'https://via.placeholder.com/800x600?text=Image deleted'
     return url
 
 def report_admins(message):
@@ -131,10 +133,10 @@ def report_admins(message):
         chunks = (message[0+i:max_length+i] for i in range(0, len(message), max_length))
         for m in chunks:
             for id in settings.ERROR_REPORTERS_IDS:
-                send_message(id, m, markdown=False, sleep=True, switch_notifications=False)
+                send_message(id, m, markdown=False, sleep=True)
     else:
         for id in settings.ERROR_REPORTERS_IDS:
-            send_message(id, message, markdown=False, sleep=True, switch_notifications=False)
+            send_message(id, message, markdown=False, sleep=True)
 
 
 # ---------
