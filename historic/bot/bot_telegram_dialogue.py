@@ -314,7 +314,7 @@ def teminate_hunt(p):
     reset_hunt_after_completion = get_str_param_boolean(p.tmp_variables['SETTINGS'], 'RESET_HUNT_AFTER_COMPLETION')
     terminate_message_key = 'MSG_HUNT_TERMINATED_RESET_ON' if reset_hunt_after_completion else 'MSG_HUNT_TERMINATED_RESET_OFF'
     send_message(p, p.ui().get_var(terminate_message_key), remove_keyboard=True, sleep=True)
-    send_typing_action(p, sleep_time=1)
+    # send_typing_action(p, sleep_time=1)
     if not p.tmp_variables.get('FINISHED', False):                   
         game.exit_game(p, save_data=True, reset_current_hunt=True)
         restart(p)
