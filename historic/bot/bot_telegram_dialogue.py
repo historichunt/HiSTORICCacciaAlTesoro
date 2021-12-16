@@ -1292,7 +1292,7 @@ def deal_with_admin_commands(p, message_obj):
             broadcast(p, msg)
             return True
         if text_input.startswith('/text '):
-            p_id, text = text_input.split(' ')[1:]
+            p_id, text = text_input.split(' ',2)[1:]
             p = Person.get_by_id(p_id)
             if send_message(p, text, kb=p.get_keyboard()):
                 msg_admin = 'Message sent successfully to {}'.format(p.get_first_last_username())
