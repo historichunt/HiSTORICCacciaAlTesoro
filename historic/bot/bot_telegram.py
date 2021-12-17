@@ -138,6 +138,9 @@ def report_admins(message):
         for id in settings.ERROR_REPORTERS_IDS:
             send_message(id, message, markdown=False, sleep=True)
 
+def report_location_admin(lat, lon):
+    for id in settings.ERROR_REPORTERS_IDS:
+        send_location(id, lat, lon)
 
 # ---------
 # BROADCAST

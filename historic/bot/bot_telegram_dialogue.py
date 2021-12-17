@@ -7,7 +7,7 @@ from historic.bot import airtable_utils, utility, ndb_person, bot_ui, game, geo_
 from historic.bot import date_time_util as dtu
 from historic.bot.bot_telegram import BOT, send_message, send_location, send_typing_action, \
     report_admins, send_text_document, send_media_url, \
-    broadcast, report_admins, reset_all_users
+    broadcast, report_admins, reset_all_users, report_location_admin
 from historic.config import params
 from historic.bot.utility import flatten, get_str_param_boolean, make_2d_array
 from historic.bot.ndb_person import Person
@@ -411,12 +411,12 @@ def state_SHOW_AVAILABLE_HUNTS_NEARBY(p, message_obj=None, **kwargs):
             send_message(p, "Purtroppo non ci sono cacce al tesoro attive vicino a te. In futuro fornirò un modo per vedere dove sono le cacce attive più vicine in modo che possiate giocare in caso vi rechiate in quelle zone.")  # TODO: fix in UI
             send_typing_action(p, 1)
             redirect_to_state(p, state_ASK_GPS_TO_LIST_HUNTS)        
-        # if notify_group_id:
-        #     p_name = p.get_first_last_username_id()
-        #     hunt_names_str = ', '.join([h['Name'] for h in open_hunts])
-        #     msg = f'{p_name} ha mandato GPS per inizio caccia (cacce aperte trovate {num_open_hunts}: {hunt_names_str})'
-        #     send_message(notify_group_id, msg)
-        #     send_location(notify_group_id, lat_lon[0], lat_lon[1])
+        # notify admin with position
+        p_name = p.get_first_last_username_id()
+        hunt_names_str = ', '.join([h['Name'] for h in open_hunts])
+        msg = f'{p_name} ha mandato GPS per inizio caccia - cacce aperte trovate {num_open_hunts}: ({hunt_names_str})'
+        report_admins(msg)
+        report_location_admin(lat_lon[0], lat_lon[1])
     else:
         text_input = message_obj.text
         kb = p.get_keyboard()
