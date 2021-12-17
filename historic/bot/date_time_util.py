@@ -6,7 +6,7 @@ def now_utc():
 
 def delta_time_now_utc_hours(dt):
     delta = datetime.utcnow() - dt
-    hours = round(delta.total_seconds() / 3600,1)
+    hours = round(delta.total_seconds() / 3600)
     return hours
 
 def now_utc_iso_format():

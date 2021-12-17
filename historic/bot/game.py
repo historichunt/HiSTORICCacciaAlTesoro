@@ -430,7 +430,7 @@ def get_game_stats(p):
         completed = len(vars['MISSIONI_INFO']['COMPLETED'])
         total = vars['MISSIONI_INFO']['TOTAL']
         finished = vars['FINISHED']                        
-        stats.append(f'{completed}/{total}')
+        stats.append(f'Missioni: {completed}/{total}')
         if finished:
             stats.append('COMPLETATA')
         else:                         

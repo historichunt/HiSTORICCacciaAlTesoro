@@ -1,4 +1,5 @@
 import logging
+from re import escape
 import telegram
 import json
 import random
@@ -22,6 +23,7 @@ def restart_multi(users, **kwargs):
         redirect_to_state(u, state_INITIAL, **kwargs)
 
 def restart(user, **kwargs):
+    # user.reset_tmp_variables()    
     redirect_to_state(user, state_INITIAL, **kwargs)
 
 # ================================
@@ -310,10 +312,50 @@ def state_TERMINATE_HUNT_CONFIRM(p, message_obj=None, **kwargs):
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)    
 
+# ================================
+# Terminate Person Confirm
+# ================================
+
+def state_TERMINATE_USER_CONFIRM(p, message_obj=None, **kwargs):    
+    user_id = p.get_tmp_variable('TERMINATE_USER_ID', None)
+    u = Person.get_by_id(user_id)
+    u_info = u.get_first_last_username()    
+    prev_state_func = possibles.get(p.last_state)
+    if message_obj is None:
+        if u:
+            kb = [
+                [p.ui().BUTTON_YES],
+                [p.ui().BUTTON_ANNULLA],
+            ]            
+            msg = f'Sei sicuro di voler terminare la caccia per {u_info}'
+            send_message(p, msg, kb)
+        else:
+            send_message(p, f'Utente {user_id} non valideo')
+            redirect_to_state(p, prev_state_func)
+    else: 
+        text_input = message_obj.text
+        kb = p.get_keyboard()
+        if text_input:
+            if text_input in flatten(kb):
+                if text_input == p.ui().BUTTON_ANNULLA:
+                    redirect_to_state(p, prev_state_func)
+                elif text_input == p.ui().BUTTON_YES:
+                    if game.user_in_game(u):
+                        teminate_hunt(u)
+                        send_message(p, f'Caccia terminata per {u_info}')
+                    else:
+                        send_message(p, f'User id {user_id} non è in una caccia')
+                    send_typing_action(p, sleep_time=1)
+                    redirect_to_state(p, prev_state_func)
+            else:
+                send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)     
+        else:
+            send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)   
+
 def teminate_hunt(p):    
     reset_hunt_after_completion = get_str_param_boolean(p.tmp_variables['SETTINGS'], 'RESET_HUNT_AFTER_COMPLETION')
     terminate_message_key = 'MSG_HUNT_TERMINATED_RESET_ON' if reset_hunt_after_completion else 'MSG_HUNT_TERMINATED_RESET_OFF'
-    send_message(p, p.ui().get_var(terminate_message_key), remove_keyboard=True, sleep=True)
+    result = send_message(p, p.ui().get_var(terminate_message_key), remove_keyboard=True, sleep=True)
     # send_typing_action(p, sleep_time=1)
     if not p.tmp_variables.get('FINISHED', False):                   
         game.exit_game(p, save_data=True, reset_current_hunt=True)
@@ -322,6 +364,7 @@ def teminate_hunt(p):
         # people who have completed needs to be informed too
         # we already saved the data but current hunt wasn't reset
         p.reset_current_hunt()
+    return result
 
 # ================================
 # ASK_GPS_TO_LIST_HUNTS (accessed via pw/qr code)
@@ -412,7 +455,7 @@ def state_SHOW_AVAILABLE_HUNTS_NEARBY(p, message_obj=None, **kwargs):
             send_typing_action(p, 1)
             redirect_to_state(p, state_ASK_GPS_TO_LIST_HUNTS)        
         # notify admin with position
-        p_name = p.get_first_last_username_id()
+        p_name = p.get_first_last_username_id(escape_markdown=False)
         hunt_names_str = ', '.join([h['Name'] for h in open_hunts])
         msg = f'{p_name} ha mandato GPS per inizio caccia - cacce aperte trovate {num_open_hunts}: ({hunt_names_str})'
         report_admins(msg)
@@ -1225,15 +1268,8 @@ def deal_with_admin_commands(p, message_obj):
             return True
         if text_input.startswith('/terminate_'):
             user_id = text_input.split('_',1)[1]
-            u = Person.get_by_id(user_id)
-            if u:   
-                if game.user_in_game(u):
-                    teminate_hunt(u)
-                    send_message(p, f'Caccia terminata per {u.get_first_last_username()}')
-                else:
-                    send_message(p, f'User id {user_id} non è in una caccia')
-            else:
-                send_message(p, f'User id {user_id} non valido')
+            p.set_tmp_variable('TERMINATE_USER_ID', user_id)
+            redirect_to_state(p, state_TERMINATE_USER_CONFIRM)
             return True
         if text_input.startswith('/save_'):
             user_id = text_input.split('_',1)[1]
