@@ -1328,28 +1328,27 @@ def deal_with_admin_commands(p, message_obj):
             broadcast(p, msg)
             return True
         if text_input.startswith('/text '):
-            p_id, text = text_input.split(' ',2)[1:]
-            p = Person.get_by_id(p_id)
+            u_id, text = text_input.split(' ',2)[1:]
+            u = Person.get_by_id(u_id)
             if send_message(p, text, kb=p.get_keyboard()):
-                msg_admin = 'Message sent successfully to {}'.format(p.get_first_last_username())
-                report_admins(msg_admin)
+                msg = 'Message successfully sent to {}'.format(u.get_first_last_username())
             else:
-                msg_admin = 'Problems sending message to {}'.format(p.get_first_last_username())
-                report_admins(msg_admin)
+                msg = 'Problems sending message to {}'.format(u.get_first_last_username())
+            send_message(p, msg)
             return True
-        if text_input.startswith('/restartUser '):
-            p_id = ' '.join(text_input.split(' ')[1:])
-            p = Person.get_by_id(p_id)
-            if p:
-                if game.user_in_game(p):
-                    game.exit_game(p, save_data=False, reset_current_hunt=True)
-                    send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
-                restart(p)
+        if text_input.startswith('/restart '):
+            u_id = ' '.join(text_input.split(' ')[1:])
+            u = Person.get_by_id(u_id)
+            if u:
+                if game.user_in_game(u):
+                    game.exit_game(u, save_data=False, reset_current_hunt=True)
+                    send_message(u, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
+                restart(u)
                 msg_admin = 'User restarted: {}'.format(p.get_first_last_username())
-                report_admins(msg_admin)                
+                send_message(p, msg_admin)
             else:
-                msg_admin = 'No user found: {}'.format(p_id)
-                report_admins(msg_admin)
+                msg_admin = 'No user found: {}'.format(u_id)
+                send_message(p, msg_admin)
             return True
         if text_input == '/reset_all_users':            
             reset_all_users(message=None) #message=p.ui().MSG_THANKS_FOR_PARTECIPATING
