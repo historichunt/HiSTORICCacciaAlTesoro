@@ -78,6 +78,9 @@ def get_wrong_answers(hunt_password, table_name='Results'):
             # empty row
             continue
         game_vars = json.loads(fields['GAME VARS'])
+        if 'MISSIONI_INFO' not in game_vars:
+            # missing missioni (probably didn't start the hunt)
+            continue
         completed_missioni = game_vars['MISSIONI_INFO']['COMPLETED']
         for m in completed_missioni:
             name = m['NOME']

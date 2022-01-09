@@ -211,9 +211,15 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                     hunt_stats = ndb_person.get_people_on_hunt_stats(hunt_pw)
                     if hunt_stats:
                         msg = 'Stats:\n\n{}'.format(hunt_stats)
+                        if len(msg)>4000:
+                            file_name_prefix = 'stats_' + hunt_name.replace(' ','_')[:30]
+                            timestamp = dtu.timestamp_yyyymmdd()
+                            send_text_document(p, f'{file_name_prefix}_{timestamp}.txt', msg)      
+                        else:
+                            send_message(p, msg, markdown=False)    
                     else:
                         msg = 'Nessuna squadra iscritta'
-                    send_message(p, msg, markdown=False)
+                        send_message(p, msg, markdown=False)
                 elif text_input == p.ui().BUTTON_TERMINATE:
                     redirect_to_state(p, state_TERMINATE_HUNT_CONFIRM)
                 elif text_input == p.ui().BUTTON_DOWNLOAD_MEDIA:
@@ -229,11 +235,11 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                         send_message(p, msg, markdown=False)
                     else:
                         timestamp = dtu.timestamp_yyyymmdd()
-                        zip_file_name = 'media_' + hunt_name.replace(' ','_')[:20] + f"_{timestamp}.zip"
+                        zip_file_name = 'media_' + hunt_name.replace(' ','_')[:30] + f"_{timestamp}.zip"
                         send_text_document(p, zip_file_name, zip_content)      
                 elif text_input == p.ui().BUTTON_DOWNLOAD_ERRORS:
                     mission_errors, errors_digested = airtable_utils.get_wrong_answers(hunt_pw)
-                    file_name_prefix = 'errori_' + hunt_name.replace(' ','_')[:20]
+                    file_name_prefix = 'errori_' + hunt_name.replace(' ','_')[:30]
                     timestamp = dtu.timestamp_yyyymmdd()
                     send_text_document(p, f'{file_name_prefix}_{timestamp}.txt', mission_errors)      
                     send_text_document(p, f'{file_name_prefix}_{timestamp}_digested.txt', errors_digested)      
