@@ -533,8 +533,11 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)        
     else:
+        if len(input_type)==0:
+            # this may happen if a person sends quickly an input while in a step with no input type
+            return
         text_input = message_obj.text
-        input_type = input_type[0] # takinf first element in the list
+        input_type = input_type[0] # take first element in the list
         if input_type == 'EMAIL':
             if text_input:
                 if utility.check_email(text_input):                
