@@ -101,9 +101,10 @@ def dayly_check_terminate_hunt():
             teminate_hunt(p)
             terminated_people_list.append(p)
             time.sleep(1)
-    msg_admin = "Caccia auto-terminata per:"
-    for n,p in enumerate(terminated_people_list,1):
-        msg_admin += f'\n {n}. {p.get_first_last_username(escape_markdown=False)}'
-    report_admins(msg_admin)
+    if terminated_people_list:
+        msg_admin = "Caccia auto-terminata per:"
+        for n,p in enumerate(terminated_people_list,1):
+            msg_admin += f'\n {n}. {p.get_first_last_username(escape_markdown=False)}'
+        report_admins(msg_admin)
     return '', 201
     
