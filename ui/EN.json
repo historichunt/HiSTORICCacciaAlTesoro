@@ -50,6 +50,7 @@
    "MSG_ANSWER_WRONG_NO_PENALTY_03": "😲 No, I'm sorry, try again!",
    "MSG_ANSWER_WRONG_PL": "🤔 Wrong answer! Try again.\n\n⚠️ Warning, you got {} wrong answers which result in a penalty of {} seconds.",
    "MSG_ANSWER_WRONG_SG": "🤔 Wrong answer! Try again.\n\n⚠️ Warning, you got {} wrong answer which results in a penalty of {} seconds.",
+   "MSG_AUTO_QUIT": "⚠️ I saw you started the treasure hunt but you haven't completed it.\nThe hunt will now be terminated, but you have the option to start another one whenever you want. 😉\n💬 If you would like to give us some suggestions to improve the game, I invite you to send a message to Paolo from hiSTORIC by writing in Telegram to @Phauly or to the email historic.trento@gmail.com.\nThanks for playing with us! 😀",
    "MSG_CHECK_HUNT_OK": "✅ No error found",
    "MSG_CONFIRM_PHOTO_INPUT": "👀 Try to check the photo. Are you sure you want to send it to us?",
    "MSG_CONFIRM_RECORDING_INPUT": "👂 Try to listen to the recording. Are you sure you want to send it to us?",

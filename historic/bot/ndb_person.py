@@ -1,3 +1,4 @@
+from json.tool import main
 from google.cloud import ndb
 from historic.bot.ndb_utils import client_context
 from historic.bot import utility, bot_ui
@@ -202,3 +203,8 @@ def get_people_on_hunt_stats(hunt):
     stats = '\n\n'.join(
         [game.get_game_stats(p) for p in people_on_hunt])    #  if p.tmp_variables['GROUP_NAME']
     return stats
+
+# if __name__ == "__main__":
+#     from historic.bot.ndb_utils import client
+#     with client.context():
+#         print(get_people_on_hunt_expired())

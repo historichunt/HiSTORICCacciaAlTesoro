@@ -324,9 +324,13 @@ def state_TERMINATE_HUNT_CONFIRM(p, message_obj=None, **kwargs):
 
 def state_TERMINATE_USER_CONFIRM(p, message_obj=None, **kwargs):    
     user_id = p.get_tmp_variable('TERMINATE_USER_ID', None)
-    u = Person.get_by_id(user_id)
-    u_info = u.get_first_last_username()    
     prev_state_func = possibles.get(p.last_state)
+    u = Person.get_by_id(user_id)
+    if u is None:
+        send_message(p, 'Wrong user ID')
+        redirect_to_state(p, prev_state_func)
+        return
+    u_info = u.get_first_last_username()        
     if message_obj is None:
         if u:
             kb = [

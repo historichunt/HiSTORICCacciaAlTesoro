@@ -4,6 +4,12 @@ from datetime import timedelta
 def now_utc():
     return datetime.utcnow()
 
+def now_utc_plus_delta_days(days, dt = None):
+    if dt == None:
+        dt = now_utc()
+    return dt + timedelta(days=days)
+
+
 def delta_time_now_utc_hours(dt):
     delta = datetime.utcnow() - dt
     hours = round(delta.total_seconds() / 3600)

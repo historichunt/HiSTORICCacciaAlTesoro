@@ -50,6 +50,7 @@
    "MSG_ANSWER_WRONG_NO_PENALTY_03": "😲 Es ist Falsch, versuch es weiter!",
    "MSG_ANSWER_WRONG_PL": "🤔 Falsche Antwort! Versuch es noch mal.\n⚠️ Achtung, Sie haben {} falsche Antworten gesammelt, das bedeutet eine Strafe von {} Sekunden.",
    "MSG_ANSWER_WRONG_SG": "🤔 Falsche Antwort! Versuch noch mal!\n⚠️ Achtung, Sie haben {} falsche Antworten gesammelt, das bedeutet eine Strafe von {} Sekunden.",
+   "MSG_AUTO_QUIT": "⚠️ Ich habe gesehen, dass du mit der Schatzsuche begonnen hast, aber du hast sie nicht abgeschlossen.\nDie Jagd ist nun beendet, aber Sie haben die Möglichkeit, jederzeit eine neue zu starten. 😉\n💬 Wenn Sie uns einige Vorschläge zur Verbesserung des Spiels machen möchten, lade ich Sie ein, eine Nachricht an Paolo von hiSTORIC zu senden, indem Sie per Telegramm an @Phauly oder an die E-Mail-Adresse historical.trento@gmail.com schreiben.\nDanke, dass du mit uns spielst! 😀",
    "MSG_CHECK_HUNT_OK": "✅ Kein Fehler gefunden",
    "MSG_CONFIRM_PHOTO_INPUT": "👀 Überprüfe dein Bild! Willst du es wirklich an uns schicken?",
    "MSG_CONFIRM_RECORDING_INPUT": "👂 Hör dir die Aufnahme an. Willst du es wirchlich an uns schicken?",

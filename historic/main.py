@@ -1,6 +1,8 @@
 from flask import Flask, request
+from historic.bot.bot_telegram import report_admins
+from historic.bot.utility import escape_markdown
 from historic.config import settings
-
+from historic.bot.ndb_utils import client_context
 
 import logging
 import google.cloud.logging
@@ -70,3 +72,35 @@ def telegram_webhook_handler():
     run_new_thread_and_report_exception(deal_with_request, request_json)
 
     return '', 200
+
+# ================================
+# CRON TASKS
+# ================================
+
+@app.route('/dayly_check_terminate_hunt', methods=['GET'])
+@client_context
+def dayly_check_terminate_hunt():
+    headers = request.headers
+    if not headers.get('X-Appengine-Cron', False):
+        # Only requests from the Cron Service will contain the X-Appengine-Cron header
+        return
+        
+    from historic.bot.date_time_util import now_utc_plus_delta_days
+    from historic.config import params
+    from historic.bot.ndb_person import Person
+    from historic.bot.bot_telegram import send_message
+    from historic.bot.bot_telegram_dialogue import teminate_hunt
+    
+    people_on_hunt = Person.query(Person.current_hunt!=None).fetch()    
+    expiration_date = now_utc_plus_delta_days(-params.TERMINATE_HUNT_AFTER_DAYS)
+    terminated_people_list = []
+    for p in people_on_hunt:
+        if p.last_mod < expiration_date:
+            send_message(p, p.ui().MSG_AUTO_QUIT, sleep=True)
+            teminate_hunt(p)
+            terminated_people_list.append(p)
+    msg_admin = "Caccia auto-terminata per:"
+    for n,p in enumerate(terminated_people_list,1):
+        msg_admin += f'\n {n}. {p.get_first_last_username(escape_markdown=False)}'
+    report_admins(msg_admin)
+    

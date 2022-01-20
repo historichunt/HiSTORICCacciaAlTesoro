@@ -60,6 +60,16 @@ MSG_ANSWER_WRONG_SG,,"🤔 Risposta sbagliata, riprovate!
 
 ⚠️ Warning, you got {} wrong answer which results in a penalty of {} seconds.","🤔 Falsche Antwort! Versuch noch mal!
 ⚠️ Achtung, Sie haben {} falsche Antworten gesammelt, das bedeutet eine Strafe von {} Sekunden."
+MSG_AUTO_QUIT,,"⚠️ Ho visto che hai iniziato la caccia al tesoro ma non la hai completata.
+La caccia verrà ora terminata, ma hai la possibilità di ricominciarne un'altra quando vorrai. 😉
+💬 Se ti va di darci qualche suggerimento per migliorare il gioco, ti invito a mandare un messaggio a Paolo di hiSTORIC scrivendo in Telegram a @Phauly  o alla mail historic.trento@gmail.com.
+Grazie per aver giocato con noi! 😀","⚠️ I saw you started the treasure hunt but you haven't completed it.
+The hunt will now be terminated, but you have the option to start another one whenever you want. 😉
+💬 If you would like to give us some suggestions to improve the game, I invite you to send a message to Paolo from hiSTORIC by writing in Telegram to @Phauly or to the email historic.trento@gmail.com.
+Thanks for playing with us! 😀","⚠️ Ich habe gesehen, dass du mit der Schatzsuche begonnen hast, aber du hast sie nicht abgeschlossen.
+Die Jagd ist nun beendet, aber Sie haben die Möglichkeit, jederzeit eine neue zu starten. 😉
+💬 Wenn Sie uns einige Vorschläge zur Verbesserung des Spiels machen möchten, lade ich Sie ein, eine Nachricht an Paolo von hiSTORIC zu senden, indem Sie per Telegramm an @Phauly oder an die E-Mail-Adresse historical.trento@gmail.com schreiben.
+Danke, dass du mit uns spielst! 😀"
 MSG_CHECK_HUNT_OK,,✅ Nessun errore rilevato,✅ No error found,✅ Kein Fehler gefunden
 MSG_CONFIRM_PHOTO_INPUT,,👀 Provate a controllare la foto. Siete sicuri di volerla inviare?,👀 Try to check the photo. Are you sure you want to send it to us?,👀 Überprüfe dein Bild! Willst du es wirklich an uns schicken?
 MSG_CONFIRM_RECORDING_INPUT,,👂 Provate a riascoltare la registrazione. Siete sicuri di volerla inviare?,👂 Try to listen to the recording. Are you sure you want to send it to us?,👂 Hör dir die Aufnahme an. Willst du es wirchlich an uns schicken?
