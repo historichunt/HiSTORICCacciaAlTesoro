@@ -105,4 +105,5 @@ def dayly_check_terminate_hunt():
     for n,p in enumerate(terminated_people_list,1):
         msg_admin += f'\n {n}. {p.get_first_last_username(escape_markdown=False)}'
     report_admins(msg_admin)
+    return '', 201
     
