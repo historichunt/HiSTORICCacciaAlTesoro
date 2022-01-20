@@ -85,6 +85,7 @@ def dayly_check_terminate_hunt():
         # Only requests from the Cron Service will contain the X-Appengine-Cron header
         return
         
+    import time
     from historic.bot.date_time_util import now_utc_plus_delta_days
     from historic.config import params
     from historic.bot.ndb_person import Person
@@ -96,9 +97,10 @@ def dayly_check_terminate_hunt():
     terminated_people_list = []
     for p in people_on_hunt:
         if p.last_mod < expiration_date:
-            send_message(p, p.ui().MSG_AUTO_QUIT, sleep=True)
+            send_message(p, p.ui().MSG_AUTO_QUIT)
             teminate_hunt(p)
             terminated_people_list.append(p)
+            time.sleep(1)
     msg_admin = "Caccia auto-terminata per:"
     for n,p in enumerate(terminated_people_list,1):
         msg_admin += f'\n {n}. {p.get_first_last_username(escape_markdown=False)}'
