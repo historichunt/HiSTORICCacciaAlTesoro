@@ -118,10 +118,12 @@ def process_errori(mission_error_dict):
             output.append(f'   ERRORE = {error}   (con frequenza = {freq})\n')
     return '\n'.join(output)
 
-def get_results_info(hunt_password, table_name='Results'):
+def get_report(hunt_password, table_name='Results'):
     table_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
     RESULTS_TABLE = Airtable(table_id, table_name, api_key=settings.AIRTABLE_API_KEY)
     table_entries = RESULTS_TABLE.get_all()
+
+    result = []
 
     for entry in table_entries:
         row = entry['fields']
@@ -139,8 +141,11 @@ def get_results_info(hunt_password, table_name='Results'):
 
         total_time_missions = vars['TOTAL TIME MISSIONS']
         nr_missions = vars['MISSIONI_INFO']['TOTAL']
-        print(f'Group={group_name} / secondi in piu = {secondi_in_piu_rispetto_a_quanto_richiesto}  messo={quanto_ci_han_messo_in_secondi}-quantovolevano={quanto_volevano_giocare_in_secondi} /')
-        print(f'Group={group_name} / secondi medi per missione = {total_time_missions/nr_missions}  total time missions={total_time_missions} / missions={nr_missions} /')
+        result.append(f'Group={group_name} / secondi in piu = {secondi_in_piu_rispetto_a_quanto_richiesto}  messo={quanto_ci_han_messo_in_secondi}-quantovolevano={quanto_volevano_giocare_in_secondi} /')
+        result.append(f'Group={group_name} / secondi medi per missione = {total_time_missions/nr_missions}  total time missions={total_time_missions} / missions={nr_missions} /')
+        result.append('')
+
+    return '\n'.join(result)
 
 
 if __name__ == "__main__":    
@@ -179,4 +184,4 @@ if __name__ == "__main__":
             f'{hunt_name_no_space}_errori.txt', f'{hunt_name_no_space}_errori_digested.txt'
         )
     elif opt==3:
-        get_results_info(password)
+        print(get_report(password))

@@ -181,9 +181,9 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
     if message_obj is None:
         kb = [            
             [p.ui().BUTTON_BACK],
-            [p.ui().BUTTON_CHECK_HUNT, p.ui().BUTTON_TEST_MISSION],
-            [p.ui().BUTTON_STATS, p.ui().BUTTON_TERMINATE],
-            [p.ui().BUTTON_DOWNLOAD_MEDIA, p.ui().BUTTON_DOWNLOAD_ERRORS],
+            [p.ui().BUTTON_CHECK_BUGS_HUNT, p.ui().BUTTON_TEST_MISSION],
+            [p.ui().BUTTON_STATS_ACTIVE, p.ui().BUTTON_TERMINATE],
+            [p.ui().BUTTON_DOWNLOAD_MEDIA, p.ui().BUTTON_DOWNLOAD_ERRORS, p.ui().BUTTON_DOWNLOAD_REPORT],
             [p.ui().BUTTON_BACK]
         ]
         msg = p.ui().MSG_HUNT_ADMIN_SELECTED.format(hunt_name)
@@ -195,7 +195,7 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
             if text_input in flatten(kb):
                 if text_input == p.ui().BUTTON_BACK:
                     redirect_to_state(p, state_ADMIN)
-                elif text_input == p.ui().BUTTON_CHECK_HUNT:
+                elif text_input == p.ui().BUTTON_CHECK_BUGS_HUNT:
                     from historic.bot.airtable_check import check_hunt
                     error = check_hunt(hunt_pw)
                     if error:
@@ -207,7 +207,7 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                     game.load_game(p, hunt_pw, test_hunt_admin=True)
                     game.build_missions(p, test_all=True)
                     redirect_to_state(p, state_TEST_HUNT_MISSION_ADMIN)                    
-                elif text_input == p.ui().BUTTON_STATS:
+                elif text_input == p.ui().BUTTON_STATS_ACTIVE:
                     hunt_stats = ndb_person.get_people_on_hunt_stats(hunt_pw)
                     if hunt_stats:
                         msg = 'Stats:\n\n{}'.format(hunt_stats)
@@ -243,6 +243,11 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                     timestamp = dtu.timestamp_yyyymmdd()
                     send_text_document(p, f'{file_name_prefix}_{timestamp}.txt', mission_errors)      
                     send_text_document(p, f'{file_name_prefix}_{timestamp}_digested.txt', errors_digested)      
+                elif text_input == p.ui().BUTTON_DOWNLOAD_REPORT:
+                    report_text = airtable_utils.get_report(hunt_pw)
+                    file_name = 'report_' + hunt_name.replace(' ','_')[:30] + '.txt'
+                    timestamp = dtu.timestamp_yyyymmdd()
+                    send_text_document(p, file_name, report_text)      
             else:
                 send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)     
         else:
