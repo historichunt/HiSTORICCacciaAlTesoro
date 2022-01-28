@@ -2,11 +2,12 @@ import collections
 import requests
 import os
 import io
+import json
 from airtable import Airtable
 from historic.config import settings
 from historic.bot import game
 import zipfile
-from historic.bot.utility import append_num_to_filename
+from historic.bot.utility import append_num_to_filename, is_int_between
 
 def download_media_zip(hunt_password, table_name='Results', log=False):    
     from historic.config.params import MAX_SIZE_FILE_BYTES    
@@ -64,9 +65,8 @@ def get_rows(table, view=None, filter=None, sort_key=None):
     else:
         return rows
 
-def get_wrong_answers(hunt_password, table_name='Results'):
-    from collections import defaultdict
-    import json
+def get_wrong_answers(hunt_password, table_name='Results', output_file=None, output_file_digested=None):
+    from collections import defaultdict    
     table_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
     RESULTS_TABLE = Airtable(table_id, table_name, api_key=settings.AIRTABLE_API_KEY)
     table_entries = RESULTS_TABLE.get_all()
@@ -86,11 +86,16 @@ def get_wrong_answers(hunt_password, table_name='Results'):
             name = m['NOME']
             answers = m['wrong_answers']
             mission_error_dict[name].extend(answers)
-    # with open(output_file, 'w') as f_out:
-    #     # TODO: uppercase, sort and make frequency stats
-    #     f_out.write(json.dumps(mission_error_dict, indent=3, ensure_ascii=False))
     mission_errors = json.dumps(mission_error_dict, indent=3, ensure_ascii=False)
     errors_digested = process_errori(mission_error_dict)
+    if output_file:
+        with open(output_file, 'w') as f_out:
+            # TODO: uppercase, sort and make frequency stats
+            f_out.write(mission_errors)
+    if output_file_digested:
+        with open(output_file, 'w') as f_out:
+            # TODO: uppercase, sort and make frequency stats
+            f_out.write(errors_digested)
     return mission_errors, errors_digested
 
 def process_errori(mission_error_dict):
@@ -113,13 +118,65 @@ def process_errori(mission_error_dict):
             output.append(f'   ERRORE = {error}   (con frequenza = {freq})\n')
     return '\n'.join(output)
 
+def get_results_info(hunt_password, table_name='Results'):
+    table_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
+    RESULTS_TABLE = Airtable(table_id, table_name, api_key=settings.AIRTABLE_API_KEY)
+    table_entries = RESULTS_TABLE.get_all()
+
+    for entry in table_entries:
+        row = entry['fields']
+        # print(vars['ROUTE_DURATION_MIN'][0])
+        finished = row.get('FINISHED', False)
+        if not finished:
+            # print(str(group_name)+'   NANANAN SKIP! NON hanno completato!')
+            continue
+        vars = json.loads(row['GAME VARS'])
+        group_name = row.get('GROUP_NAME', '')
+        quanto_ci_han_messo_in_secondi = vars['ELAPSED GAME']
+        quanto_volevano_giocare_in_minuti = vars['ROUTE_DURATION_MIN']
+        quanto_volevano_giocare_in_secondi = quanto_volevano_giocare_in_minuti * 60
+        secondi_in_piu_rispetto_a_quanto_richiesto = quanto_ci_han_messo_in_secondi - quanto_volevano_giocare_in_secondi
+
+        total_time_missions = vars['TOTAL TIME MISSIONS']
+        nr_missions = vars['MISSIONI_INFO']['TOTAL']
+        print(f'Group={group_name} / secondi in piu = {secondi_in_piu_rispetto_a_quanto_richiesto}  messo={quanto_ci_han_messo_in_secondi}-quantovolevano={quanto_volevano_giocare_in_secondi} /')
+        print(f'Group={group_name} / secondi medi per missione = {total_time_missions/nr_missions}  total time missions={total_time_missions} / missions={nr_missions} /')
+
+
 if __name__ == "__main__":    
-    import os
-    password = input('Inserisci password caccia al tesoro: ').lower()
-    assert password in game.HUNTS_PW, 'Incorrect password'
+    
+    while True:
+        password = input('\nInserisci password caccia al tesoro: ').lower()
+        if password in game.HUNTS_PW:
+            break
+        print('\nPasswrod non valida.\n')
+
     hunt_name = game.HUNTS_PW[password]['Name']
-    output_file = os.path.join('data', hunt_name.replace(' ', '_')[:20]+'.zip')
-    download_media(password, output_file)
-    # download_media_zip(password)
-    # mission_error_dict = get_wrong_answers(password, os.path.join(outputdir, 'errori.txt'))
-    # process_errori(mission_error_dict, os.path.join(outputdir, 'errori_processed.txt'))
+    print(f'\nTrovata caccia: {hunt_name}\n')
+
+    options = [
+        '1. Scaricare media',
+        '2. Scaricare errori',
+        '3. Stampa statistiche squadre'
+    ]
+    
+    while True:
+        print('Opzioni:\n' + '\n'.join(options))
+        opt = input('\nLa tua scelta --> ')
+        if is_int_between(opt, 1, len(options)):
+            opt = int(opt)
+            break
+        print('\nScelta non valida, riprova.\n')
+
+    hunt_name_no_space = hunt_name.replace(' ', '_')[:20]
+    if opt==1:
+        output_file = os.path.join('data', hunt_name_no_space + '.zip')
+        download_media(password, output_file)
+        # download_media_zip(password)
+    elif opt==2:
+        get_wrong_answers(
+            password, 
+            f'{hunt_name_no_space}_errori.txt', f'{hunt_name_no_space}_errori_digested.txt'
+        )
+    elif opt==3:
+        get_results_info(password)
