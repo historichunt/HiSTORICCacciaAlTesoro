@@ -99,6 +99,7 @@ def get_wrong_answers(hunt_password, table_name='Results', output_file=None, out
     return mission_errors, errors_digested
 
 def process_errori(mission_error_dict):
+    mission_error_dict = [x.lower() for x in mission_error_dict]
     output = []
     # with open(output_file, 'w') as f_out:
     output.append("ERRORI piu' frequenti (Almeno 5 volte)\n")
