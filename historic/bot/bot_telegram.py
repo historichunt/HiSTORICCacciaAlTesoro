@@ -87,6 +87,8 @@ def send_media_url(p, url_attachment, kb=None, caption=None,
     remove_keyboard=False, inline_keyboard=False):
     chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
     attach_type = url_attachment.rsplit('.',1)[1].lower()     
+    if '?' in attach_type:
+        attach_type = attach_type.split('?')[0]
     rm = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)       
     if attach_type in ['jpg','png','jpeg']:
         BOT.send_photo(chat_id, photo=url_attachment, caption=caption, reply_markup=rm)
