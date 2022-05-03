@@ -84,7 +84,7 @@ def get_wrong_answers(hunt_password, table_name='Results', output_file=None, out
         completed_missioni = game_vars['MISSIONI_INFO']['COMPLETED']
         for m in completed_missioni:
             name = m['NOME']
-            answers = m['wrong_answers']
+            answers = m['wrong_answers'].lower()
             mission_error_dict[name].extend(answers)
     mission_errors = json.dumps(mission_error_dict, indent=3, ensure_ascii=False)
     errors_digested = process_errori(mission_error_dict)
