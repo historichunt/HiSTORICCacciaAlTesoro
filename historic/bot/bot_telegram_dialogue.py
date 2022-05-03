@@ -450,7 +450,8 @@ def state_SHOW_AVAILABLE_HUNTS_NEARBY(p, message_obj=None, **kwargs):
         lat_lon = p.get_location()
         open_hunts = [
             hunt for hunt in game.HUNTS_NAME.values()
-            if 'GPS' in hunt and 
+            if hunt.get('Active', False) and
+            'GPS' in hunt and 
             geo_utils.distance_km(
                 utility.get_lat_lon_from_string(hunt['GPS']), 
                 lat_lon
