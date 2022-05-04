@@ -64,10 +64,9 @@ def repeat_state(user, message_obj=None, **kwargs):
 
 def state_INITIAL(p, message_obj=None, **kwargs):    
     if message_obj is None:
-        # switch_language_button = p.ui().BUTTON_ENGLISH if p.language=='IT' else p.ui().BUTTON_ITALIAN
         kb = [
             [p.ui().BUTTON_START_HUNT],
-            # [switch_language_button],
+            [p.ui().BUTTON_SWITCH_LANGUAGE],
             [p.ui().BUTTON_INFO]
         ]     
         if p.is_global_admin() or p.is_hunt_admin():
@@ -84,12 +83,8 @@ def state_INITIAL(p, message_obj=None, **kwargs):
                     send_message(p, p.ui().MSG_HISTORIC_INFO, remove_keyboard=True)
                     send_typing_action(p, sleep_time=5)
                     repeat_state(p)
-                # elif text_input == p.ui().BUTTON_ITALIAN:
-                #     p.set_language('IT')
-                #     repeat_state(p)
-                # elif text_input == p.ui().BUTTON_ENGLISH:
-                #     p.set_language('EN')                
-                #     repeat_state(p)          
+                elif text_input == p.ui().BUTTON_SWITCH_LANGUAGE:
+                    redirect_to_state(p, state_CHANGE_LANGUAGE)
                 elif text_input == p.ui().BUTTON_ADMIN:
                     redirect_to_state(p, state_ADMIN)
                 return
@@ -128,6 +123,37 @@ def access_hunt_via_password(p, hunt_password, send_msg_if_wrong_pw):
             send_typing_action(p, 1)
             repeat_state(p)
         return False
+
+# ================================
+# Change Language State
+# ================================
+
+def state_CHANGE_LANGUAGE(p, message_obj=None, **kwargs):    
+    if message_obj is None:
+        buttons_languages = [
+            p.ui().get_var(f'BUTTON_SWITCH_{l}')
+            for l in params.LANGUAGES
+            if l != p.language
+        ]
+        kb = [[b] for b in  buttons_languages]
+        kb.append([p.ui().BUTTON_BACK])
+        send_message(p, p.ui().MSG_CHANGE_LANGUAGE, kb)
+    else: 
+        text_input = message_obj.text
+        kb = p.get_keyboard()
+        if text_input:            
+            if text_input in flatten(kb):
+                if text_input == p.ui().BUTTON_BACK:
+                    redirect_to_state(p, state_INITIAL)
+                else:
+                    for l in params.LANGUAGES:
+                        if text_input == p.ui().get_var(f'BUTTON_SWITCH_{l}'):
+                            p.set_language(l)
+                            send_message(p, p.ui().MSG_LANGUAGE_SWITCHED)
+                            send_typing_action(p, sleep_time=1)                    
+                            redirect_to_state(p, state_INITIAL)
+        else:
+            send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
 # ================================
 # Admin State
@@ -1377,19 +1403,21 @@ def deal_with_admin_commands(p, message_obj):
 
 def deal_with_universal_command(p, message_obj):
     text_input = message_obj.text
+    if not text_input.startswith('/'):
+        return False
     if text_input.startswith('/start'):
         if game.user_in_game(p):
             send_message(p, p.ui().MSG_YOU_ARE_IN_A_GAME_EXIT_FIRST)
         else:
             redirect_to_state(p, state_INITIAL, message_obj)
         return True
-    if text_input.lower() == '/it':
-        send_message(p, "🇮🇹 Linua settata per ITALIANO")
-        p.set_language('IT', put=True)
-        return True
-    if text_input.lower() == '/en':
-        send_message(p, "🇬🇧 Language set on ENGLISH")
-        p.set_language('EN', put=True)
+    # change language (/it /en /de /ja)
+    l = text_input[-2:].upper()
+    if l in params.LANGUAGES:
+        p.set_language(l, put=True)
+        send_message(p, p.ui().MSG_LANGUAGE_SWITCHED)
+        send_typing_action(p, sleep_time=1)                    
+        repeat_state(p)
         return True
     if text_input == '/exit':
         if game.user_in_game(p):

@@ -12,29 +12,32 @@ BUTTON_CONTATTACI,,📩 CONTATTACI,📩 CONTACT US,📩 お問い合わせくだ
 BUTTON_CONTINUE_01,,⏭️ CONTINUA,⏭️ CONTINUE,⏭️ 続行します,⏭️ FORTSETZEN
 BUTTON_CONTINUE_02,,🤔 E QUINDI?,🤔 AND SO?,🤔 など？,🤔 UND SO?
 BUTTON_CONTINUE_03,,⏭️ AVANTI,⏭️ NEXT,⏭️ 次へ,⏭️ WEITER
-BUTTON_DOWNLOAD_MEDIA,,🗜️ DOWNLOAD MEDIA ZIP,🗜️ DOWNLOAD MEDIA ZIP,🗜️ media zipをダウンロードします,🗜️ DOWNLOAD MEDIA REISSVERSCHLUSS HERUNTER
 BUTTON_DOWNLOAD_ERRORS,,✨ DOWNLOAD ERRORI,✨ DOWNLOAD ERRORS,✨ エラーをダウンロードします,✨ DOWNLOAD FEHLER
+BUTTON_DOWNLOAD_MEDIA,,🗜️ DOWNLOAD MEDIA ZIP,🗜️ DOWNLOAD MEDIA ZIP,🗜️ をダウンロードします,🗜️ MEDIEN HERUNTERLADEN
 BUTTON_DOWNLOAD_REPORT,,📜 DOWNLOAD REPORT,📜 DOWNLOAD REPORT,📜 レポートをダウンロードします,📜 BERICHT HERUNTERLADEN
 BUTTON_END,,🎇 FINE,🎇 END,🎇 端,🎇 ENDE
-BUTTON_ENGLISH,,🇬🇧 Switch to English,🇬🇧 Switch to English,🇬🇧 Switch to English,🇬🇧 Switch to English
 BUTTON_FIRST_HINT,,💡 PRIMO INDIZIO,💡 FIRST HINT,💡 最初のヒント,💡 ERSTER HINWEIS
 BUTTON_GPS,,📍 POSIZIONE,📍 LOCATION,📍 場所,📍 LAGE
 BUTTON_INDIETRO,,🔙 INDIETRO,🔙 BACK,🔙 バック,🔙 ZURÜCK
 BUTTON_INFO,,ℹ INFO,ℹ INFO,ℹ 情報,ℹ INFO
 BUTTON_INIZIO,,🏠 TORNA ALL'INIZIO,🏠 HOME,🏠 家,🏠 STARTSEITE
-BUTTON_ITALIAN,,🇮🇹 Passa ad italiano,🇮🇹 Passa ad italiano,🇮🇹 passa ad italiano,🇮🇹 Passa ad italiano
 BUTTON_NEXT_MISSION,,🎳 PROSSIMA MISSIONE,🎳 NEXT MISSION,🎳 次のミッション,🎳 NÄCHSTE AUFGABE
 BUTTON_NO,,❌ NO,❌ NO,❌ いいえ,❌ NEIN
 BUTTON_ROUTE_BICYCLE,,🚲 IN BICI,🚲 BY BICYCLE,🚲 自転車による,🚲 DURCH FAHRRAD
-BUTTON_ROUTE_FOOT,,🦶 A PIEDI,🦶 ON FOOT,🦶 歩いて,🦶 ZU FUSS
-BUTTON_ROUTE_CIRCULAR_YES,,🔄 CIRCOLARE,🔄 CIRCULAR,🔄 円,🔄 RUNDSCHREIBEN
 BUTTON_ROUTE_CIRCULAR_NO,,📏 LINEARE,📏 LINEAR,📏 線形,📏 LINEAR
+BUTTON_ROUTE_CIRCULAR_YES,,🔄 CIRCOLARE,🔄 CIRCULAR,🔄 円,🔄 RUNDSCHREIBEN
+BUTTON_ROUTE_FOOT,,🦶 A PIEDI,🦶 ON FOOT,🦶 歩いて,🦶 ZU FUSS
 BUTTON_SECOND_HINT,,💡 SECONDO INDIZIO,💡 SECOND HINT,💡 セカンドヒント,💡 ZWEITE HINWEIS
 BUTTON_SKIP_EMAIL,,⏩ SALTA,⏩ SKIP,⏩ スキップ,⏩ ÜBERSPRINGEN
 BUTTON_START,,🎯 INIZIAMO!,🎯 LET'S START!,🎯 始めましょう！,🎯 LASST UNS BEGINNEN!
 BUTTON_START_GAME,,🎯 INIZIAMO IL GIOCO!,🎯 LET'S START THE GAME!,🎯 ゲームを始めましょう！,🎯 JETZT STARTEN WIR DAS SPIEL!
 BUTTON_START_HUNT,,🏁 Inizia una caccia al tesoro,🏁 Start a treasure hunt,🏁 トレジャーハントを開始します,🏁 Starte die Schatzsuche
 BUTTON_STATS_ACTIVE,,📈 STATS IN CORSO,📈 STATS CURRENT,📈 stats current,📈 STATISTIKEN STROM
+BUTTON_SWITCH_DE,,🇩🇪 Auf deutsch umstellen,🇩🇪 Auf deutsch umstellen,🇩🇪 Auf deutsch umstellen,🇩🇪 Auf deutsch umstellen
+BUTTON_SWITCH_EN,,🇬🇧 Switch to English,🇬🇧 Switch to English,🇬🇧 Switch to English,🇬🇧 Switch to English
+BUTTON_SWITCH_IT,,🇮🇹 Passa all'italiano,🇮🇹 Passa all'italiano,🇮🇹 Passa all'italiano,🇮🇹 Passa all'italiano
+BUTTON_SWITCH_JA,,🇯🇵 日本語に切り替える,🇯🇵 日本語に切り替える,🇯🇵 日本語に切り替える,🇯🇵 日本語に切り替える
+BUTTON_SWITCH_LANGUAGE,,🌐 LANGUAGE,🌐 LANGUAGE,🌐 LANGUAGE,🌐 LANGUAGE
 BUTTON_TERMINATE,,✂️ TERMINA CACCIA,✂️ TERMINATE HUNT,✂️ を終了します,✂️ BEENDEN SIE DIE JAGD
 BUTTON_TEST_MISSION,,🧪 TEST MISSIONE,🧪 TEST MISSION,🧪 テストミッション,🧪 TEST MISSION
 BUTTON_UNDERSTOOD,,👌 HO CAPITO,👌 UNDERSTOOD,👌 理解された,👌 VERSTANDEN
@@ -42,7 +45,7 @@ BUTTON_UPDATE_HUNTS_CONFIG,,💨 AGGIORNA CACCE,💨 UPDATE HUNTS,💨 を更新
 BUTTON_VERSION,,🏷️ VERSIONE,🏷️ VERSION,🏷️ 嫌なバージョン,🏷️ AUSGABE
 BUTTON_YES,,✅ SI,✅ YES,✅ はい,✅ JA
 MSG_ADMIN,,🔑 INTERFACCIA AMMINISTRATORI,🔑 ADMIN INTERFACE,🔑 管理インターフェイス,🔑 ADMIN SCHNITTSTELLE
-MSG_ANSWER_ALMOST,,🙄 Ci sei quasi... Ricordatevi che avete anche gli aiuti a disposizione!,🙄 Almost...,🙄 ほとんど...,🙄 Fast...
+MSG_ANSWER_ALMOST,,🙄 Ci sei quasi...,🙄 Almost...,🙄 ほとんど...,🙄 Fast...
 MSG_ANSWER_OK_01,,🤗 Risposta esatta!,🤗 Correct answer!,🤗 正解！,🤗 korrekt!
 MSG_ANSWER_OK_02,,🤗 Esatto!,🤗 Exactly!,🤗 正確に！,🤗 Genau!!
 MSG_ANSWER_OK_03,,🤗 Proprio così!,🤗 Way to go!,🤗 行く方法！,🤗 Richtig!
@@ -78,6 +81,7 @@ Thanks for playing with us! 😀","⚠️ 私はあなたがトレジャーハ�
 Die Jagd ist nun beendet, aber Sie haben die Möglichkeit, jederzeit eine neue zu starten. 😉
 💬 Wenn Sie uns einige Vorschläge zur Verbesserung des Spiels machen möchten, lade ich Sie ein, eine Nachricht an Paolo von hiSTORIC zu senden, indem Sie per Telegramm an @Phauly oder an die E-Mail-Adresse historical.trento@gmail.com schreiben.
 Danke, dass du mit uns spielst! 😀"
+MSG_CHANGE_LANGUAGE,,🌐 CHANGE LANGUAGE,🌐 CHANGE LANGUAGE,🌐 CHANGE LANGUAGE,🌐 CHANGE LANGUAGE
 MSG_CHECK_HUNT_OK,,✅ Nessun errore rilevato,✅ No error found,✅ エラーは見つかりません,✅ Kein Fehler gefunden
 MSG_CONFIRM_PHOTO_INPUT,,👀 Provate a controllare la foto. Siete sicuri di volerla inviare?,👀 Try to check the photo. Are you sure you want to send it to us?,👀 写真を確認してみてください。あなたはそれを私たちに送りたいですか？,👀 Überprüfe dein Bild! Willst du es wirklich an uns schicken?
 MSG_CONFIRM_RECORDING_INPUT,,👂 Provate a riascoltare la registrazione. Siete sicuri di volerla inviare?,👂 Try to listen to the recording. Are you sure you want to send it to us?,👂 録音を聞いてみてください。あなたはそれを私たちに送りたいですか？,👂 Hör dir die Aufnahme an. Willst du es wirchlich an uns schicken?
@@ -145,6 +149,7 @@ MSG_HISTORIC_INFO,,ℹ️ Per maggiori informazioni su hiSTORIC visita il nostro
 MSG_HUNT_ADMIN_SELECTED,,👉 ADMIN HUNT: {},👉 ADMIN HUNT: {},👉 管理者狩り：{},👉 Admin -Hunt: {}
 MSG_HUNT_DISABLED,,📆 La caccia al tesoro non è ancora attiva. Aspetta il giorno e l'ora a cui ti sei prenotato/a per iniziare a giocare!,📆 The treasure hunt is not active yet. Wait for the day and time when the hunt is supposed to start!,📆 トレジャーハントはまだアクティブではありません。狩りが始まることになっている日と時間を待ってください！,"📆 Die Schatzsuche ist noch nicht aktiv. Warten Sie auf den Tag und die Zeit, an der die Jagd beginnen soll!"
 MSG_HUNT_NOT_TERMINATED,,⌛ Vi preghiamo di attendere la comunicazione del termine della caccia al tesoro.,⌛ Please wait for a message to indicate that the game is over.,⌛ ゲームが終わったことを示すメッセージが待ってください。,"⌛ Bitte warten Sie auf eine Nachricht, um anzuzeigen, dass das Spiel vorbei ist."
+MSG_HUNT_TERMINATE_CONFIRM,,"🤔 Sei proprio sicuro/a di voler terminare la caccia: {}? QUESTO COMANDO NON È REVERSIBILE. A tutte le persone ancora all'interno, verrà terminata la caccia.",🤔 Are you really sure you want to terminate the hunt: {}? YOU CAN'T UNDO THIS COMMAND. ALL PLAYERS IN THE HUNT WILL BE KICKED OUT.,🤔 を終わらせたいのは本当に確信していますか：{}？このコマンドを元に戻すことはできません。狩りのすべてのプレイヤーは追い出されます。,"🤔 Bist du wirklich sicher, dass du die Jagd beenden willst: {}? Sie können diesen Befehl nicht rückgängig machen. Alle Spieler auf der Jagd werden rausgeschmissen."
 MSG_HUNT_TERMINATED_RESET_OFF,,"⏰ Il tempo a disposizione è terminato!
 🏘 Ritornate al punto di partenza per la premiazione!","⏰ Time is up!
 🏘 Go back to the starting point for the awarding!","⏰ 時間が経ちました！
@@ -159,12 +164,12 @@ MSG_HUNT_TERMINATED_RESET_ON,,"⏰ Il tempo a disposizione è terminato!
 📜 [[FBページ](https://www.facebook.com/historictrento)で結果を公開します。","⏰ Die Zeit ist abgelaufen!
 
 📜 Wir werden das Ergebnis auf unserer [FB -Seite] (https://www.facebook.com/historictrento) veröffentlichen."
-MSG_HUNT_TERMINATE_CONFIRM,,"🤔 Sei proprio sicuro/a di voler terminare la caccia: {}? QUESTO COMANDO NON È REVERSIBILE. A tutte le persone ancora all'interno, verrà terminata la caccia.",🤔 Are you really sure you want to terminate the hunt: {}? YOU CAN'T UNDO THIS COMMAND. ALL PLAYERS IN THE HUNT WILL BE KICKED OUT.,🤔 を終わらせたいのは本当に確信していますか：{}？このコマンドを元に戻すことはできません。狩りのすべてのプレイヤーは追い出されます。,"🤔 Bist du wirklich sicher, dass du die Jagd beenden willst: {}? Sie können diesen Befehl nicht rückgängig machen. Alle Spieler auf der Jagd werden rausgeschmissen."
+MSG_LANGUAGE_SWITCHED,,🇮🇹 Linua settata per ITALIANO,🇬🇧 Language set on ENGLISH,🇯🇵 日本語に設定された言語,🇩🇪 Sprache auf Deutsch eingestellt
+MSG_LIST_HUNTS_FROM_GPS,,📍Inviami la tua *posizione* per vedere se ci sono cacce attive nelle vicinanze.,📍 Send me your *position* to see if there are treasure hunts nearby.,📍 近くに宝狩りがあるかどうかを確認するために、私にあなたの *ポジション *を送ってください。,"📍 Schicken Sie mir Ihre * Position *, um zu sehen, ob es in der Nähe Schatzsuche gibt."
 MSG_MEDIA_INPUT_ABORTED,,❌ Invio annullato.,❌ Submission cancelled.,❌ キャンセルされました。,❌ Einreichung storniert.
 MSG_MEDIA_INPUT_MISSIONE_OK_01,,😀 Fantastico!,Fantastic! 😀,素晴らしい！ 😀,Fantastisch! 😀
 MSG_MEDIA_INPUT_MISSIONE_OK_02,,😀 Super!,Super! 😀,素晴らしい！ 😀,Super! 😀
 MSG_MISSION_N_TOT,,*🎳 Missione {}/{}*,*🎳 Mission {}/{}*,*🎳 ミッション{}/{}*,*🎳 Mission {}/{}*
-MSG_NOT_IN_GAME,,❌ Non hai iniziato una caccia al tesoro.,❌ You are not in a treasure hunt.,❌ あなたは宝狩りにいません。,❌ Sie sind nicht in einer Schatzsuche.
 MSG_NO_FORWARDING_ALLOWED,,⛔️ Input non valido! Non puoi inoltrarmi messaggi!,⛔️ Not a valid input! You cannot forward me messages.,⛔️ 有効な入力ではありません！メッセージを転送することはできません。,⛔️ Kein gültiger Eingang! Sie können mir keine Nachrichten weiterleiten.
 MSG_NO_HUNTS,,"😀 Ciao! 
 In questo momento non c'è nessuna caccia al tesoro attiva.
@@ -179,6 +184,7 @@ historic.trento@gmail.com。","😀 Hallo!
 In diesem Moment gibt es keine aktive Schatzsuche.
 Besuchen Sie uns auf unserer Website [historisch] (https://www.historictrento.it) oder senden Sie uns eine E -Mail an eine E -Mail an
 historic.trento@gmail.com."
+MSG_NOT_IN_GAME,,❌ Non hai iniziato una caccia al tesoro.,❌ You are not in a treasure hunt.,❌ あなたは宝狩りにいません。,❌ Sie sind nicht in einer Schatzsuche.
 MSG_PRESS_FOR_ENDING,,"La caccia al tesoro è terminata! Siete stati bravissimi! Spero vi siate divertiti quanto me! 
 🎇 Ora premete il pulsante per terminare la caccia e bloccare il tempo!",🎇 Press the button to end the game.,🎇 [ボタンを押してゲームを終了します。,"🎇 Drücken Sie die Taste, um das Spiel zu beenden."
 MSG_PRESS_FOR_NEXT_MISSION,,🎳 Premi sul pulsante per andare alla prossima missione.,🎳 Press the button to go to the next mission.,🎳 ボタンを押して、次のミッションに移動します。,"🎳 Drücken Sie die Taste, um zur nächsten Mission zu gehen."
@@ -220,7 +226,6 @@ MSG_SELFIE_MISSIONE_WRONG,,"🤔 Mi dispiace, il selfie non è stato accettato p
 📷 新しいセルフィーを送ってみてください！","🤔 Leider wurde das Selfie nicht akzeptiert, weil es nicht das Objekt des Rätsels enthält, oder wir können Sie nicht klar sehen.
 
 📷 Versuchen Sie uns ein neues Selfie zu schicken!"
-MSG_LIST_HUNTS_FROM_GPS,,📍Inviami la tua *posizione* per vedere se ci sono cacce attive nelle vicinanze.,📍 Send me your *position* to see if there are treasure hunts nearby.,📍 近くに宝狩りがあるかどうかを確認するために、私にあなたの *ポジション *を送ってください。,"📍 Schicken Sie mir Ihre * Position *, um zu sehen, ob es in der Nähe Schatzsuche gibt."
 MSG_START_TIME,,⏱ Via al tempo!,⏱ Time is running!,⏱ 時間が実行されています！,⏱ Die Zeit läuft!
 MSG_SUPPORT,,"💁 Se hai problemi, ci puoi contattare via email a historictrento@gmail.com oppure su Facebook a https://www.facebook.com/historictrento/","💁 If you have any problem, you can contact us via email at historictrento@gmail.com or on Facebook at https://www.facebook.com/historictrento/",💁 問題がある場合は、historictrento@gmail.comまたはhttps://www.facebook.com/historictrento/でFacebookでメールでお問い合わせください。,"💁 Wenn Sie ein Problem haben, können Sie uns per E -Mail unter historictrento@gmail.com oder auf Facebook unter https://www.facebook.com/historictrento/ kontaktieren"
 MSG_SURVEY_INTRO,,"📋 Prima di dirvi quanto ci avete messo, vorrei farvi alcune domande...","📋 Before telling you how long it took you to complete the game, I would like to ask you few questions...",📋 ゲームを完了するのにどれくらい時間がかかったかを伝える前に、私はあなたにいくつかの質問をしたいと思います...,"📋 Bevor Sie Ihnen sagen, wie lange Sie das Spiel vervollständigen, möchte ich Ihnen einige Fragen stellen ..."

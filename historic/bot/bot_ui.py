@@ -45,8 +45,6 @@ class UI_LANG:
     def __getitem__(self, item):
          return self.get_var(item)
 
-# ui = lambda l: UI_LANG(l)
-
 # ================================
 # SPECIAL BUTTONS
 # ================================
