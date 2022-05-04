@@ -4,7 +4,7 @@ import os
 # (works both in flask and gunicorn)
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) 
 
-LANGUAGES = ['IT','EN', 'DE']
+LANGUAGES = ['IT','EN', 'JA', 'DE']
 MAX_TEAM_NAME_LENGTH = 30
 JUMP_TO_SURVEY_AFTER = False  # 2
 TERMINATE_HUNT_AFTER_DAYS = 3
