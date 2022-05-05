@@ -228,11 +228,16 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                         send_message(p, error, markdown=False)
                     else:
                         send_message(p, p.ui().MSG_CHECK_HUNT_OK)
-                elif text_input == p.ui().BUTTON_TEST_MISSION:                    
-                    send_message(p, "Caricamento missioni...")
-                    game.load_game(p, hunt_pw, test_hunt_admin=True)
-                    game.build_missions(p, test_all=True)
-                    redirect_to_state(p, state_TEST_HUNT_MISSION_ADMIN)                    
+                elif text_input == p.ui().BUTTON_TEST_MISSION:
+                    hunt_languages = game.get_hunt_languages(hunt_pw)
+                    if p.language not in hunt_languages:
+                        lang_commands_str = ', '.join([f'/{l}' for l in hunt_languages])
+                        send_message(p, f"Cambia lingua ({lang_commands_str}) e ripremi su {text_input}")    
+                    else:
+                        send_message(p, p.ui().MSG_GAME_IS_LOADING)
+                        game.load_game(p, hunt_pw, test_hunt_admin=True)
+                        game.build_missions(p, test_all=True)
+                        redirect_to_state(p, state_TEST_HUNT_MISSION_ADMIN)                    
                 elif text_input == p.ui().BUTTON_STATS_ACTIVE:
                     hunt_stats = ndb_person.get_people_on_hunt_stats(hunt_pw)
                     if hunt_stats:
@@ -419,8 +424,7 @@ def state_ASK_GPS_TO_START_HUNT(p, message_obj=None, **kwargs):
             [bot_ui.BUTTON_LOCATION(p.language)],            
             [p.ui().BUTTON_BACK],            
         ] 
-        msg = '📍 Inviami la tua posizione per impostare il punto di partenza della caccia' # TODO: fix ui
-        send_message(p, msg, kb)
+        send_message(p, p.ui().MSG_GET_GPS_TO_SET_HUNT_START, kb)
     else:
         text_input = message_obj.text
         location = message_obj.location        
@@ -433,8 +437,7 @@ def state_ASK_GPS_TO_START_HUNT(p, message_obj=None, **kwargs):
                 send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
         elif location:            
             p.set_location(location['latitude'], location['longitude'])
-            hunt_password = p.get_tmp_variable('HUNT_PW')
-            start_hunt(p, hunt_password)
+            redirect_to_state(p, state_CHECK_LANGUAGE_AND_START_HUNT)
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
 
@@ -491,16 +494,16 @@ def state_SHOW_AVAILABLE_HUNTS_NEARBY(p, message_obj=None, **kwargs):
             kb.append(
                 [p.ui().BUTTON_BACK]
             )
-            send_message(p, "Molto bene, ci sono cacce al tesoro attive vicino a te! Puoi selezionarne una tra quelle qui sotto.", kb) # TODO: fix in UI            
+            send_message(p, p.ui().MSG_HUNT_NEARBY_YES, kb)
         else:
-            send_message(p, "Purtroppo non ci sono cacce al tesoro attive vicino a te. In futuro fornirò un modo per vedere dove sono le cacce attive più vicine in modo che possiate giocare in caso vi rechiate in quelle zone.")  # TODO: fix in UI
+            send_message(p, p.ui().MSG_HUNT_NEARBY_NO)
             send_typing_action(p, 1)
             redirect_to_state(p, state_ASK_GPS_TO_LIST_HUNTS)        
         # notify admin with position
         p_name = p.get_first_last_username_id(escape_markdown=False)
         hunt_names_str = ', '.join([h['Name'] for h in open_hunts])
-        msg = f'{p_name} ha mandato GPS per inizio caccia - cacce aperte trovate {num_open_hunts}: ({hunt_names_str})'
-        report_admins(msg)
+        admin_msg = f'{p_name} ha mandato GPS per inizio caccia - cacce aperte trovate {num_open_hunts}: ({hunt_names_str})'
+        report_admins(admin_msg)
         report_location_admin(lat_lon[0], lat_lon[1])
     else:
         text_input = message_obj.text
@@ -510,22 +513,62 @@ def state_SHOW_AVAILABLE_HUNTS_NEARBY(p, message_obj=None, **kwargs):
                 redirect_to_state(p, state_ASK_GPS_TO_LIST_HUNTS)
             else:
                 hunt_password = game.HUNTS_NAME[text_input]['Password']
-                start_hunt(p, hunt_password)
-                notify_group_id = game.get_notify_group_id(p)
-                if notify_group_id:
-                    p_name = p.get_first_last_username_id()
-                    msg = f'{p_name} ha iniziato la caccia: {text_input}'
-                    send_message(notify_group_id, msg)
+                p.set_tmp_variable('HUNT_PW', hunt_password)
+                redirect_to_state(p, state_CHECK_LANGUAGE_AND_START_HUNT)                
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
-def start_hunt(p, hunt_password):
-    game.load_game(p, hunt_password)                    
+# ================================
+# Change Language Before Hunt Start
+# ================================
+
+def state_CHECK_LANGUAGE_AND_START_HUNT(p, message_obj=None, **kwargs):    
+    hunt_password = p.get_tmp_variable('HUNT_PW')
+    if message_obj is None:        
+        hunt_languages = game.get_hunt_languages(hunt_password)
+        if p.language not in hunt_languages:            
+            buttons_languages = [
+                p.ui().get_var(f'BUTTON_SWITCH_{l}')
+                for l in params.LANGUAGES
+                if l != p.language
+            ]
+            kb = [[b] for b in  buttons_languages]
+            kb.append([p.ui().BUTTON_ANNULLA])
+            send_message(p, p.ui().MSG_HUNT_NOT_AVAILABLE_IN_YOUR_LANGUAGE, kb)
+        else:
+            start_hunt(p, hunt_password)
+    else: 
+        text_input = message_obj.text
+        kb = p.get_keyboard()
+        if text_input:            
+            if text_input in flatten(kb):
+                if text_input == p.ui().BUTTON_ANNULLA:
+                    redirect_to_state(p, state_INITIAL)
+                else:
+                    for l in params.LANGUAGES:
+                        if text_input == p.ui().get_var(f'BUTTON_SWITCH_{l}'):
+                            p.set_language(l)
+                            send_message(p, p.ui().MSG_LANGUAGE_SWITCHED)
+                            send_typing_action(p, sleep_time=1)     
+                            start_hunt(p, hunt_password)                                                   
+        else:
+            send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)       
+
+def start_hunt(p, hunt_password): 
+    send_message(p, p.ui().MSG_GAME_IS_LOADING)
+    game.load_game(p, hunt_password)
+    notify_group_id = game.get_notify_group_id(p) 
+    if notify_group_id:
+        p_name = p.get_first_last_username_id()
+        h_name = p.get_tmp_variable('HUNT_NAME')
+        msg = f'{p_name} ha iniziato la caccia: {h_name}'
+        send_message(notify_group_id, msg)    
     skip_instructions = get_str_param_boolean(p.tmp_variables['SETTINGS'], 'SKIP_INSTRUCTIONS')
     if skip_instructions:
         redirect_to_state(p, state_CHECK_INITIAL_POSITION)        
     else:
         redirect_to_state(p, state_INSTRUCTIONS)
+
 
 # ================================
 # Instructions
@@ -652,7 +695,7 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                     send_typing_action(p, sleep_time=1)
                     repeat_state(p, next_step=True)
                 else:
-                    send_message(p, "Non ho capito. Ti prego di inserire il numero di persone (in cifre) ad esempio 3.") #TODO: fix ui
+                    send_message(p, p.ui().MSG_WRONG_NUMBER_OF_PEOPLE) 
             else:
                 send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
         elif input_type == 'TEST_POSITION':
@@ -745,9 +788,12 @@ def state_CHECK_INITIAL_POSITION(p, message_obj=None, **kwargs):
 def load_missions(p):        
     success = game.build_missions(p)
     if not success:
-        send_message(p, "Problema selezione percorso") #TODO: fix ui
+        send_message(p, p.ui().MSG_ERROR_ROUTING)
         send_typing_action(p, sleep_time=1)
         restart(p)
+        msg_admin = f"Problema percorso per {p.get_first_last_username_id()}"
+        send_text_document(p, 'tmp_vars.json', game.debug_tmp_vars(p), caption=msg_admin)
+        report_admins(msg_admin)
     else:
         send_message(p, p.ui().MSG_GO)
         redirect_to_state(p, state_MISSION_INTRO)
@@ -1411,14 +1457,15 @@ def deal_with_universal_command(p, message_obj):
         else:
             redirect_to_state(p, state_INITIAL, message_obj)
         return True
-    # change language (/it /en /de /ja)
-    l = text_input[-2:].upper()
-    if l in params.LANGUAGES:
-        p.set_language(l, put=True)
-        send_message(p, p.ui().MSG_LANGUAGE_SWITCHED)
-        send_typing_action(p, sleep_time=1)                    
-        repeat_state(p)
-        return True
+    # change language (/it /en /de /ja)    
+    if len(text_input)==3: 
+        l = text_input[-2:].upper()
+        if l in params.LANGUAGES:
+            p.set_language(l, put=True)
+            send_message(p, p.ui().MSG_LANGUAGE_SWITCHED)
+            send_typing_action(p, sleep_time=1)                    
+            repeat_state(p)
+            return True
     if text_input == '/exit':
         if game.user_in_game(p):
             game.exit_game(p, save_data=False, reset_current_hunt=True)

@@ -1,5 +1,6 @@
 import re
 from airtable import Airtable
+from historic.bot.game import get_hunt_languages
 from historic.config import settings
 from historic.bot import airtable_utils
 
@@ -40,22 +41,25 @@ def check_hunt(hunt_pw):
     hunt_config_dict = HUNTS_PW[hunt_pw]    
     # hunt_name = hunt_config_dict['Name']            
     game_id = hunt_config_dict['Airtable_Game_ID']
-    hunt_missioni_table = Airtable(game_id, 'Missioni', api_key=settings.AIRTABLE_API_KEY)
-    missioni_row_dict_list = airtable_utils.get_rows(hunt_missioni_table)
-    for row_dict in missioni_row_dict_list:
-        for k,v in row_dict.items():
-            if type(v) is not str:
-                continue
-            mk_check = (
-                ('PARENTESI GRAFFE', check_curly_bracket),
-                ('PARENTESI QUADRE', check_square_bracket),
-                ('UNDERSCORES', check_underscores),
-                ('BACKTICK', check_backtick)
-            )
-            miss_name = row_dict['NOME']
-            for err_type, check_func in mk_check:
-                if not check_func(v):
-                    return f'Errore {err_type} in tabella "Missioni": missione "{miss_name}", colonna {k}'
+    hunt_languages = get_hunt_languages(hunt_pw)
+    for l in hunt_languages:
+        table_name = f'Missioni_{l}'
+        hunt_missioni_table = Airtable(game_id, table_name, api_key=settings.AIRTABLE_API_KEY)
+        missioni_row_dict_list = airtable_utils.get_rows(hunt_missioni_table)
+        for row_dict in missioni_row_dict_list:
+            for k,v in row_dict.items():
+                if type(v) is not str:
+                    continue
+                mk_check = (
+                    ('PARENTESI GRAFFE', check_curly_bracket),
+                    ('PARENTESI QUADRE', check_square_bracket),
+                    ('UNDERSCORES', check_underscores),
+                    ('BACKTICK', check_backtick)
+                )
+                miss_name = row_dict['NOME']
+                for err_type, check_func in mk_check:
+                    if not check_func(v):
+                        return f'Errore {err_type} in tabella "{table_name}": missione "{miss_name}", colonna {k}'
 
 # def check_consistencies():
 #     check_ui()

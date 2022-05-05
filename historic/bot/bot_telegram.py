@@ -107,11 +107,13 @@ def send_media_url(p, url_attachment, kb=None, caption=None,
         logging.error(error_msg)
         raise ValueError('Wrong attach type: {}'.format(error_msg))
 
-def send_text_document(p, file_name, file_content):
+def send_text_document(p, file_name, file_content, caption=None):
     import requests
     chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
     files = [('document', (file_name, file_content, 'text/plain'))]
     data = {'chat_id': chat_id}
+    if caption:
+        data['caption'] = caption
     resp = requests.post(settings.TELEGRAM_API_URL + 'sendDocument', data=data, files=files)
     logging.debug("Sent documnet. Response status code: {}".format(resp.status_code))
 
