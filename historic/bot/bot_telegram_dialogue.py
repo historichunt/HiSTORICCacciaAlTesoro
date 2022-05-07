@@ -1461,11 +1461,14 @@ def deal_with_universal_command(p, message_obj):
     if len(text_input)==3: 
         l = text_input[-2:].upper()
         if l in params.LANGUAGES:
-            p.set_language(l, put=True)
-            send_message(p, p.ui().MSG_LANGUAGE_SWITCHED)
-            send_typing_action(p, sleep_time=1)                    
-            repeat_state(p)
-            return True
+            if game.user_in_game(p):
+                send_message(p, p.ui().MSG_NO_CHANGE_LANG_IN_HUNT, remove_keyboard=True)    
+            else:
+                p.set_language(l, put=True)
+                send_message(p, p.ui().MSG_LANGUAGE_SWITCHED)
+                send_typing_action(p, sleep_time=1)                    
+                repeat_state(p)
+                return True
     if text_input == '/exit':
         if game.user_in_game(p):
             game.exit_game(p, save_data=False, reset_current_hunt=True)

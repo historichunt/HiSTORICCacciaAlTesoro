@@ -236,7 +236,7 @@ MSG_START_TIME,,⏱ Via al tempo!,⏱ Time is running!,⏱ 時間が実行され
 MSG_SUPPORT,,"💁 Se hai problemi, ci puoi contattare via email a historictrento@gmail.com oppure su Facebook a https://www.facebook.com/historictrento/","💁 If you have any problem, you can contact us via email at historictrento@gmail.com or on Facebook at https://www.facebook.com/historictrento/",💁 問題がある場合は、historictrento@gmail.comまたはhttps://www.facebook.com/historictrento/でFacebookでメールでお問い合わせください。,"💁 Wenn Sie ein Problem haben, können Sie uns per E -Mail unter historictrento@gmail.com oder auf Facebook unter https://www.facebook.com/historictrento/ kontaktieren"
 MSG_SURVEY_INTRO,,"📋 Prima di dirvi quanto ci avete messo, vorrei farvi alcune domande...","📋 Before telling you how long it took you to complete the game, I would like to ask you few questions...",📋 ゲームを完了するのにどれくらい時間がかかったかを伝える前に、私はあなたにいくつかの質問をしたいと思います...,"📋 Bevor Sie Ihnen sagen, wie lange Sie das Spiel vervollständigen, möchte ich Ihnen einige Fragen stellen ..."
 MSG_THANKS_FOR_PARTECIPATING,,😀 Grazie di aver partecipato alla caccia al tesoro!,😀 Thanks for participating to the treasure hunt!,😀 トレジャーハントに参加してくれてありがとう！,"😀 Danke, dass Sie an der Schatzsuche teilgenommen haben!"
-MSG_TIME_STOP,,⏱ Stop al tempo!,⏱ Stop to the time!,⏱ 時間に止めてください！,⏱ Halten Sie zur Zeit vorbei!
+MSG_TIME_STOP,,⏱ Stop al tempo!,⏱ Stopping the time!,⏱ 時間に止めてください！,⏱ Halten Sie zur Zeit vorbei!
 MSG_TOO_EARLY,,⏱️ Troppo presto! Provate tra {} secondi.,⏱️ Too early! Try again in {} seconds.,⏱ 早め！ {}秒で再試行してください。,⏱️ Zu früh! Versuchen Sie es erneut in {} Sekunden.
 MSG_TOO_FAR,,"😳 Siete ancora un po' lontani, il posto che dovete raggiungere è a *{} metri* in distanza aerea da dove vi trovate ora.
 
@@ -290,3 +290,4 @@ Se vuoi uscire o ricominciare premi su /exit.","❌ You are inside a game.
 If you want to exit or restart press on /exit.","❌ あなたはゲームの中にいます。
 出口または再起動 /終了 /終了を再起動する場合。/exit","❌ Du bist in einem Spiel.
 Wenn Sie beenden oder neu starten möchten, drücken Sie auf /beenden Sie."
+MSG_NO_CHANGE_LANG_IN_HUNT,,❌ Non puoi cambiare la lingua durante la caccia.,❌ You can't change the tongue during hunting.,❌ 狩猟中に舌を変えることはできません。,❌ Sie können die Zunge während der Jagd nicht ändern.

@@ -95,6 +95,7 @@
    "MSG_MEDIA_INPUT_MISSIONE_OK_02": "素晴らしい！ 😀",
    "MSG_MISSION_N_TOT": "*🎳 ミッション{}/{}*",
    "MSG_NOT_IN_GAME": "❌ あなたは宝狩りにいません。",
+   "MSG_NO_CHANGE_LANG_IN_HUNT": "❌ 狩猟中に舌を変えることはできません。",
    "MSG_NO_FORWARDING_ALLOWED": "⛔️ 有効な入力ではありません！メッセージを転送することはできません。",
    "MSG_NO_HUNTS": "😀 こんにちは！\nこの瞬間、アクティブな宝狩りはありません。\n私たちのウェブサイト[Historic]（https://www.historictrento.it）で私たちのウェブサイトにアクセスするか、メールを送ってください\nhistoric.trento@gmail.com。",
    "MSG_PRESS_FOR_ENDING": "🎇 [ボタンを押してゲームを終了します。",

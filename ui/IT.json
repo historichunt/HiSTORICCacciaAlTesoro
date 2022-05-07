@@ -95,6 +95,7 @@
    "MSG_MEDIA_INPUT_MISSIONE_OK_02": "😀 Super!",
    "MSG_MISSION_N_TOT": "*🎳 Missione {}/{}*",
    "MSG_NOT_IN_GAME": "❌ Non hai iniziato una caccia al tesoro.",
+   "MSG_NO_CHANGE_LANG_IN_HUNT": "❌ Non puoi cambiare la lingua durante la caccia.",
    "MSG_NO_FORWARDING_ALLOWED": "⛔️ Input non valido! Non puoi inoltrarmi messaggi!",
    "MSG_NO_HUNTS": "😀 Ciao! \nIn questo momento non c'è nessuna caccia al tesoro attiva.\nVieni a trovarci sul sito [historic](https://www.historictrento.it) o mandaci una email a \nhistoric.trento@gmail.com.",
    "MSG_PRESS_FOR_ENDING": "La caccia al tesoro è terminata! Siete stati bravissimi! Spero vi siate divertiti quanto me! \n🎇 Ora premete il pulsante per terminare la caccia e bloccare il tempo!",
