@@ -69,7 +69,7 @@ POST_MEDIA, POST_MEDIA_CAPTION, POST_MESSAGE,
 INPUT_INSTRUCTIONS, INPUT_TYPE, INPUT_CONFIRMATION, POST_INPUT
 '''
 
-def get_hunt_settings(p, airtable_game_id):
+def get_hunt_settings(airtable_game_id):
     SETTINGS_TABLE = Airtable(airtable_game_id, 'Settings', api_key=settings.AIRTABLE_API_KEY)
     SETTINGS = {
         row['fields']['Name']:row['fields']['Value'] 
@@ -78,19 +78,18 @@ def get_hunt_settings(p, airtable_game_id):
     }
     return SETTINGS
 
-def get_hunt_ui(p, airtable_game_id, multilingual):    
+def get_hunt_ui(airtable_game_id, hunt_languages):    
     UI_TABLE = Airtable(airtable_game_id, 'UI', api_key=settings.AIRTABLE_API_KEY)
     table_rows = [
         row['fields'] 
         for row in UI_TABLE.get_all() 
     ]
-    LANGS = params.LANGUAGES if multilingual else ['IT']
     UI = {
         lang: {
             r['VAR']: r[lang].strip()
             for r in table_rows
         }        
-        for lang in LANGS
+        for lang in hunt_languages
     }
     return UI
 
@@ -293,7 +292,7 @@ def save_game_data_in_airtable(p):
         api_key=settings.AIRTABLE_API_KEY
     )    
 
-    games_row = {}
+    games_row = {'LANGUAGE': p.language}
     for h in RESULTS_GAME_TABLE_HEADERS:
         games_row[h] = game_data[h]
     games_row['GAME VARS'] = json.dumps(game_data,ensure_ascii=False)
@@ -307,7 +306,7 @@ def save_survey_data_in_airtable(p):
     game_data = p.tmp_variables
     airtable_game_id = game_data['HUNT_INFO']['Airtable_Game_ID']
     results_survey_table = Airtable(airtable_game_id, 'Survey Answers', api_key=settings.AIRTABLE_API_KEY)
-    survey_row = {}
+    survey_row = {'LANGUAGE': p.language}
     survey_data = game_data['SURVEY_INFO']['COMPLETED']
     for row in survey_data:
         survey_row[row['QN']] = row['ANSWER'] # columns: Q1, Q2, ...
@@ -318,6 +317,17 @@ def save_survey_data_in_airtable(p):
 # GAME MANAGEMENT FUNCTIONS
 ################################
 
+def get_hunt_languages(hunt_password):
+    hunt_info = HUNTS_PW[hunt_password]
+    airtable_game_id = hunt_info['Airtable_Game_ID']
+    hunt_settings = get_hunt_settings(airtable_game_id)
+    hunt_languages =  [
+        l.strip()
+        for l in hunt_settings['LANGUAGES'].upper().split(',')
+        if l.strip() in params.LANGUAGES
+    ]
+    return hunt_languages
+
 def load_game(p, hunt_password, test_hunt_admin=False):    
     '''
     Save current game info user tmp_variable
@@ -327,23 +337,23 @@ def load_game(p, hunt_password, test_hunt_admin=False):
         p.current_hunt = hunt_password  # avoid when testing
     hunt_info = HUNTS_PW[hunt_password]
     airtable_game_id = hunt_info['Airtable_Game_ID']
-    hunt_settings = get_hunt_settings(p, airtable_game_id)
-    multilingual =  utility.get_str_param_boolean(hunt_settings, 'MULTILINGUAL')
-    hunt_ui = get_hunt_ui(p, airtable_game_id, multilingual)
-    instructions_table = Airtable(airtable_game_id, 'Instructions', api_key=settings.AIRTABLE_API_KEY)    
-    survey_table = Airtable(airtable_game_id, 'Survey', api_key=settings.AIRTABLE_API_KEY)                
+    hunt_settings = get_hunt_settings(airtable_game_id)
+    hunt_languages =  get_hunt_languages(hunt_password)
+    hunt_ui = get_hunt_ui(airtable_game_id, hunt_languages)
+    instructions_table = Airtable(airtable_game_id, f'Instructions_{p.language}', api_key=settings.AIRTABLE_API_KEY)    
+    survey_table = Airtable(airtable_game_id, f'Survey_{p.language}', api_key=settings.AIRTABLE_API_KEY)                
     instructions_steps = airtable_utils.get_rows(
         instructions_table, view='Grid view',
         filter=lambda r: not r.get('Skip',False), 
     )
-    # TODO: improve multilingual implementation
-    mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni' 
+    mission_tab_name = f'Missioni_{p.language}'
     survey = airtable_utils.get_rows(survey_table, view='Grid view')
     if not test_hunt_admin:
         p.tmp_variables = {} # resetting vars 
         # but we don't want to reset ADMIN_HUNT_NAME and ADMIN_HUNT_PW for admins (mission test)
     tvar = p.tmp_variables
     tvar['HUNT_NAME'] = hunt_info['Name']
+    tvar['HUNT_LANGUAGES'] = hunt_languages
     tvar['TEST_HUNT_MISSION_ADMIN'] = test_hunt_admin
     tvar['HUNT_START_GPS'] = get_closest_mission(p, airtable_game_id, mission_tab_name)
     tvar['SETTINGS'] = hunt_settings    
@@ -376,9 +386,7 @@ def build_missions(p, test_all=False):
     tvar = p.tmp_variables
     hunt_settings = tvar['SETTINGS']
     airtable_game_id = tvar['HUNT_INFO']['Airtable_Game_ID']
-    multilingual =  utility.get_str_param_boolean(hunt_settings, 'MULTILINGUAL')
-    # TODO: improve multilingual implementation
-    mission_tab_name = 'Missioni_EN' if multilingual and p.language=='EN' else 'Missioni' 
+    mission_tab_name = f'Missioni_{p.language}'
     if test_all:
         missions = get_all_missions(airtable_game_id, mission_tab_name)    
     elif hunt_settings.get('MISSIONS_SELECTION', None) == 'ROUTING':
@@ -592,9 +600,6 @@ def increase_wrong_answers_current_indovinello(p, answer, give_penalty, put=True
         p.tmp_variables['PENALTIES'] += 1
     if put:
         p.put()                
-
-def is_multilingual(p):
-    return p.tmp_variables['SETTINGS'].get('MULTILINGUAL', 'False') == 'True'
 
 def get_total_penalty(p):    
     PENALTIES = p.tmp_variables['PENALTIES']

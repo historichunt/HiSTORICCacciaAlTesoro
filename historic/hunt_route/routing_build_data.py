@@ -21,8 +21,9 @@ def read_data_from_spreadsheet(spreadsheet_key, spreadsheet_gid, max_points=None
     }
     return name_coordinates
 
-def read_data_from_airtable(table_id, max_points=None):
-    table = Airtable(table_id, 'Missioni', api_key=settings.AIRTABLE_API_KEY)
+def read_data_from_airtable(table_id, table_name, max_points=None):
+    # TODO: this works only if there is a table 'Missioni_IT;
+    table = Airtable(table_id, table_name, api_key=settings.AIRTABLE_API_KEY)
     data = airtable_utils.get_rows(table)
     if max_points is not None:
         data = data[:max_points]
@@ -40,8 +41,8 @@ def build_data_from_spreadsheet(api, name, spreadsheet_key, spreadsheet_gid, max
         api = api
     )        
 
-def build_data_from_airtable(api, table_id, max_points=None):
-    names_longlat = read_data_from_airtable(table_id, max_points)
+def build_data_from_airtable(api, table_id, table_name, max_points=None):
+    names_longlat = read_data_from_airtable(table_id, table_name, max_points)
     return DataMatrices(
         dataset_name = table_id,
         points_name_coordinate = names_longlat,
@@ -64,5 +65,5 @@ def test_airtable_map(table_id, max_points=None):
 
 if __name__ == "__main__":
     # test_airtable_map('apph7gGu4AAOgcbdA', 4)
-    build_data_from_airtable(api_google, 'apph7gGu4AAOgcbdA') # max_points=3
+    build_data_from_airtable(api_google, 'apph7gGu4AAOgcbdA', 'Missioni_IT') # max_points=3
     

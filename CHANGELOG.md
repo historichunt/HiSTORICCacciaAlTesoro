@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.10
+- Add JP language in UI
+- Multilingual working
+
 ## 0.9
 - hunt route
 - open hunts
