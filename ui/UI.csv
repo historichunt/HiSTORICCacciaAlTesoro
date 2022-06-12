@@ -44,6 +44,8 @@ BUTTON_UNDERSTOOD,,👌 HO CAPITO,👌 UNDERSTOOD,👌 理解された,👌 VERS
 BUTTON_UPDATE_HUNTS_CONFIG,,💨 AGGIORNA CACCE,💨 UPDATE HUNTS,💨 を更新します,💨 UPDATE SCHATZSUCHE
 BUTTON_VERSION,,🏷️ VERSIONE,🏷️ VERSION,🏷️ 嫌なバージョン,🏷️ AUSGABE
 BUTTON_YES,,✅ SI,✅ YES,✅ はい,✅ JA
+COMMAND_EXIT,,🚪Esci dalla caccia,🚪Exit the hunt,🚪ハントを終了します,🚪Verlasse die Jagd
+COMMAND_HELP,,🆘 Chiedi aiuto,🆘 Get help,🆘助けを得る,🆘 Holen Sie sich Hilfe
 MSG_ADMIN,,🔑 INTERFACCIA AMMINISTRATORI,🔑 ADMIN INTERFACE,🔑 管理インターフェイス,🔑 ADMIN SCHNITTSTELLE
 MSG_ANSWER_ALMOST,,🙄 Ci sei quasi...,🙄 Almost...,🙄 ほとんど...,🙄 Fast...
 MSG_ANSWER_OK_01,,🤗 Risposta esatta!,🤗 Correct answer!,🤗 正解！,🤗 korrekt!
@@ -127,6 +129,7 @@ MSG_END_NO_PENALTY,,"🏆 Bravi! Che soddisfazione!
 
 🏁  Ihr habt in *{}* die Herausforderungen beendet!!"
 MSG_ERROR_ROUTING,,"🙇 Ci dispiace, si è verificato un problema nel trovare un percorso.","🙇 We are sorry, a problem occurred in finding a path.",🙇 申し訳ありませんが、パスを見つける際に問題が発生しました。,"🙇 Es tut uns leid, ein Problem beim Finden eines Weges."
+MSG_EXITED_FROM_GAME_CONFIRM,,"⚠️ Sei proprio sicuro/a di voler uscire dalla caccia? La caccia verrà eliminata e non potrai riprenderla. Se sei sicuro, premi su → /exit_for_real ←","⚠️ Are you really sure you want to exit from the hunt? The hunt will be deleted and you cannot resume it. If you are sure, please press on → /exit_for_real ←",⚠️ ハントを終了してもよろしいですか？ ハントは削除され、再開できなくなります。 よろしければ、→ /exit_for_real ← を押してください,"⚠️ Bist du wirklich sicher, dass du die Jagd beenden möchtest? Die Jagd wird gelöscht und kann nicht fortgesetzt werden. Wenn Sie sich sicher sind, drücken Sie bitte auf → /exit_for_real ←"
 MSG_EXITED_FROM_GAME,,🚪 Sei uscito/a dalla caccia al tesoro!,🚪 You have exited the treasure hunt.,🚪 宝狩りを終えました。,🚪 Ihr habt die Schatzsuche verlassen.
 MSG_FINAL_RESET_OFF,,🔔 Verrete avvisati quando ritornare al punto di partenza per la premiazione!,🔔 We will let you know when to go back to the starting point for the awarding!,🔔 賞の出発点に戻るタイミングをお知らせします！,"🔔 Wir geben euch Bescheid, wann ihr wieder zum Ausgangspunkt zur Erhaltung der Preise zurückkehren könnt!"
 MSG_FINAL_RESET_ON,,📜 Pubblicheremo i risultati sulla nostra [pagina Facebook](https://www.facebook.com/historictrento).,📜 We will publish the result on our [Facebook page](https://www.facebook.com/historictrento). ,📜 [[Facebookページ](https://www.facebook.com/historictrento) で結果を公開します。,📜 Wir werden das Ergebnis auf unserer [Facebook -Seite] (https://www.facebook.com/historictrento) veröffentlichen.
@@ -176,6 +179,7 @@ MSG_MEDIA_INPUT_ABORTED,,❌ Invio annullato.,❌ Submission cancelled.,❌ キ�
 MSG_MEDIA_INPUT_MISSIONE_OK_01,,😀 Fantastico!,Fantastic! 😀,素晴らしい！ 😀,Fantastisch! 😀
 MSG_MEDIA_INPUT_MISSIONE_OK_02,,😀 Super!,Super! 😀,素晴らしい！ 😀,Super! 😀
 MSG_MISSION_N_TOT,,*🎳 Missione {}/{}*,*🎳 Mission {}/{}*,*🎳 ミッション{}/{}*,*🎳 Mission {}/{}*
+MSG_NO_CHANGE_LANG_IN_HUNT,,❌ Non puoi cambiare la lingua durante la caccia.,❌ You can't change the tongue during hunting.,❌ 狩猟中に舌を変えることはできません。,❌ Sie können die Zunge während der Jagd nicht ändern.
 MSG_NO_FORWARDING_ALLOWED,,⛔️ Input non valido! Non puoi inoltrarmi messaggi!,⛔️ Not a valid input! You cannot forward me messages.,⛔️ 有効な入力ではありません！メッセージを転送することはできません。,⛔️ Kein gültiger Eingang! Sie können mir keine Nachrichten weiterleiten.
 MSG_NO_HUNTS,,"😀 Ciao! 
 In questo momento non c'è nessuna caccia al tesoro attiva.
@@ -290,4 +294,3 @@ Se vuoi uscire o ricominciare premi su /exit.","❌ You are inside a game.
 If you want to exit or restart press on /exit.","❌ あなたはゲームの中にいます。
 出口または再起動 /終了 /終了を再起動する場合。/exit","❌ Du bist in einem Spiel.
 Wenn Sie beenden oder neu starten möchten, drücken Sie auf /beenden Sie."
-MSG_NO_CHANGE_LANG_IN_HUNT,,❌ Non puoi cambiare la lingua durante la caccia.,❌ You can't change the tongue during hunting.,❌ 狩猟中に舌を変えることはできません。,❌ Sie können die Zunge während der Jagd nicht ändern.

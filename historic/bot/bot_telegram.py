@@ -4,6 +4,7 @@ from telegram.error import (TelegramError, Unauthorized,
     BadRequest, TimedOut, ChatMigrated, NetworkError)
 import logging
 import time
+from historic.bot.bot_ui import COMMANDS_LANG
 from historic.config import settings
 from historic.bot import game, utility
 from historic.bot.ndb_person import Person
@@ -145,6 +146,52 @@ def report_admins(message):
 def report_location_admin(lat, lon):
     for id in settings.ERROR_REPORTERS_IDS:
         send_location(id, lat, lon)
+
+# ---------
+# MENU
+# ---------
+
+def get_menu(p):
+    return BOT.get_chat_menu_button(
+        chat_id=p.chat_id
+    )
+
+def set_menu(p):
+    menu_button = telegram.MenuButtonCommands()
+    return BOT.set_chat_menu_button(
+        p.chat_id, 
+        menu_button
+    )
+
+def remove_menu(p):
+    return BOT.set_chat_menu_button(
+        p.chat_id, 
+        telegram.MenuButtonDefault()
+    )
+
+# ---------
+# COMMANDS
+# ---------
+
+def get_commands(p):
+    return  [
+        (c.command, c.description) 
+        for c in BOT.get_my_commands(
+            scope=telegram.BotCommandScopeChat(p.chat_id)
+        )
+    ]
+
+def delete_commands(p):
+    return BOT.delete_my_commands(
+        scope=telegram.BotCommandScopeChat(p.chat_id)
+    )
+
+def set_commands(p):
+    lang = p.language
+    return BOT.set_my_commands(
+        commands=COMMANDS_LANG(lang),
+        scope=telegram.BotCommandScopeChat(p.chat_id)
+    )
 
 # ---------
 # BROADCAST

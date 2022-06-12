@@ -6,9 +6,9 @@ import random
 from historic.config import params, settings
 from historic.bot import airtable_utils, utility, ndb_person, bot_ui, game, geo_utils
 from historic.bot import date_time_util as dtu
-from historic.bot.bot_telegram import BOT, send_message, send_location, send_typing_action, \
+from historic.bot.bot_telegram import BOT, delete_commands, get_commands, get_menu, remove_menu, send_message, send_location, send_typing_action, \
     report_admins, send_text_document, send_media_url, \
-    broadcast, report_admins, reset_all_users, report_location_admin
+    broadcast, report_admins, reset_all_users, report_location_admin, set_commands, set_menu
 from historic.config import params
 from historic.bot.utility import flatten, get_str_param_boolean, make_2d_array
 from historic.bot.ndb_person import Person
@@ -71,6 +71,7 @@ def state_INITIAL(p, message_obj=None, **kwargs):
         ]     
         if p.is_global_admin() or p.is_hunt_admin():
             kb[-1].append(p.ui().BUTTON_ADMIN)       
+        set_commands(p) # refresh commands in menu
         send_message(p, p.ui().MSG_WELCOME, kb)
     else: 
         text_input = message_obj.text
@@ -564,6 +565,7 @@ def start_hunt(p, hunt_password):
         msg = f'{p_name} ha iniziato la caccia: {h_name}'
         send_message(notify_group_id, msg)    
     skip_instructions = get_str_param_boolean(p.tmp_variables['SETTINGS'], 'SKIP_INSTRUCTIONS')
+    set_commands(p) # refresh commands in menu
     if skip_instructions:
         redirect_to_state(p, state_CHECK_INITIAL_POSITION)        
     else:
@@ -1344,6 +1346,26 @@ def deal_with_callback_query(callback_query):
 def deal_with_admin_commands(p, message_obj):
     text_input = message_obj.text
     if p.is_error_reporter():
+        if text_input == '/get_menu':
+            menu = get_menu(p)
+            send_message(p, menu.type)
+            return True            
+        if text_input == '/set_menu':
+            assert set_menu(p)
+            return True
+        if text_input == '/del_menu':
+            assert remove_menu(p)
+            return True
+        if text_input == '/get_cmd':
+            cmds = get_commands(p)      
+            send_message(p, json.dumps(cmds, indent=3, ensure_ascii=False))
+            return True            
+        if text_input == '/set_cmd':
+            assert set_commands(p)            
+            return True
+        if text_input == '/del_cmd':
+            assert delete_commands(p)            
+            return True            
         if text_input == '/debug':
             #send_message(p, game.debug_tmp_vars(p), markdown=False)
             send_text_document(p, 'tmp_vars.json', game.debug_tmp_vars(p))
@@ -1470,6 +1492,13 @@ def deal_with_universal_command(p, message_obj):
                 repeat_state(p)
                 return True
     if text_input == '/exit':
+        if game.user_in_game(p):
+            game.exit_game(p, save_data=False, reset_current_hunt=True)
+            send_message(p, p.ui().MSG_EXITED_FROM_GAME_CONFIRM)
+        else:
+            send_message(p, p.ui().MSG_NOT_IN_GAME)
+        return True
+    if text_input == '/exit_for_real':
         if game.user_in_game(p):
             game.exit_game(p, save_data=False, reset_current_hunt=True)
             send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)

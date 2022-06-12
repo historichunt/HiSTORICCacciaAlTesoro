@@ -46,6 +46,16 @@ class UI_LANG:
          return self.get_var(item)
 
 # ================================
+# COMMANDS
+# ================================
+
+COMMANDS_LANG = lambda l: [
+    (c.split('_',1)[1].lower(), UI_DICT[l][c]) 
+    for c in UI_DICT[l]   
+    if c.startswith('COMMAND_')
+]
+
+# ================================
 # SPECIAL BUTTONS
 # ================================
 
