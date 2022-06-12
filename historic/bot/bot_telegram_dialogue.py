@@ -10,7 +10,7 @@ from historic.bot.bot_telegram import BOT, delete_commands, get_commands, get_me
     report_admins, send_text_document, send_media_url, \
     broadcast, report_admins, reset_all_users, report_location_admin, set_commands, set_menu
 from historic.config import params
-from historic.bot.utility import flatten, get_str_param_boolean, make_2d_array
+from historic.bot.utility import escape_markdown, flatten, get_str_param_boolean, make_2d_array
 from historic.bot.ndb_person import Person
 from historic.bot.ndb_utils import client_context
 from historic.hunt_route import api_google
@@ -420,7 +420,7 @@ def teminate_hunt(p):
 def state_ASK_GPS_TO_START_HUNT(p, message_obj=None, **kwargs):    
     give_instruction = message_obj is None
 
-    if give_instruction:                
+    if give_instruction:                        
         kb = [
             [bot_ui.BUTTON_LOCATION(p.language)],            
             [p.ui().BUTTON_BACK],            
@@ -1493,8 +1493,8 @@ def deal_with_universal_command(p, message_obj):
                 return True
     if text_input == '/exit':
         if game.user_in_game(p):
-            game.exit_game(p, save_data=False, reset_current_hunt=True)
-            send_message(p, p.ui().MSG_EXITED_FROM_GAME_CONFIRM)
+            msg = p.ui().MSG_EXITED_FROM_GAME_CONFIRM.format(escape_markdown('/exit_for_real'))
+            send_message(p, msg)
         else:
             send_message(p, p.ui().MSG_NOT_IN_GAME)
         return True

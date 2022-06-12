@@ -17,6 +17,19 @@ def get_chat_id_from_str(s):
         return s[2:]
     return s # e.g., HISTORIC_GROUP for notification has id "-1001499..."
 
+def make_kb_serializable(kb):
+    new_kb = []
+    for line in kb:
+        new_kb.append(
+            [
+                b.text 
+                if type(b)==telegram.KeyboardButton
+                else b
+                for b in line
+            ]
+        )
+    return new_kb
+
 def get_reply_markup(p, kb=None, remove_keyboard=None, inline_keyboard=False):
     is_person = isinstance(p, Person)
     if kb or remove_keyboard:
@@ -28,7 +41,8 @@ def get_reply_markup(p, kb=None, remove_keyboard=None, inline_keyboard=False):
             return telegram.ReplyKeyboardRemove()
         else:
             if is_person:
-                p.set_keyboard(kb)
+                saved_kb = make_kb_serializable(kb)
+                p.set_keyboard(saved_kb)
             return telegram.ReplyKeyboardMarkup(kb, resize_keyboard=True)
     return None
 '''

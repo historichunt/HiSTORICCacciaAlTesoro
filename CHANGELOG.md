@@ -3,6 +3,7 @@
 ## 0.10
 - Add JP language in UI
 - Multilingual working
+- Menu buttons (0.10.4)
 
 ## 0.9
 - hunt route

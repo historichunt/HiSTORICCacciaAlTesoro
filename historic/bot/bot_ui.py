@@ -88,21 +88,24 @@ MSG_MEDIA_INPUT_MISSIONE_OK = lambda l: random.choice(
     ]
 )
 
-BUTTON_LOCATION = lambda l: {
-    'text': UI_LANG(l).BUTTON_GPS,
-    'request_location': True,
-}
+BUTTON_LOCATION = lambda l: \
+    telegram.KeyboardButton(
+        text = UI_LANG(l).BUTTON_GPS,
+        request_location = True
+    )
 
-BUTTON_YES_CALLBACK = lambda x: telegram.InlineKeyboardButton(
-    text = UI_LANG('IT').BUTTON_YES,
-    callback_data = x
-)
+BUTTON_YES_CALLBACK = lambda x: \
+    telegram.InlineKeyboardButton(
+        text = UI_LANG('IT').BUTTON_YES,
+        callback_data = x
+    )
 
 
-BUTTON_NO_CALLBACK = lambda x: telegram.InlineKeyboardButton(
-    text = UI_LANG('IT').BUTTON_NO,
-    callback_data = x
-)
+BUTTON_NO_CALLBACK = lambda x: \
+    telegram.InlineKeyboardButton(
+        text = UI_LANG('IT').BUTTON_NO,
+        callback_data = x
+    )
 
 def sort_alphabetically():
     for lang in LANGUAGES:

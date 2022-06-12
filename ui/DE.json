@@ -68,7 +68,7 @@
    "MSG_END_NO_PENALTY": "🏆 Herzliche Glückwünsche!\n\n🏁 Ihr habt die Schatzsuche in *{}* beendet!!\n\n🏁  Ihr habt in *{}* die Herausforderungen beendet!!",
    "MSG_ERROR_ROUTING": "🙇 Es tut uns leid, ein Problem beim Finden eines Weges.",
    "MSG_EXITED_FROM_GAME": "🚪 Ihr habt die Schatzsuche verlassen.",
-   "MSG_EXITED_FROM_GAME_CONFIRM": "⚠️ Bist du wirklich sicher, dass du die Jagd beenden möchtest? Die Jagd wird gelöscht und kann nicht fortgesetzt werden. Wenn Sie sich sicher sind, drücken Sie bitte auf → /exit_for_real ←",
+   "MSG_EXITED_FROM_GAME_CONFIRM": "⚠️ Bist du wirklich sicher, dass du die Jagd beenden möchtest? Die Jagd wird gelöscht und kann nicht fortgesetzt werden. Wenn Sie sich sicher sind, drücken Sie bitte auf → {} ←",
    "MSG_FINAL_RESET_OFF": "🔔 Wir geben euch Bescheid, wann ihr wieder zum Ausgangspunkt zur Erhaltung der Preise zurückkehren könnt!",
    "MSG_FINAL_RESET_ON": "📜 Wir werden das Ergebnis auf unserer [Facebook -Seite] (https://www.facebook.com/historictrento) veröffentlichen.",
    "MSG_GAME_IS_LOADING": "⏳ Spiel laden ... bitte warten.",
