@@ -530,8 +530,7 @@ def state_CHECK_LANGUAGE_AND_START_HUNT(p, message_obj=None, **kwargs):
         if p.language not in hunt_languages:            
             buttons_languages = [
                 p.ui().get_var(f'BUTTON_SWITCH_{l}')
-                for l in params.LANGUAGES
-                if l != p.language
+                for l in hunt_languages
             ]
             kb = [[b] for b in  buttons_languages]
             kb.append([p.ui().BUTTON_ANNULLA])
