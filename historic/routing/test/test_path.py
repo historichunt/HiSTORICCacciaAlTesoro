@@ -1,6 +1,9 @@
-from historic.hunt_route import plot_utils
+from historic.routing.utils import plot_utils
 import numpy as np
 import polyline
+
+from historic.routing.data_matrices import DataMatrices
+from historic.routing.datasets.trento_hunt_params import TRENTO_BASE_KEY
 
 def test_snapped_road():
     original_poly = 'o`exGmiybAsB`AQmAUgAMoAAc@Ju@b@iAj@}@HAHGDKA[FeA|@wFDBNGDG@MEUCECCSg@y@aBCQA]NeAR_A@o@cAyFAs@D[`@AZBC[IsAYoGm@oCCI}@eD_AeCWg@gAgAfAm@`@KN['
@@ -12,9 +15,11 @@ def test_snapped_road():
     plot_utils.plot_route_graph(path_coordinates)
 
 def test_road_inverse():
-    from historic.hunt_route import routing_trento
-    from historic.hunt_route import api_google
-    trento_dm = routing_trento.get_trento_dm('GOOGLE')
+    from historic.routing.api import api_google
+    trento_dm = DataMatrices(
+        dataset_name = TRENTO_BASE_KEY,
+        api = api_google
+    )  
     
     i=1
     j=5

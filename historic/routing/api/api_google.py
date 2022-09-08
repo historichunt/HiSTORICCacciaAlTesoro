@@ -21,7 +21,11 @@ PROFILES = [
 ]
 
 # matrix api works for at most 25x25 table
+# Maximum of 25 origins or 25 destinations per request.
+# Maximum 100 elements per request (origins x destinations)
+# see https://developers.google.com/maps/documentation/distance-matrix/usage-and-billing
 MAX_SRC_DST = 10
+MAX_SINGLE_ROW = 25
 
 def get_directions(origin, destination, mode='walking'):
     """[summary]
@@ -47,7 +51,7 @@ def get_directions(origin, destination, mode='walking'):
     total_duration = sum(l['duration']['value'] for l in legs)
     return polyline, total_distance, total_duration
 
-def get_distance_matrix_simple(origins, destinations, mode='walking'):
+def build_distance_matrix_simple(origins, destinations, mode='walking'):
         
     matrix_result = gmaps.distance_matrix(
         origins=origins,
@@ -73,29 +77,52 @@ def get_distance_matrix_simple(origins, destinations, mode='walking'):
         
     return distance_mtx.tolist(), duration_mtx.tolist()
 
-def get_distance_matrix(locations, mode='walking'):
+def build_distance_matrices(locations, mode='walking'):
 
     num_points = len(locations)
 
     distances_matrix = np.zeros((num_points,num_points))
     durations_matrix = np.zeros((num_points,num_points))    
 
-    print(f'Building matrix for {mode}')
+    print(f'Building dst matrix for {mode}')
 
     for src_start in range(0, num_points, MAX_SRC_DST):
         for dst_start in range(0, num_points, MAX_SRC_DST):
             src_stop = min(src_start + MAX_SRC_DST, num_points)
             dst_stop = min(dst_start + MAX_SRC_DST, num_points)
-            origins = [locations[i] for i in range(src_start, src_stop)]
-            destinations = [locations[i] for i in range(dst_start, dst_stop)]
+            origins = locations[src_start:src_stop]
+            destinations = locations[dst_start:dst_stop]
 
             distances_sub_matrix, durations_sub_matrix = \
-                get_distance_matrix_simple(origins, destinations, mode)
+                build_distance_matrix_simple(origins, destinations, mode)
         
             distances_matrix[src_start:src_stop, dst_start:dst_stop] = distances_sub_matrix
             durations_matrix[src_start:src_stop, dst_start:dst_stop] = durations_sub_matrix            
 
     return distances_matrix.tolist(), durations_matrix.tolist()
+
+def build_distance_row(locations, source_idx, destinations_idx, mode='walking'):
+
+    origin = locations[source_idx]
+    destinations = [locations[i] for i in destinations_idx]
+
+    num_points = len(destinations)
+
+    distances_row = np.zeros(num_points)
+    durations_row = np.zeros(num_points)   
+
+    for dst_start in range(0, num_points, MAX_SINGLE_ROW):
+        dst_stop = min(dst_start + MAX_SINGLE_ROW, num_points)
+        sub_destinations = destinations[dst_start:dst_stop]
+
+        distances_sub_row, durations_sub_row = \
+            build_distance_matrix_simple([origin], sub_destinations, mode)
+            # single row (2-dim matrix)
+        
+        distances_row[dst_start:dst_stop] = distances_sub_row[0]
+        durations_row[dst_start:dst_stop] = durations_sub_row[0]         
+    
+    return distances_row.tolist(), durations_row.tolist()
 
 def snap_to_roads(path):
     result = gmaps.snap_to_roads(path)
@@ -114,7 +141,7 @@ def test_polyline():
 def test_distance_matrix():
     porteghet = (46.071298, 11.124574)
     poste = (46.06683, 11.124260)
-    distance_mtx, duration_mtx = get_distance_matrix_simple([porteghet], [poste])
+    distance_mtx, duration_mtx = build_distance_matrix_simple([porteghet], [poste])
     print('distance_mtx', distance_mtx)
     print('duration_mtx', duration_mtx)
 

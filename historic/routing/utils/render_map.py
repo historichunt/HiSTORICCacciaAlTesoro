@@ -10,6 +10,7 @@ from historic.config.settings import ENV_VARS
 
 # for showing larger images 
 import matplotlib as mpl
+
 mpl.rcParams['figure.figsize'] = [12.0, 8.0]
 
 
@@ -182,8 +183,8 @@ def render_map(route_points, path_points, unique_segments, segments_counts, all_
     return r.content
 
 def test_render_map():    
-    from historic.hunt_route.routing_wikidata import read_wikidata_locations
-    from historic.hunt_route import api_ors
+    from historic.routing.datasets.routing_wikidata import read_wikidata_locations
+    from historic.routing.api import api_ors
     coordinates = [
         [11.1022361, 46.060613], 
         [11.1188586, 46.0627946], 

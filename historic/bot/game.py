@@ -4,12 +4,14 @@ from random import shuffle, choice
 from historic.config import params, settings
 from historic.bot import utility, airtable_utils
 import historic.bot.date_time_util as dtu
-from historic.hunt_route import api_google, routing
-from historic.hunt_route.data_matrices import DataMatrices
-from historic.hunt_route.routing import RoutePlanner
+from historic.routing import route_planner
+from historic.routing.api import api_google
+from historic.routing.data_matrices import DataMatrices
+from historic.routing.route_planner import RoutePlanner
+from historic.routing.metrics import METRIC_DISTANCE, METRIC_DURATION, METRICS
 import numpy as np
 
-from historic.hunt_route.trento_open_params import fine_tuning_trento_open
+# from historic.hunt_route.trento_open_params import fine_tuning_trento_open
 
 #################
 # GAMES CONFIG
@@ -192,7 +194,7 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
         route_planner = RoutePlanner(
             dm = game_dm,
             profile = profile,
-            metric = routing.METRIC_DURATION,
+            metric = METRIC_DURATION,
             start_idx = start_idx, 
             min_dst = 60, # 2 min
             max_dst = 720, # 12 min

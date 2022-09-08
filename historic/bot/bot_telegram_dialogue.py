@@ -13,7 +13,7 @@ from historic.config import params
 from historic.bot.utility import escape_markdown, flatten, get_str_param_boolean, make_2d_array
 from historic.bot.ndb_person import Person
 from historic.bot.ndb_utils import client_context
-from historic.hunt_route import api_google
+from historic.routing.api import api_google
 
 # ================================
 # RESTART

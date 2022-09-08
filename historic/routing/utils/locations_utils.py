@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from geopy import distance
 from math import pi, atan2
 from collections import Counter
-from historic.hunt_route import mgrs_utils
+from historic.routing.utils import mgrs_utils
 
 
 TWO_PI = 2 * pi
@@ -117,7 +117,7 @@ def compute_overlapping_path_segments(dm, route_points, profile):
     for segment, count in zip(unique_segments_sorted, segments_counts):
         if count > 1:
             segment = np.flip(segment, axis=1) # geopy distance expect lat, long
-            dst = distance.distance(segment[0], segment[1]).m
+            dst = distance.distance(segment[0], segment[1]).m # meters
             overlapping_dst += dst * (count-1) # count only repeted path
     
     return overlapping_dst, path_points, unique_segments_sorted, segments_counts

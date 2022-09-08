@@ -1,4 +1,6 @@
-from historic.hunt_route import api_google
+from historic.routing.api import api_google
+
+TRENTO_BASE_KEY = 'apph7gGu4AAOgcbdA'
 
 def fine_tuning_trento_open(profile, circular_route, duration_min):        
     if circular_route:

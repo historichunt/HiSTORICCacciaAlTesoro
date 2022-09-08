@@ -49,7 +49,7 @@ def interpolate(seg, num_interp_points):
     return points
 
 def get_grid_id_set_from_route(route_points, num_interp_points=100):
-    from historic.hunt_route.locations_utils import convert_path_to_segments
+    from historic.routing.utils.locations_utils import convert_path_to_segments
     segments_route1 = convert_path_to_segments(route_points)
     route_grid_set = set()
     for seg in segments_route1:
@@ -67,9 +67,9 @@ def add_grid_to_plot(ax, grid_counter):
 
 
 def test_route_overlap():
-    from historic.hunt_route.data_matrices import DataMatrices
-    from historic.hunt_route import api_google
-    from historic.hunt_route.locations_utils import plot_route_points
+    from historic.routing.data_matrices import DataMatrices
+    from historic.routing.api import api_google
+    from historic.routing.utils.locations_utils import plot_route_points
 
     dm = DataMatrices(
         dataset_name = 'Trento',

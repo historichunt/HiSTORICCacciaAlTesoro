@@ -3,19 +3,12 @@ from numpy.random import RandomState
 from dataclasses import dataclass, field
 from typing import List
 from tqdm import tqdm
-from historic.hunt_route.data_matrices import DataMatrices
-from historic.hunt_route.limited_size_sorted_dict import LimitedSizeSortedDict
-from historic.hunt_route import locations_utils
-from historic.hunt_route.render_map import render_map
+from historic.routing.data_matrices import DataMatrices
+from historic.routing.utils.limited_size_sorted_dict import LimitedSizeSortedDict
+from historic.routing.utils import locations_utils
+from historic.routing.utils.render_map import render_map
 from collections import Counter
-
-METRIC_DISTANCE = 'distance'
-METRIC_DURATION = 'duration'
-
-METRICS = [
-    METRIC_DISTANCE,
-    METRIC_DURATION
-]
+from historic.routing.metrics import METRIC_DISTANCE, METRIC_DURATION, METRICS
 
 @dataclass
 class RoutePlanner:    
@@ -24,7 +17,7 @@ class RoutePlanner:
     Attributes:
         dm (DataMatrices): object with data
         profile (str): one of api.PROFILES ('walking', 'cycling') / differs for ORS/GOOGLE 
-        metric (str): one of routing.METRICS ('duration', 'distance')
+        metric (str): one of metrics.METRICS ('duration', 'distance')
         start_idx (int): start point index (0-based in list of points)        
         max_attempts (int): max number of attempts (upper bound on the number of correct routes being returned)        
         min_dst (int): min distance (or duration) between consecutive points in the route
@@ -350,6 +343,8 @@ class RoutePlanner:
             pair_dst = self.get_pair_dst(prev_idx, next_idx, add_stop_duration=True)
 
             if pair_dst is None:
+                # discarding pairs whose distance is None 
+                # (e.g., not calculated because linear distance above threshold)
                 continue
 
             new_tot_dst = tot_dst + pair_dst

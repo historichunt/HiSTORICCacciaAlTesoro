@@ -17,8 +17,9 @@ PROFILES = [
     PROFILE_CYCLING_REGULAR
 ]
 
-# matrix api works for at most 50x50 table
+# up to 2.500 distance pairs (at most 50x50 table)
 MAX_SRC_DST = 50
+MAX_SINGLE_ROW = 2500
 
 def run_matrix_api(locations, sources_idx, destinations_idx, profile):
     """get matrix of durations/distances via openrouteservice
@@ -71,7 +72,7 @@ def run_matrix_api(locations, sources_idx, destinations_idx, profile):
 
     return json_data    
 
-def build_matrices(locations, profile):
+def build_distance_matrices(locations, profile):
     """To build duration and direction matrices for arbitrarily big tables
 
     Args:
@@ -108,6 +109,39 @@ def build_matrices(locations, profile):
             durations_matrix[src_start:src_stop, dst_start:dst_stop] = durations_sub_matrix            
 
     return distances_matrix.tolist(), durations_matrix.tolist()
+
+def build_distance_row(locations, source_idx, destinations_idx, profile):
+    """To build duration and direction matrices for arbitrarily big tables
+
+    Args:
+        locations (list of list): [long,lat]
+        profile ([type]): foot/cycling
+
+    Returns:
+        tuple: durations_matrix, distances_matrix
+    """
+    num_points = len(destinations_idx)
+
+    distances_row = np.zeros(num_points)
+    durations_row = np.zeros(num_points)    
+
+    for dst_start in range(0, num_points, MAX_SINGLE_ROW):
+        dst_stop = min(dst_start + MAX_SINGLE_ROW, num_points)
+        destinations_idx = list(range(dst_start, dst_stop))
+
+        json_data = run_matrix_api (
+            locations = locations,
+            sources_idx=[source_idx],
+            destinations_idx=destinations_idx,
+            profile=profile
+        )
+
+        distances_sub_row = np.array(json_data['distances'])
+        durations_sub_row = np.array(json_data['durations'])
+        distances_row[dst_start:dst_stop] = distances_sub_row[0]
+        durations_row[dst_start:dst_stop] = durations_sub_row[0]         
+
+    return distances_row.tolist(), durations_row.tolist()
 
 def run_directions_api(coordinates, profile, format='json'):
     """[summary]
@@ -167,7 +201,7 @@ def get_direction_polyline(coordinates, profile):
 
 def test_directions():    
     import json
-    from historic.hunt_route import render_map
+    from historic.routing.utils import render_map
     coordinates = [
         [11.1022361, 46.060613], 
         [11.1188586, 46.0627946] 

@@ -1,10 +1,11 @@
 import pandas as pd
 from airtable.airtable import Airtable
-from historic.hunt_route import api_google
-from historic.hunt_route.data_matrices import DataMatrices
+from historic.routing.api import api_google
+from historic.routing.data_matrices import DataMatrices
 from historic.bot import airtable_utils
-from historic.hunt_route.render_map import render_map_with_coordinates
+from historic.routing.utils.render_map import render_map_with_coordinates
 from historic.config import settings
+from historic.routing.datasets.trento_hunt_params import TRENTO_BASE_KEY
 
 def read_data_from_spreadsheet(spreadsheet_key, spreadsheet_gid, max_points=None):
     url = f'https://docs.google.com/spreadsheets/d/{spreadsheet_key}/export?gid={spreadsheet_gid}&format=csv'
@@ -27,27 +28,38 @@ def read_data_from_airtable(table_id, table_name, max_points=None):
     data = airtable_utils.get_rows(table)
     if max_points is not None:
         data = data[:max_points]
-    names_longlat = {
+    name_longlat = {
         r['NOME']: list(reversed([float(x) for x in r['GPS'].split(',')])) # latlong -> longlat
         for r in data
     }    
-    return names_longlat
+    return name_longlat
 
-def build_data_from_spreadsheet(api, name, spreadsheet_key, spreadsheet_gid, max_points=None):        
-    names_longlat = read_data_from_spreadsheet(spreadsheet_key, spreadsheet_gid, max_points)
-    return DataMatrices(
+def build_data_from_spreadsheet(
+    api, name, spreadsheet_key, spreadsheet_gid,
+    update=True, max_points=None, max_linear_dst_km=None):        
+
+    name_longlat = read_data_from_spreadsheet(spreadsheet_key, spreadsheet_gid, max_points)
+    dm = DataMatrices(
         dataset_name = name,
-        points_name_coordinate = names_longlat,
         api = api
-    )        
+    )
+    if update:
+        dm.update_matrices(name_longlat)
+    return dm
 
-def build_data_from_airtable(api, table_id, table_name, max_points=None):
-    names_longlat = read_data_from_airtable(table_id, table_name, max_points)
-    return DataMatrices(
-        dataset_name = table_id,
-        points_name_coordinate = names_longlat,
-        api = api
-    )        
+def build_data_from_airtable(
+    api, table_id, table_name, 
+    update=True, max_points=None, max_linear_dst_km=None):
+
+    name_longlat = read_data_from_airtable(table_id, table_name, max_points)
+    dm = DataMatrices(
+        dataset_name = table_id,        
+        api = api,
+        max_linear_dst_km = max_linear_dst_km
+    )      
+    if update:  
+        dm.update_matrices(name_longlat)
+    return dm
 
 def get_dm(api, name):
     return DataMatrices(
@@ -57,13 +69,19 @@ def get_dm(api, name):
 
 def test_airtable_map(table_id, max_points=None):
     import numpy as np
-    names_longlat = read_data_from_airtable(table_id, max_points)
-    print('Read points: ', len(names_longlat))
-    coordinates = np.array(list(names_longlat.values()))
-    assert all(len(c)==2 for c in names_longlat.values())
+    name_longlat = read_data_from_airtable(table_id, max_points)
+    print('Read points: ', len(name_longlat))
+    coordinates = np.array(list(name_longlat.values()))
+    assert all(len(c)==2 for c in name_longlat.values())
     render_map_with_coordinates(coordinates)
 
 if __name__ == "__main__":
-    # test_airtable_map('apph7gGu4AAOgcbdA', 4)
-    build_data_from_airtable(api_google, 'apph7gGu4AAOgcbdA', 'Missioni_IT') # max_points=3
+    # test_airtable_map(TRENTO_BASE_KEY, 'Missioni_IT')
+    build_data_from_airtable(
+        api_google, 
+        TRENTO_BASE_KEY,
+        'Missioni_IT',
+        max_linear_dst_km=2.5
+        # max_points=3
+    ) 
     

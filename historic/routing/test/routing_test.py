@@ -1,10 +1,11 @@
 from tqdm import tqdm
-from historic.hunt_route import api_google
-from historic.hunt_route.routing import RoutePlanner
-from historic.hunt_route import routing
-from historic.hunt_route.data_matrices import DataMatrices
-from historic.hunt_route.trento_open_params import fine_tuning_trento_open
+from historic.routing.api import api_google
+from historic.routing.route_planner import RoutePlanner
+from historic.routing.data_matrices import DataMatrices
+# from historic.hunt_route.trento_open_params import fine_tuning_trento_open
 from collections import Counter
+from historic.routing.metrics import METRIC_DISTANCE, METRIC_DURATION, METRICS
+from historic.routing.datasets.trento_hunt_params import TRENTO_BASE_KEY
 
 def get_route_planner(datamatrix, profile, metric, start_idx, duration_sec, tot_dst_tolerance,
     max_grid_overalapping, circular_route, show_progress_bar):
@@ -38,7 +39,7 @@ def get_route_planner(datamatrix, profile, metric, start_idx, duration_sec, tot_
 def test_single_route():
 
     api = api_google
-    metric = routing.METRIC_DURATION
+    metric = METRIC_DURATION
     # profile = api_google.PROFILE_FOOT_WALKING
     profile = api_google.PROFILE_CYCLING_REGULAR    
     start_idx = 24
@@ -47,7 +48,7 @@ def test_single_route():
     plot_dm_stats = False
     
     trento_dm = DataMatrices(
-        dataset_name = 'apph7gGu4AAOgcbdA',
+        dataset_name = TRENTO_BASE_KEY,
         api = api
     )  
 
@@ -80,11 +81,11 @@ def test_single_route():
 def test_multi_routes():
 
     api = api_google
-    metric = routing.METRIC_DURATION
+    metric = METRIC_DURATION
     max_attempts = 10
 
     trento_dm = DataMatrices(
-        dataset_name = 'apph7gGu4AAOgcbdA', # trento open
+        dataset_name = TRENTO_BASE_KEY,
         api = api
     )  
 
