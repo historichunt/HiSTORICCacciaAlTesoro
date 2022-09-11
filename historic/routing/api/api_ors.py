@@ -190,7 +190,8 @@ def run_directions_api(coordinates, profile, format='json'):
     )    
     return result
 
-def get_direction_polyline(coordinates, profile):
+def get_direction_polyline(origin_coord, dest_coord, profile):
+    coordinates = [origin_coord, dest_coord]
     try:
         json_data = run_directions_api(coordinates, profile, format='json')
         poly_entry = json_data["routes"][0]["geometry"]

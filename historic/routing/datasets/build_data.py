@@ -22,9 +22,8 @@ def read_data_from_spreadsheet(spreadsheet_key, spreadsheet_gid, max_points=None
     }
     return name_coordinates
 
-def read_data_from_airtable(table_id, table_name, max_points=None):
-    # TODO: this works only if there is a table 'Missioni_IT;
-    table = Airtable(table_id, table_name, api_key=settings.AIRTABLE_API_KEY)
+def read_data_from_airtable(base_key, table_name, max_points=None):
+    table = Airtable(base_key, table_name, api_key=settings.AIRTABLE_API_KEY)
     data = airtable_utils.get_rows(table)
     if max_points is not None:
         data = data[:max_points]
@@ -48,12 +47,12 @@ def build_data_from_spreadsheet(
     return dm
 
 def build_data_from_airtable(
-    api, table_id, table_name, 
+    api, base_key, table_name, 
     update=True, max_points=None, max_linear_dst_km=None):
 
-    name_longlat = read_data_from_airtable(table_id, table_name, max_points)
+    name_longlat = read_data_from_airtable(base_key, table_name, max_points)
     dm = DataMatrices(
-        dataset_name = table_id,        
+        dataset_name = base_key,        
         api = api,
         max_linear_dst_km = max_linear_dst_km
     )      
@@ -61,15 +60,23 @@ def build_data_from_airtable(
         dm.update_matrices(name_longlat)
     return dm
 
-def get_dm(api, name):
-    return DataMatrices(
-        dataset_name = name,
-        api = api
-    )        
+def test_trento_dm_update():
+    dm = DataMatrices(
+        dataset_name = TRENTO_BASE_KEY,        
+        api = api_google,
+        max_linear_dst_km = 2
+    )
 
-def test_airtable_map(table_id, max_points=None):
+    # name_longlat = {
+    #     'test': [11.1161067, 46.080037]
+    # }
+    # dm.update_matrices(name_longlat)      
+    dm.update_matrices()
+    
+
+def test_airtable_map(base_key, max_points=None):
     import numpy as np
-    name_longlat = read_data_from_airtable(table_id, max_points)
+    name_longlat = read_data_from_airtable(base_key, max_points)
     print('Read points: ', len(name_longlat))
     coordinates = np.array(list(name_longlat.values()))
     assert all(len(c)==2 for c in name_longlat.values())
@@ -77,11 +84,12 @@ def test_airtable_map(table_id, max_points=None):
 
 if __name__ == "__main__":
     # test_airtable_map(TRENTO_BASE_KEY, 'Missioni_IT')
-    build_data_from_airtable(
-        api_google, 
-        TRENTO_BASE_KEY,
-        'Missioni_IT',
-        max_linear_dst_km=2.5
-        # max_points=3
-    ) 
+    test_trento_dm_update()
+    # build_data_from_airtable(
+    #     api_google, 
+    #     TRENTO_BASE_KEY,
+    #     'Missioni_IT',
+    #     max_linear_dst_km=2.5
+    #     # max_points=3
+    # ) 
     

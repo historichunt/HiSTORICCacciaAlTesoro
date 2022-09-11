@@ -4,6 +4,7 @@ import numpy as np
 import mgrs
 from collections import Counter
 
+# Military Grid Reference System
 # see https://www.maptools.com/tutorials/mgrs/quick_guide
 
 # 1m      (precision 5) - default
@@ -75,8 +76,8 @@ def test_route_overlap():
         dataset_name = 'Trento',
         api = api_google
     )   
-    p1 = dm.coordinates[0]
-    p2 = dm.coordinates[1]
+    p1 = dm.coordinates_longlat[0]
+    p2 = dm.coordinates_longlat[1]
     route1_points = dm.get_direction_path_coordinates(p1, p2, profile=api_google.PROFILE_FOOT_WALKING)
     route2_points = dm.get_direction_path_coordinates(p2, p1, profile=api_google.PROFILE_FOOT_WALKING)
     all_points = np.concatenate([route1_points, route2_points])

@@ -27,7 +27,7 @@ PROFILES = [
 MAX_SRC_DST = 10
 MAX_SINGLE_ROW = 25
 
-def get_directions(origin, destination, mode='walking'):
+def get_direction_polyline(origin, destination, mode='walking', debug=False):
     """[summary]
 
     Args:
@@ -47,9 +47,12 @@ def get_directions(origin, destination, mode='walking'):
     result = directions_result[0]
     polyline = result['overview_polyline']['points']
     legs = result['legs']
-    total_distance = sum(l['distance']['value'] for l in legs)
-    total_duration = sum(l['duration']['value'] for l in legs)
-    return polyline, total_distance, total_duration
+    if debug:
+        total_distance = sum(l['distance']['value'] for l in legs)
+        total_duration = sum(l['duration']['value'] for l in legs)
+        print('total_distance', total_distance)
+        print('total_duration', total_duration)
+    return polyline
 
 def build_distance_matrix_simple(origins, destinations, mode='walking'):
         
@@ -133,10 +136,8 @@ def snap_to_roads(path):
 def test_polyline():
     porteghet = (46.071298, 11.124574)
     poste = (46.06683, 11.124260)
-    polyline, total_distance, total_duration = get_directions(porteghet, poste)
+    polyline = get_direction_polyline(porteghet, poste, debug=True)
     print('polyline', polyline)
-    print('total_distance', total_distance)
-    print('total_duration', total_duration)
 
 def test_distance_matrix():
     porteghet = (46.071298, 11.124574)

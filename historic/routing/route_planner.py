@@ -74,7 +74,7 @@ class RoutePlanner:
         self.dst_matrix = np.array(self.dm.dst_matrices[self.profile][self.metric])
         self.num_points = len(self.dst_matrix)
         self.point_names = self.dm.point_names
-        self.points = np.array(self.dm.coordinates)      
+        self.points = np.array(self.dm.coordinates_longlat)      
     
     def __check_params(self):
         assert self.num_attempts is None or self.num_attempts > 0, \
@@ -206,7 +206,12 @@ class RoutePlanner:
         self.remove_neighbor = self.exclude_neighbor_dst is not None
         if self.remove_neighbor:
             self.p_idx_neighbor_idx = {
-                p: [n for n in self.all_points_idx if self.dst_matrix[p][n] < self.exclude_neighbor_dst]
+                p: [
+                    n for n in self.all_points_idx 
+                    if \
+                        self.dst_matrix[p][n] != None \
+                        and \
+                        self.dst_matrix[p][n] < self.exclude_neighbor_dst]
                 for p in self.all_points_idx
             }
 
@@ -233,6 +238,10 @@ class RoutePlanner:
     def get_pair_dst(self, idx_a, idx_b, add_stop_duration):
     
         pair_dst = self.dst_matrix[idx_a][idx_b]
+
+        if pair_dst is None:
+            # point ins pairs not connected (e.g., too far)
+            return None
         
         if pair_dst < self.min_dst:
             # pairwise distance too small
