@@ -68,7 +68,7 @@ class DataMatrices:
             self.num_points = len(self.point_names)
             if self.completed:
                 self.__build_direction_coord_matrices()
-                self.__build_grid_matrices_set()
+                self.__convert_grid_matrices_to_set() # builds grid_matrices_set
             else:
                 self.update_matrices()
         else:
@@ -87,7 +87,7 @@ class DataMatrices:
     def __init_matrices(self):
         self.dst_matrices = {
             profile: {
-                metric: fill_double_list(0, self.num_points)
+                metric: fill_double_list(None, self.num_points)
                 for metric in METRICS
             }
             for profile in self.api.PROFILES                        
@@ -102,6 +102,7 @@ class DataMatrices:
         }                     
 
     def __copy_sub_matrix(self, src_matrix, dst_matrix):
+        # src_matrix smaller than dst_matrix
         num_points = len(src_matrix)
         for i in range(num_points):
             for j in range(num_points):
@@ -130,7 +131,7 @@ class DataMatrices:
         else:
             self.coordinates_for_api = self.coordinates_longlat
 
-    def __build_grid_matrices_set(self):
+    def __convert_grid_matrices_to_set(self):
         self.grid_matrices_set = {}
         for profile in self.api.PROFILES:
             grid_matrix_list_profile = self.grid_matrices[profile]
@@ -153,13 +154,13 @@ class DataMatrices:
         """
 
         if name_longlat is not None:
-            self.__increase_data(name_longlat)
-            if self.completed:
-                print("No new points found and DataMatrices already completed")
-                return
-            else:
-                self.save_data()
+            # set self.completed to False and self.modified to True if more data found
+            self.__increase_data(name_longlat) 
         
+        if self.completed:
+            print("No new points found and DataMatrices already completed")
+            return
+
         self.__build_coordinates_for_api()
         self.name_longlat = { p:c for p,c in zip(self.point_names, self.coordinates_longlat)}
         # self.longlat_name = { c:p for p,c in zip(self.point_names, self.coordinates_longlat)}
@@ -188,37 +189,41 @@ class DataMatrices:
         if len(new_points)==0:
             return            
                 
-        print(f'Num new points found: {len(new_points)}')
-        print(f'Total points: {self.num_points}')
+        old_num_points = self.num_points        
         
         self.point_names.extend(new_points)
         self.coordinates_longlat.extend(new_coordinates)        
         self.num_points = len(self.point_names)
         self.__enlarge_matrices()
+        self.modified = True
         self.completed = False 
+
+        print(f'Num new points found: {len(new_points)}')
+        print(f'Total points increased from {old_num_points} to {self.num_points}')
 
     def __update_dst_matrices(self):
         
-        empty_dst_matrices = self.__check_matrix_empty(
-            matrix = self.dst_matrices[self.api.PROFILES[0]][METRICS[0]],
-            empty_value=0
-        )
-
         all_connected = True
         connected_point_names = None
         if self.restrict_connections_by_linear_dst:
             connected_point_names, all_connected = self.__compute_connected_point_names()
 
-        if empty_dst_matrices and all_connected:
+        if all_connected:
+            empty_dst_matrices = self.__check_matrix_empty(
+                matrix = self.dst_matrices[self.api.PROFILES[0]][METRIC_DISTANCE],
+                empty_value=None
+            )
+            if empty_dst_matrices:
                 # build entire matrix without checking linear distance
                 self.__build_full_dst_matrices() # saving data
-        else:
-            # dst matrixes could be 
-            # - empty (but only connected points should be considered)
-            # - incomplete (e.g., new points added)            
-            self.__complete_dst_matrices(connected_point_names) # saving data
+                return
 
-    def __check_matrix_empty(self, matrix, empty_value=0):
+        # dst matrixes could be 
+        # - empty (but only connected points should be considered)
+        # - incomplete (e.g., new points added)            
+        self.__complete_dst_matrices(connected_point_names) # saving data
+
+    def __check_matrix_empty(self, matrix, empty_value):
         """Check if dst matrices are simply initialized with None        
         Returns:
             _type_: _description_
@@ -264,9 +269,9 @@ class DataMatrices:
         total_num_pairs = int((self.num_points ** 2 - self.num_points) / 2) # excluding self
         non_connected_num_pairs = total_num_pairs - connected_pairs
         connected_percentage = connected_pairs / total_num_pairs * 100
-        print(f'Total num pairs: {total_num_pairs}')
-        print(f'Non connected num pairs: {non_connected_num_pairs}')
-        print(f'Connected num pairs: {connected_pairs} ({connected_percentage:.0f}%)')
+        print(f'Total pairs: {total_num_pairs}')
+        print(f'Non connected pairs: {non_connected_num_pairs}')
+        print(f'Connected pairs: {connected_pairs} ({connected_percentage:.2f}%)')
         
         print(f'All connected: {all_connected}')
         return connected_point_names, all_connected
@@ -285,7 +290,7 @@ class DataMatrices:
         for profile in self.api.PROFILES:
 
             # get distance matrix for the given profile (to check for zero values)
-            dst_matrix = self.dst_matrices[profile][METRICS[0]] # distance
+            dst_matrix = self.dst_matrices[profile][METRIC_DISTANCE] # distance
             
             for origin_idx in range(self.num_points):
                 p_origin = self.point_names[origin_idx]
@@ -295,7 +300,7 @@ class DataMatrices:
                     dst_idx for dst_idx,p_dst in enumerate(self.point_names)
                     if (
                         p_dst in connected_point_names_origin and 
-                        dst_matrix[origin_idx][dst_idx] == 0
+                        dst_matrix[origin_idx][dst_idx] == None
                     )
                 ]
 
@@ -319,10 +324,11 @@ class DataMatrices:
     def __update_direction_matrices(self):
         save_every = 1 if self.api == api_ors else 100
         
-        finished = self.__build_direction_poly_matrix(save_every) 
+        finished, added = self.__build_direction_poly_matrix(save_every) 
         
-        if finished:
-            self.__build_direction_coord_matrices()
+        self.__build_direction_coord_matrices()
+        
+        if finished and added > 0:            
             self.__build_direction_grid_matrices()                
 
         return finished
@@ -334,7 +340,7 @@ class DataMatrices:
         
         for profile in self.api.PROFILES:
 
-            dst_matrix = self.dst_matrices[profile][METRICS[0]] # distance
+            dst_matrix = self.dst_matrices[profile][METRIC_DISTANCE] # distance
 
             added = 0
             total = int(self.num_points * (self.num_points-1))
@@ -342,11 +348,12 @@ class DataMatrices:
                 self.poly_matrices[profile][i][j] == ''
                 for i in range(self.num_points)
                 for j in range(self.num_points)
-                if i!=j and dst_matrix[i][j] != 0
+                if i!=j and dst_matrix[i][j] not in [0,None] 
+                # exluding identical points and those not connected
             ])
             if missing==0:
-                # print('Direction Matrix already filled')
-                return True
+                print('Direction Matrix already filled')
+                return True, added
             print(f'Direction Matrix {profile} (missing/tot): {missing}/{total}')
             pbar = tqdm(total=total)
             for i, c1 in enumerate(self.coordinates_for_api):
@@ -361,7 +368,7 @@ class DataMatrices:
                             pbar.close()
                             self.save_data()
                             print('Added: ', added)                        
-                            return False
+                            return False, added
                         self.poly_matrices[profile][i][j] = poly_entry 
                         added += 1        
                         self.modified = True            
@@ -370,26 +377,28 @@ class DataMatrices:
             pbar.close()        
             self.save_data()
             print('Added: ', added)
-        return True
+        return True, added
 
     def __build_direction_coord_matrices(self):
 
-        for profile in self.api.PROFILES:        
-            # init coord matrices
-            self.coord_matrices = {
-                profile: fill_double_list(None, self.num_points)
-                for profile in self.api.PROFILES
-            }    
+        self.coord_matrices = {
+            profile: fill_double_list(None, self.num_points)
+            for profile in self.api.PROFILES
+        }    
 
-            profile_coord_matrix = self.coord_matrices[profile]
+        for profile in self.api.PROFILES:        
+            coord_matrix_profile = self.coord_matrices[profile]
+            poly_matrices_profile = self.poly_matrices[profile]
             for i in range(self.num_points):
                 for j in range(self.num_points):
                     if i==j:
                         continue                
-                    poly_entry = self.poly_matrices[profile][i][j]
-                    assert poly_entry != '', 'poly_entry must be filled'
+                    poly_entry = poly_matrices_profile[i][j]
+                    if poly_entry is None:
+                        # locations i,j not connected
+                        continue
                     path_coordinates = np.array(polyline.decode(poly_entry, geojson=True)) # long, lat
-                    profile_coord_matrix[i][j] = path_coordinates        
+                    coord_matrix_profile[i][j] = path_coordinates        
 
     def __build_direction_grid_matrices(self):
 
@@ -397,11 +406,6 @@ class DataMatrices:
         
             profile_grid_matrix = self.grid_matrices[profile]
 
-            if not self.__check_matrix_empty(matrix=profile_grid_matrix, empty_value=None):
-                # already initialized
-                return
-
-            # need to initialize it
             bar = tqdm(total=self.num_points**2, desc=f'Build grid matrix ({profile})')
             for i in range(self.num_points):
                 for j in range(self.num_points):
@@ -409,6 +413,9 @@ class DataMatrices:
                     if i==j:
                         continue                
                     path_coordinates = self.coord_matrices[profile][i][j]
+                    if path_coordinates is None:
+                        # locations i,j not connected
+                        continue
                     grid_set = get_grid_id_set_from_route(path_coordinates)
                     profile_grid_matrix[i][j] = list(grid_set)
             bar.close()            

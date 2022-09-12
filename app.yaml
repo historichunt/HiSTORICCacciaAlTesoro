@@ -8,5 +8,6 @@ runtime: python37
 # default F1: 256 MB 600 MHz
 # free quota: https://cloud.google.com/appengine/quotas#Instances
 # pricing: https://cloud.google.com/appengine/pricing
+# API usage: https://console.cloud.google.com/apis/dashboard?project=historictrentobot
 
 instance_class: F2

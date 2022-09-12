@@ -67,11 +67,11 @@ def test_trento_dm_update():
         max_linear_dst_km = 2
     )
 
-    # name_longlat = {
-    #     'test': [11.1161067, 46.080037]
-    # }
-    # dm.update_matrices(name_longlat)      
-    dm.update_matrices()
+    name_longlat = {
+        'test': [11.0810876,46.0800388]
+    }
+    dm.update_matrices(name_longlat)      
+    # dm.update_matrices()
     
 
 def test_airtable_map(base_key, max_points=None):
