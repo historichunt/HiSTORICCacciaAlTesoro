@@ -9,6 +9,7 @@ from historic.config.settings import ENV_VARS
 
 
 API_NAME = 'GOOGLE'
+ENABLED = True
 
 gmaps = googlemaps.Client(key=ENV_VARS.get('GOOGLE_API_KEY'))
 
@@ -38,6 +39,9 @@ def get_direction_polyline(origin, destination, mode='walking', debug=False):
     Returns:
         [type]: [description]
     """
+
+    assert ENABLED
+
     directions_result = gmaps.directions(
         origin=origin,
         destination=destination,
@@ -55,6 +59,8 @@ def get_direction_polyline(origin, destination, mode='walking', debug=False):
     return polyline
 
 def build_distance_matrix_simple(origins, destinations, mode='walking'):
+
+    assert ENABLED
         
     matrix_result = gmaps.distance_matrix(
         origins=origins,
@@ -128,6 +134,7 @@ def build_distance_row(locations, source_idx, destinations_idx, mode='walking'):
     return distances_row.tolist(), durations_row.tolist()
 
 def snap_to_roads(path):
+    assert ENABLED
     result = gmaps.snap_to_roads(path)
     new_coord = [[d['location']['latitude'],d['location']['longitude']] for d in result]
     new_poly = polyline.encode(new_coord, geojson=False)
