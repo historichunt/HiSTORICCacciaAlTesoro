@@ -41,13 +41,16 @@ def check_hunt(hunt_pw):
     hunt_config_dict = HUNTS_PW[hunt_pw]    
     # hunt_name = hunt_config_dict['Name']            
     game_id = hunt_config_dict['Airtable_Game_ID']
+    skip_columns = ['NOTE OPZIONALI']
     hunt_languages = get_hunt_languages(hunt_pw)
     for l in hunt_languages:
         table_name = f'Missioni_{l}'
         hunt_missioni_table = Airtable(game_id, table_name, api_key=settings.AIRTABLE_API_KEY)
         missioni_row_dict_list = airtable_utils.get_rows(hunt_missioni_table)
         for row_dict in missioni_row_dict_list:
-            for k,v in row_dict.items():
+            for col,v in row_dict.items():
+                if col in skip_columns:
+                    continue
                 if type(v) is not str:
                     continue
                 mk_check = (
@@ -59,7 +62,7 @@ def check_hunt(hunt_pw):
                 miss_name = row_dict['NOME']
                 for err_type, check_func in mk_check:
                     if not check_func(v):
-                        return f'Errore {err_type} in tabella "{table_name}": missione "{miss_name}", colonna {k}'
+                        return f'Errore {err_type} in tabella "{table_name}": missione "{miss_name}", colonna {col}'
 
 # def check_consistencies():
 #     check_ui()
@@ -69,5 +72,5 @@ def check_hunt(hunt_pw):
 if __name__ == "__main__":
     import sys
     assert len(sys.argv)==2
-    pw = sys.argv[1]
+    pw = sys.argv[1].lower()
     check_hunt(pw)
