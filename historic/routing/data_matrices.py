@@ -174,17 +174,21 @@ class DataMatrices:
     def __increase_data(self, name_longlat):
         new_points = []
         new_coordinates = []
+        error = False
         for p,c in name_longlat.items():
             if p in self.point_names:
                 # already present: skip but make sure it's maps to same coordiante
                 idx = self.point_names.index(p)
                 p_gps = self.coordinates_longlat[idx]                                 
-                assert c == p_gps, \
-                    f"Point name {p} already present but associated to new GPS: old -> {p_gps}, new ->{c}"
+                if c != p_gps:
+                    error = True
+                    print(f"Point name {p} already present but associated to new GPS: old -> {p_gps}, new ->{c}")                    
                 continue            
             else:
                 new_points.append(p)
                 new_coordinates.append(c)     
+
+        assert not error, 'An error has occured in __increase_data'
 
         if len(new_points)==0:
             return            
@@ -327,7 +331,7 @@ class DataMatrices:
         finished, added = self.__build_direction_poly_matrix(save_every) 
         
         self.__build_direction_coord_matrices()
-        
+
         if finished and added > 0:            
             self.__build_direction_grid_matrices()                
 

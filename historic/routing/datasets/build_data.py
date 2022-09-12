@@ -46,7 +46,7 @@ def build_data_from_spreadsheet(
         dm.update_matrices(name_longlat)
     return dm
 
-def build_data_from_airtable(
+def build_or_update_dm_from_airtable(
     api, base_key, table_name, 
     update=True, max_points=None, max_linear_dst_km=None):
 
@@ -84,12 +84,12 @@ def test_airtable_map(base_key, max_points=None):
 
 if __name__ == "__main__":
     # test_airtable_map(TRENTO_BASE_KEY, 'Missioni_IT')
-    test_trento_dm_update()
-    # build_data_from_airtable(
-    #     api_google, 
-    #     TRENTO_BASE_KEY,
-    #     'Missioni_IT',
-    #     max_linear_dst_km=2.5
-    #     # max_points=3
-    # ) 
+    # test_trento_dm_update()
+    build_or_update_dm_from_airtable(
+        api_google, 
+        TRENTO_BASE_KEY,
+        'Missioni_IT',
+        max_linear_dst_km=2.5
+        # max_points=3
+    ) 
     
