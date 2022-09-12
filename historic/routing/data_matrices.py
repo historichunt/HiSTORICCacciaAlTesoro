@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import sys
 from typing import Callable
 import polyline
 import os
@@ -93,7 +94,7 @@ class DataMatrices:
             for profile in self.api.PROFILES                        
         }
         self.poly_matrices = {
-            profile: fill_double_list("", self.num_points)
+            profile: fill_double_list('', self.num_points)
             for profile in self.api.PROFILES
         }
         self.grid_matrices = {
@@ -146,7 +147,7 @@ class DataMatrices:
                         continue
                     grid_matrix_set_profile[i][j] = set(value)                        
 
-    def update_matrices(self, name_longlat=None):
+    def update_matrices(self, name_longlat=None, allow_change_gps=False):
         """update dst_matrices, poly_matrices and grid_matrices
 
         Args:
@@ -155,14 +156,14 @@ class DataMatrices:
 
         if name_longlat is not None:
             # set self.completed to False and self.modified to True if more data found
-            self.__increase_data(name_longlat) 
+            self.__update_locations(name_longlat, allow_change_gps) 
         
         if self.completed:
             print("No new points found and DataMatrices already completed")
             return
 
         self.__build_coordinates_for_api()
-        self.name_longlat = { p:c for p,c in zip(self.point_names, self.coordinates_longlat)}
+        self.name_longlat = {p:c for p,c in zip(self.point_names, self.coordinates_longlat)}
         # self.longlat_name = { c:p for p,c in zip(self.point_names, self.coordinates_longlat)}
 
         self.__update_dst_matrices() # setting modified to true
@@ -171,26 +172,38 @@ class DataMatrices:
             self.completed = True
             self.save_data()
 
-    def __increase_data(self, name_longlat):
+    def __update_locations(self, name_longlat, allow_change_gps):
         new_points = []
         new_coordinates = []
-        error = False
+        self.updated_gps_idx = set()
+        num_gps_conflicts = 0
         for p,c in name_longlat.items():
             if p in self.point_names:
                 # already present: skip but make sure it's maps to same coordiante
                 idx = self.point_names.index(p)
-                p_gps = self.coordinates_longlat[idx]                                 
+                p_gps = self.coordinates_longlat[idx]
                 if c != p_gps:
-                    error = True
+                    num_gps_conflicts += 1
                     print(f"Point name {p} already present but associated to new GPS: old -> {p_gps}, new ->{c}")                    
-                continue            
+                    if allow_change_gps:
+                        self.updated_gps_idx.add(idx)
+                        self.coordinates_longlat[idx] = c
             else:
                 new_points.append(p)
                 new_coordinates.append(c)     
 
-        assert not error, 'An error has occured in __increase_data'
+        if num_gps_conflicts > 0:            
+            if allow_change_gps:
+                print('Updated GPS coordinates:', num_gps_conflicts)
+            else:
+                print(f'{num_gps_conflicts} GPS conflict(s) - set allow_change_gps to True to allow changes.')
+                sys.exit(1)
 
-        if len(new_points)==0:
+        if len(new_points) == 0:
+            print(f'No new point names found')
+            if num_gps_conflicts > 0:
+                self.modified = True
+                self.completed = False
             return            
                 
         old_num_points = self.num_points        
@@ -291,38 +304,52 @@ class DataMatrices:
 
     def __complete_dst_matrices(self, connected_point_names):
 
+        print('Completing dst matrices...')
+        num_elements_changed = 0
+
         for profile in self.api.PROFILES:
 
-            # get distance matrix for the given profile (to check for zero values)
-            dst_matrix = self.dst_matrices[profile][METRIC_DISTANCE] # distance
+            profile_distance_metric = self.dst_matrices[profile][METRIC_DISTANCE]
+            profile_duration_metric = self.dst_matrices[profile][METRIC_DURATION]
             
             for origin_idx in range(self.num_points):
                 p_origin = self.point_names[origin_idx]
                 connected_point_names_origin = connected_point_names[p_origin]
                 # find all the destinations connected to origin
-                destinations_idx = [
-                    dst_idx for dst_idx,p_dst in enumerate(self.point_names)
-                    if (
-                        p_dst in connected_point_names_origin and 
-                        dst_matrix[origin_idx][dst_idx] == None
-                    )
-                ]
+                destinations_idx = []
+                for dst_idx, dst_name in enumerate(self.point_names):
+                    if dst_name not in connected_point_names_origin:
+                        # not connected points, including self connection
+                        # reset it just in case
+                        profile_distance_metric[origin_idx][dst_idx] = None
+                        profile_duration_metric[origin_idx][dst_idx] = None
+                        continue
+                    if ( 
+                        profile_distance_metric[origin_idx][dst_idx] == None or                            
+                        origin_idx in self.updated_gps_idx or
+                        dst_idx in self.updated_gps_idx
+                        # recalculate dst if GPS of origin or dst changed
+                    ):
+                        destinations_idx.append(dst_idx) 
 
-                if len(destinations_idx)==0:
+                if len(destinations_idx) == 0:
                     continue
+
+                num_elements_changed += len(destinations_idx)
                 
                 distances_row, durations_row = self.api.build_distance_row(
                         self.coordinates_for_api, origin_idx, destinations_idx, profile)
 
-                profile_distance_metric = self.dst_matrices[profile][METRIC_DISTANCE]
-                profile_duration_metric = self.dst_matrices[profile][METRIC_DURATION]
                 for dst_idx, distance, duration in zip(destinations_idx, distances_row, durations_row):
                     profile_distance_metric[origin_idx][dst_idx] = distance
                     profile_duration_metric[origin_idx][dst_idx] = duration                    
 
                 self.modified = True
 
-        self.save_data()
+        print('Total number of elements changed:', num_elements_changed)
+        
+        if num_elements_changed > 0:
+            self.save_data()
 
 
     def __update_direction_matrices(self):
@@ -344,43 +371,54 @@ class DataMatrices:
         
         for profile in self.api.PROFILES:
 
-            dst_matrix = self.dst_matrices[profile][METRIC_DISTANCE] # distance
+            dst_matrix_profile = self.dst_matrices[profile][METRIC_DISTANCE] # distance
+            poly_matrices_profile = self.poly_matrices[profile]
 
             added = 0
             total = int(self.num_points * (self.num_points-1))
-            missing = np.sum([
-                self.poly_matrices[profile][i][j] == ''
-                for i in range(self.num_points)
-                for j in range(self.num_points)
-                if i!=j and dst_matrix[i][j] not in [0,None] 
-                # exluding identical points and those not connected
-            ])
-            if missing==0:
+            
+            missing_idx_pairs = []
+            for i in range(self.num_points):
+                for j in range(self.num_points):
+                    if dst_matrix_profile[i][j] == None: 
+                        # not connected (including self)
+                        # resetting just in case
+                        poly_matrices_profile[i][j] = ''
+                        continue
+                    if (
+                        # GPS for i or j have changed
+                        i in self.updated_gps_idx or        
+                        j in self.updated_gps_idx or
+                        poly_matrices_profile[i][j] == ''
+                    ):
+                        pair = (i,j)
+                        missing_idx_pairs.append(pair)                
+
+            missing = len(missing_idx_pairs)      
+            if missing == 0:
                 print('Direction Matrix already filled')
                 return True, added
             print(f'Direction Matrix {profile} (missing/tot): {missing}/{total}')
-            pbar = tqdm(total=total)
-            for i, c1 in enumerate(self.coordinates_for_api):
-                for j, c2 in enumerate(self.coordinates_for_api):
-                    if i==j:
-                        continue                
-                    pbar.update(1)
-                    poly_entry = self.poly_matrices[profile][i][j]
-                    if poly_entry == '':
-                        poly_entry = self.api.get_direction_polyline(c1, c2, profile)
-                        if poly_entry is None:
-                            pbar.close()
-                            self.save_data()
-                            print('Added: ', added)                        
-                            return False, added
-                        self.poly_matrices[profile][i][j] = poly_entry 
-                        added += 1        
-                        self.modified = True            
-                        if added % save_every == 0:
-                            self.save_data()        
+            pbar = tqdm(total=missing)
+            for i,j in missing_idx_pairs:
+                c1 = self.coordinates_for_api[i]
+                c2 = self.coordinates_for_api[j]
+                pbar.update(1)
+                poly_entry = self.api.get_direction_polyline(c1, c2, profile)
+                if poly_entry is None:
+                    pbar.close()
+                    self.save_data()
+                    print('Added polylines:', added)  
+                    print('Interruption in retrieving polylines: data saved, pleease run it again.')                    
+                    return False, added
+                poly_matrices_profile[i][j] = poly_entry 
+                added += 1        
+                self.modified = True            
+                if added % save_every == 0:
+                    self.save_data()        
             pbar.close()        
             self.save_data()
-            print('Added: ', added)
+            print('Added polylines:', added)
         return True, added
 
     def __build_direction_coord_matrices(self):
@@ -398,10 +436,11 @@ class DataMatrices:
                     if i==j:
                         continue                
                     poly_entry = poly_matrices_profile[i][j]
-                    if poly_entry is None:
-                        # locations i,j not connected
-                        continue
-                    path_coordinates = np.array(polyline.decode(poly_entry, geojson=True)) # long, lat
+                    if poly_entry == '':
+                        # non connected
+                        # if poly_entry is '' path_coordinates will be None
+                        continue                                 
+                    path_coordinates = np.array(polyline.decode(poly_entry, geojson=True)) # long, lat                    
                     coord_matrix_profile[i][j] = path_coordinates        
 
     def __build_direction_grid_matrices(self):
@@ -418,10 +457,12 @@ class DataMatrices:
                         continue                
                     path_coordinates = self.coord_matrices[profile][i][j]
                     if path_coordinates is None:
-                        # locations i,j not connected
-                        continue
-                    grid_set = get_grid_id_set_from_route(path_coordinates)
-                    profile_grid_matrix[i][j] = list(grid_set)
+                        # if path_coordinates is None (e.g., not connected) 
+                        # grid_list will be set to None
+                        grid_list = None
+                    else:                        
+                        grid_list = list(get_grid_id_set_from_route(path_coordinates))
+                    profile_grid_matrix[i][j] = grid_list
             bar.close()            
         
         self.modified = True

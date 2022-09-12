@@ -68,9 +68,9 @@ def test_trento_dm_update():
     )
 
     name_longlat = {
-        'test': [11.0810876,46.0800388]
+        'I mori': [11.122619234194406, 46.069758622716286]
     }
-    dm.update_matrices(name_longlat)      
+    dm.update_matrices(name_longlat, allow_change_gps=True)      
     # dm.update_matrices()
     
 

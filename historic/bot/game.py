@@ -166,8 +166,8 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
 
     max_attempts = 15
 
-    lat, lon = p.get_tmp_variable('HUNT_START_GPS')
-    start_idx = game_dm.get_coordinate_index(lat=lat, lon=lon)
+    lat, long = p.get_tmp_variable('HUNT_START_GPS')
+    start_idx = game_dm.get_coordinate_index(lat=lat, long=long)
     skip_points_idx = [
         game_dm.get_stop_name_index(m['NOME'])
         for m in MISSIONI_SKIP
