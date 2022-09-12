@@ -42,9 +42,9 @@ def test_single_route():
     metric = METRIC_DURATION
     # profile = api_google.PROFILE_FOOT_WALKING
     profile = api_google.PROFILE_CYCLING_REGULAR    
-    start_idx = 24
-    duration_min = 30
-    circular_route = True
+    start_idx = 72
+    duration_min = 60
+    circular_route = False
     plot_dm_stats = False
     
     trento_dm = DataMatrices(
@@ -153,7 +153,7 @@ def test_multi_routes():
                 print(sorted(solution_counter.items(), key=lambda x: x[0]))
 
 if __name__ == "__main__":
-    # test_single_route()
-    test_multi_routes()
+    test_single_route()
+    # test_multi_routes()
     
     
