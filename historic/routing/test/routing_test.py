@@ -8,7 +8,7 @@ from historic.routing.metrics import METRIC_DISTANCE, METRIC_DURATION, METRICS
 from historic.routing.datasets.trento_hunt_params import TRENTO_BASE_KEY
 
 def get_route_planner(datamatrix, profile, metric, start_idx, duration_sec, tot_dst_tolerance,
-    max_grid_overalapping, circular_route, show_progress_bar):
+    max_grid_overalapping, exclude_neighbor_dst, circular_route, show_progress_bar):
 
     return RoutePlanner(
         dm = datamatrix,
@@ -28,11 +28,11 @@ def get_route_planner(datamatrix, profile, metric, start_idx, duration_sec, tot_
         stop_duration = 300, # 5 min
         num_attempts = 10000, # set to None for exaustive search
         random_seed = 1, # only relevan if num_attempts is not None (non exhaustive serach)
-        exclude_neighbor_dst = 60,    
+        exclude_neighbor_dst = exclude_neighbor_dst,    
         circular_route = circular_route,
         num_best = 1,
         stop_when_num_best_reached = True,
-        num_discarded = 1,
+        num_discarded = 1, # for debugging purpose
         show_progress_bar = show_progress_bar
     )
 
@@ -40,10 +40,12 @@ def test_single_route():
 
     api = api_google
     metric = METRIC_DURATION
-    # profile = api_google.PROFILE_FOOT_WALKING
-    profile = api_google.PROFILE_CYCLING_REGULAR    
-    start_idx = 72
-    duration_min = 60
+    profile = api_google.PROFILE_FOOT_WALKING
+    # profile = api_google.PROFILE_CYCLING_REGULAR    
+    
+    start_point_name = 'POVO Mesiano vecchio sanatorio'
+    duration_min = 120
+    exclude_neighbor_dst = None
     circular_route = False
     plot_dm_stats = False
     
@@ -51,6 +53,14 @@ def test_single_route():
         dataset_name = TRENTO_BASE_KEY,
         api = api
     )  
+    
+    start_idx = trento_dm.get_stop_name_index(start_point_name)
+
+    if start_idx == None:
+        print(f'Start point ({start_point_name}) not found' )
+        return
+        
+    print(f'Start: {{start_point_name}}, idx:{start_idx}')
 
     if plot_dm_stats:
         trento_dm.plot(profile, metric)    
@@ -60,9 +70,11 @@ def test_single_route():
     route_planner = get_route_planner(
         trento_dm, profile, metric, start_idx, duration_sec, 
         tot_dst_tolerance=10*60,
-        max_grid_overalapping=100,
-        circular_route=circular_route, 
-        show_progress_bar=True)
+        max_grid_overalapping=100,        
+        exclude_neighbor_dst=exclude_neighbor_dst,
+        circular_route=circular_route,         
+        show_progress_bar=True
+    )
 
     route_planner.build_routes()
 
@@ -122,6 +134,7 @@ def test_multi_routes():
                             trento_dm, profile, metric, start_idx, duration_sec, 
                             tot_dst_tolerance=duration_tolerance_sec,
                             max_grid_overalapping=max_grid_overalapping,
+                            exclude_neighbor_dst=60,
                             circular_route=circular_route, 
                             show_progress_bar=False)
 

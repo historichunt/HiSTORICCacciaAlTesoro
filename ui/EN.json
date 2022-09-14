@@ -66,7 +66,7 @@
    "MSG_EMAIL_WRONG": "⛔️ Not a valid input, you have to insert email addresses or press on ⏩ SKIP.",
    "MSG_END": "🏆 Congratulations!\n\n🏁 You have completed the treasure hunt in *{1}*!!\n({2} time + {0} penalty)\n\n🏁 You have completed the missions in *{3}*!! ({4} time + {0} penalty)",
    "MSG_END_NO_PENALTY": "🏆 Congratulations!\n\n🏁 You have completed the treasure hunt in *{}*!!\n\n🏁 You have completed the missions in *{}*!!",
-   "MSG_ERROR_ROUTING": "🙇 We are sorry, a problem occurred in finding a path.",
+   "MSG_ERROR_ROUTING": "🙇 I'm sorry, I was unable to find an adequate path for the settings inserted.",
    "MSG_EXITED_FROM_GAME": "🚪 You have exited the treasure hunt.",
    "MSG_EXITED_FROM_GAME_CONFIRM": "⚠️ Are you really sure you want to exit from the hunt? The hunt will be deleted and you cannot resume it. If you are sure, please press on → {} ←",
    "MSG_FINAL_RESET_OFF": "🔔 We will let you know when to go back to the starting point for the awarding!",
