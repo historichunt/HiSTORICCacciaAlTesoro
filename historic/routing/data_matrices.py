@@ -468,13 +468,16 @@ class DataMatrices:
         self.modified = True
 
     def get_stop_name_index(self, point_name):
-        assert point_name in self.data['point_names']
-        return self.data['point_names'].index(point_name)
+        if point_name in self.point_names:
+            return self.point_names.index(point_name)
+        return None
 
     def get_coordinate_index(self, lat, long):        
         target = [long, lat]
-        assert target in self.data['coordinates']
-        return self.data['coordinates'].index(target)
+        if target in self.coordinates_longlat:
+            return self.coordinates_longlat.index(target)
+        return None
+
 
     def get_direction_path_coordinates(self, c1, c2, profile):
         i = self.coordinates_longlat.index(c1)

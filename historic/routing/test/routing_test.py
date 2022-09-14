@@ -118,7 +118,7 @@ def test_multi_routes():
                 # print('duration_tolerance_min', duration_tolerance_min)
 
                 # route_errors_idx = []                
-                solution_counter = Counter()
+                solution_counter = Counter() # attempt -> counter
 
                 for start_idx in tqdm(range(trento_dm.num_points)):
 
@@ -153,20 +153,21 @@ def test_multi_routes():
 
                     if not found_solution:
                         # route_errors_idx.append(start_idx)
-                        print(f'Missing route for start_idx {start_idx}')
+                        print(f'Missing route for start: {trento_dm.point_names[start_idx]}')
                         # route_planner.get_routes(
                         #     show_map=False,
                         #     log=True
-                        # )            
-                        return
+                        # )   
+                    else:
+                        print('No missing routes!')         
 
                     # if route_errors_idx:
                     #     print('route_errors_idx', route_errors_idx)
 
-                print(sorted(solution_counter.items(), key=lambda x: x[0]))
+                print("attempts, count:", sorted(solution_counter.items(), key=lambda x: x[0]))
 
 if __name__ == "__main__":
-    test_single_route()
-    # test_multi_routes()
+    # test_single_route()
+    test_multi_routes()
     
     
