@@ -109,7 +109,7 @@ def test_multi_routes():
 
             for circular_route in [False]: #                 
 
-                print(f'Using profile {profile}, duration {duration_min}, circular {circular_route}')
+                print(f'\nUsing profile {profile}, duration {duration_min}, circular {circular_route}')
 
                 # max_grid_overalapping, duration_tolerance_min = \
                 #     fine_tuning_trento_open(profile, circular_route, duration_min)
@@ -117,14 +117,15 @@ def test_multi_routes():
                 # print('max_grid_overalapping', max_grid_overalapping)
                 # print('duration_tolerance_min', duration_tolerance_min)
 
-                # route_errors_idx = []                
                 solution_counter = Counter() # attempt -> counter
+                missing_route_start = []
 
                 for start_idx in tqdm(range(trento_dm.num_points)):
 
                     max_grid_overalapping = 20
                     duration_tolerance_min = 10                    
-                    found_solution = False                    
+                    found_solution = False          
+                    start_point_name = trento_dm.point_names[start_idx]          
                     
                     for attempt in range(1,max_attempts+1):
 
@@ -134,7 +135,7 @@ def test_multi_routes():
                             trento_dm, profile, metric, start_idx, duration_sec, 
                             tot_dst_tolerance=duration_tolerance_sec,
                             max_grid_overalapping=max_grid_overalapping,
-                            exclude_neighbor_dst=60,
+                            exclude_neighbor_dst=None,
                             circular_route=circular_route, 
                             show_progress_bar=False)
 
@@ -146,25 +147,20 @@ def test_multi_routes():
                             break
                         
                         max_grid_overalapping += 20
-                        duration_tolerance_min += 10
-
-                        # if len(route_planner.solutions) == 0:
-                        
+                        duration_tolerance_min += 10                        
 
                     if not found_solution:
-                        # route_errors_idx.append(start_idx)
-                        print(f'Missing route for start: {trento_dm.point_names[start_idx]}')
-                        # route_planner.get_routes(
-                        #     show_map=False,
-                        #     log=True
-                        # )   
-                    else:
-                        print('No missing routes!')         
+                        missing_route_start.append(start_point_name)                        
 
-                    # if route_errors_idx:
-                    #     print('route_errors_idx', route_errors_idx)
 
-                print("attempts, count:", sorted(solution_counter.items(), key=lambda x: x[0]))
+                if missing_route_start:
+                    for spn in missing_route_start:
+                        print(f'Missing route for start: {spn}')                          
+                else:
+                    print('No missing routes!')   
+                
+                print("Attempts, count:", sorted(solution_counter.items(), key=lambda x: x[0]))
+
 
 if __name__ == "__main__":
     # test_single_route()
