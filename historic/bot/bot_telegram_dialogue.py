@@ -609,7 +609,8 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 send_media_url(p, url_attachment, caption=msg, remove_keyboard=True)
             else:
                 send_message(p, msg, remove_keyboard=True)        
-            if not input_type: # empty list
+            if not input_type: 
+                # no input, go to next instruction after 1 sec
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)        
     else:
@@ -669,7 +670,14 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
             # BUTTON_X_MIN
             kb = p.get_keyboard()
             if text_input in flatten(kb):
-                if text_input in [p.ui().BUTTON_ROUTE_FOOT]:
+                if text_input == p.ui().BUTTON_CONTINUE:
+                    send_typing_action(p, sleep_time=1)
+                    repeat_state(p, next_step=True)
+                elif text_input == p.ui().BUTTON_EXIT:
+                    game.exit_game(p, save_data=False, reset_current_hunt=True)
+                    send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
+                    restart(p)
+                elif text_input in [p.ui().BUTTON_ROUTE_FOOT]:
                     p.set_tmp_variable('ROUTE_TRANSPORT', api_google.PROFILE_FOOT_WALKING, put=True)
                 elif text_input in [p.ui().BUTTON_ROUTE_BICYCLE]:
                     p.set_tmp_variable('ROUTE_TRANSPORT', api_google.PROFILE_CYCLING_REGULAR, put=True)
