@@ -235,7 +235,7 @@ def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                         lang_commands_str = ', '.join([f'/{l}' for l in hunt_languages])
                         send_message(p, f"Cambia lingua ({lang_commands_str}) e ripremi su {text_input}")    
                     else:
-                        send_message(p, p.ui().MSG_GAME_IS_LOADING)
+                        send_message(p, p.ui().MSG_GAME_IS_LOADING, remove_keyboard=True)
                         game.load_game(p, hunt_pw, test_hunt_admin=True)
                         game.build_missions(p, test_all=True)
                         redirect_to_state(p, state_TEST_HUNT_MISSION_ADMIN)                    
@@ -555,7 +555,7 @@ def state_CHECK_LANGUAGE_AND_START_HUNT(p, message_obj=None, **kwargs):
             send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)       
 
 def start_hunt(p, hunt_password): 
-    send_message(p, p.ui().MSG_GAME_IS_LOADING)
+    send_message(p, p.ui().MSG_GAME_IS_LOADING, remove_keyboard=True)
     game.load_game(p, hunt_password)
     notify_group_id = game.get_notify_group_id(p) 
     if notify_group_id:

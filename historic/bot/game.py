@@ -95,15 +95,20 @@ def get_hunt_ui(airtable_game_id, hunt_languages):
     }
     return UI
 
-def get_closest_mission(p, airtable_game_id, mission_tab_name):    
+def get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name):    
     MISSIONI_TABLE = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_API_KEY)
     all_gps = np.asarray([
         utility.get_lat_lon_from_string(row['fields']['GPS']) for row in MISSIONI_TABLE.get_all() 
-        if row['fields'].get('ACTIVE',False) and row['fields'].get('GPS',False)
+        if (
+            row['fields'].get('ACTIVE',False) and 
+            row['fields'].get('GPS',False) and
+            not row['fields'].get('FINALE',False)
+        )
     ])
     current_pos = np.asarray(p.get_location())
     dist_2 = np.sum((all_gps - current_pos)**2, axis=1)
-    return all_gps[np.argmin(dist_2)].tolist()
+    idx = np.argmin(dist_2)
+    return all_gps[idx].tolist()
 
 
 def get_all_missions(airtable_game_id, mission_tab_name):
@@ -357,7 +362,7 @@ def load_game(p, hunt_password, test_hunt_admin=False):
     tvar['HUNT_NAME'] = hunt_info['Name']
     tvar['HUNT_LANGUAGES'] = hunt_languages
     tvar['TEST_HUNT_MISSION_ADMIN'] = test_hunt_admin
-    tvar['HUNT_START_GPS'] = get_closest_mission(p, airtable_game_id, mission_tab_name)
+    tvar['HUNT_START_GPS'] = get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name) # used in routing
     tvar['SETTINGS'] = hunt_settings    
     tvar['UI'] = hunt_ui    
     tvar['HUNT_INFO'] = hunt_info
