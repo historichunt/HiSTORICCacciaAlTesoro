@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.11
+- Incremental data matrices
+- Continue/Exit in Instructions
+- Exclude Final missions from first mission
+
 ## 0.10
 - Add JP language in UI
 - Multilingual working

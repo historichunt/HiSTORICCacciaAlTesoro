@@ -97,14 +97,23 @@ def get_hunt_ui(airtable_game_id, hunt_languages):
 
 def get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name):    
     MISSIONI_TABLE = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_API_KEY)
-    all_gps = np.asarray([
-        utility.get_lat_lon_from_string(row['fields']['GPS']) for row in MISSIONI_TABLE.get_all() 
-        if (
-            row['fields'].get('ACTIVE',False) and 
-            row['fields'].get('GPS',False) and
-            not row['fields'].get('FINALE',False)
-        )
-    ])
+    next_missions = [
+        row['fields']['NEXT']
+        for row in MISSIONI_TABLE.get_all() 
+        if row['fields'].get('NEXT', '')
+    ]
+    all_gps = np.asarray(
+        [
+            utility.get_lat_lon_from_string(row['fields']['GPS']) 
+            for row in MISSIONI_TABLE.get_all() 
+            if (
+                row['fields'].get('ACTIVE',False) and          # must be active
+                row['fields'].get('GPS',False) and             # must have GPS
+                not row['fields'].get('FINALE',False) and      # must not be a FINAL mission
+                not row['fileds']['NOME'] in next_missions     # must not be a NEXT mission
+            )
+        ]
+    )
     current_pos = np.asarray(p.get_location())
     dist_2 = np.sum((all_gps - current_pos)**2, axis=1)
     idx = np.argmin(dist_2)
@@ -362,7 +371,7 @@ def load_game(p, hunt_password, test_hunt_admin=False):
     tvar['HUNT_NAME'] = hunt_info['Name']
     tvar['HUNT_LANGUAGES'] = hunt_languages
     tvar['TEST_HUNT_MISSION_ADMIN'] = test_hunt_admin
-    tvar['HUNT_START_GPS'] = get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name) # used in routing
+    tvar['HUNT_START_GPS'] = get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name)
     tvar['SETTINGS'] = hunt_settings    
     tvar['UI'] = hunt_ui    
     tvar['HUNT_INFO'] = hunt_info
