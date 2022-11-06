@@ -110,7 +110,7 @@ def get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name):
                 row['fields'].get('ACTIVE',False) and          # must be active
                 row['fields'].get('GPS',False) and             # must have GPS
                 not row['fields'].get('FINALE',False) and      # must not be a FINAL mission
-                not row['fileds']['NOME'] in next_missions     # must not be a NEXT mission
+                not row['fields']['NOME'] in next_missions     # must not be a NEXT mission
             )
         ]
     )
