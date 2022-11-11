@@ -243,7 +243,7 @@ def get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=Tru
     }
     return missions_name_fields_dict
 
-def get_possible_start_and_final_missions_names(missions_name_fields_dict):
+def get_final_missions_dict_names(missions_name_fields_dict):
     final_missions_names = [
         m_name
         for m_name,fields in missions_name_fields_dict.items() 
@@ -272,34 +272,32 @@ def get_possible_start_and_final_missions_names(missions_name_fields_dict):
         all_final_missions_or_linked.extend(linked_missions)
         linked_missions.remove(final_mission)
 
-    possible_starting_missions_names = [
+    remaining_missions_names = [
         m_name
-        for m_name, fields in missions_name_fields_dict.items()
-        if  (
-            m_name not in all_final_missions_or_linked and    # must not be in the chain of final missions
-            fields.get('GPS',False)                           # must have GPS            
-        )
+        for m_name in missions_name_fields_dict
+        if  m_name not in all_final_missions_or_linked
     ]
 
-    assert len(possible_starting_missions_names)>0 
+    assert len(remaining_missions_names)>0 
     # this could happen if all misions are linked
     # TODO: fix this
 
-    return possible_starting_missions_names, final_missions_and_linked_names
+    return final_missions_and_linked_names, remaining_missions_names
 
 
 def get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name):    
     
     MISSIONI_ACTIVE = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)
     
-    possible_starting_missions_names, _ = get_possible_start_and_final_missions_names(MISSIONI_ACTIVE)
+    _, remaining_missions_names = get_final_missions_dict_names(MISSIONI_ACTIVE)
         
     all_gps = np.asarray(
         [
             utility.get_lat_lon_from_string(fields['GPS']) 
             for m_name, fields in MISSIONI_ACTIVE.items()
             if (
-                m_name in possible_starting_missions_names     # must not be in the chain of final missions
+                m_name in remaining_missions_names and     # must not be in the chain of final missions
+                fields.get('GPS', None)
             )
         ]
     )
@@ -315,9 +313,21 @@ def get_random_missions(airtable_game_id, mission_tab_name):
 
     MISSIONI_ACTIVE = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)
 
-    possible_starting_missions_names, final_missions_and_linked_names = \
-        get_possible_start_and_final_missions_names(MISSIONI_ACTIVE)
-    missioni_random_names = possible_starting_missions_names
+    final_missions_and_linked_names, remaining_missions_names = \
+        get_final_missions_dict_names(MISSIONI_ACTIVE)
+
+    next_missions = [
+        fields['NEXT'] for fields in MISSIONI_ACTIVE.values()
+        if fields.get('NEXT',None)
+    ]
+    
+    remaining_missions_names_no_next = [
+        m_name for m_name, m_fields in MISSIONI_ACTIVE.items()
+        if (
+            m_name in remaining_missions_names and
+            m_name not in next_missions
+        )
+    ]
 
     chosen_final_mission_name = \
         choice(list(final_missions_and_linked_names.keys())) \
@@ -325,14 +335,25 @@ def get_random_missions(airtable_game_id, mission_tab_name):
         else None    
     
     if chosen_final_mission_name:
-        # adding non chosen final missions and linked to possible starting missions
-        for f,l in final_missions_and_linked_names.items():
+        # adding non chosen final missions and linked to remaining_missions_names_no_next
+        # (only those with no NEXT)
+        for f,linked_missions in final_missions_and_linked_names.items():
             if f == chosen_final_mission_name:
                 continue
-            missioni_random_names.append(f)
-            missioni_random_names.extend(l)        
+            for m in linked_missions:
+                if m not in next_missions:
+                    remaining_missions_names_no_next.append(m)
+            remaining_missions_names_no_next.append(f) # this shouldn't have none by default
         
-    shuffle(missioni_random_names)
+    shuffle(remaining_missions_names_no_next)
+
+    missioni_random_names = []
+    for m in remaining_missions_names_no_next:
+        missioni_random_names.append(m)
+        next = MISSIONI_ACTIVE[m].get('NEXT', None)
+        while next:
+            missioni_random_names.append(next)
+            next = MISSIONI_ACTIVE[next].get('NEXT', None)
 
     if chosen_final_mission_name:
         final_mission_linked = final_missions_and_linked_names[chosen_final_mission_name]
