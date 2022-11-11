@@ -98,12 +98,13 @@ def send_photo_data(p, img_content, kb=None, caption=None,
         reply_markup=rm, parse_mode=parse_mode
     )
 
-def send_media_url(p, url_attachment, kb=None, caption=None,
+def send_media_url(p, url_attachment, type='image/png', kb=None, caption=None,
     remove_keyboard=False, inline_keyboard=False):
     chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
-    attach_type = url_attachment.rsplit('.',1)[1].lower()     
-    if '?' in attach_type:
-        attach_type = attach_type.split('?')[0]
+    # attach_type = url_attachment.rsplit('.',1)[1].lower()     
+    # if '?' in attach_type:
+    #     attach_type = attach_type.split('?')[0]
+    attach_type = type.split('/')[1]    
     rm = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)       
     if attach_type in ['jpg','png','jpeg']:
         BOT.send_photo(chat_id, photo=url_attachment, caption=caption, reply_markup=rm)

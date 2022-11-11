@@ -599,14 +599,18 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
             buttons = [p.ui()[b] for b in input_type]
             kb = make_2d_array(buttons, length=2)
             if media:
-                url_attachment = media[0]['url']
-                send_media_url(p, url_attachment, kb, caption=msg)
+                media_dict = media[0]
+                url_attachment = media_dict['url']
+                type = media_dict['type']
+                send_media_url(p, url_attachment, type, kb, caption=msg)
             else:
                 send_message(p, msg, kb)
         else:
             if media:
-                url_attachment = media[0]['url']
-                send_media_url(p, url_attachment, caption=msg, remove_keyboard=True)
+                media_dict = media[0]
+                url_attachment = media_dict['url']
+                type = media_dict['type']
+                send_media_url(p, url_attachment, type, caption=msg, remove_keyboard=True)
             else:
                 send_message(p, msg, remove_keyboard=True)        
             if not input_type: 
@@ -833,8 +837,10 @@ def state_MISSION_INTRO(p, message_obj=None, **kwargs):
             return
         if 'INTRO_MEDIA' in current_mission:
             caption = current_mission.get('INTRO_MEDIA_CAPTION',None)
-            url_attachment = current_mission['INTRO_MEDIA'][0]['url']
-            send_media_url(p, url_attachment, caption=caption)
+            media_dict = current_mission['INTRO_MEDIA'][0]
+            url_attachment = media_dict['url']
+            type = media_dict['type']
+            send_media_url(p, url_attachment, type, caption=caption)
             send_typing_action(p, sleep_time=1)
         msg = current_mission['INTRODUZIONE_LOCATION'] # '*Introduzione*: ' + 
         kb = [[random.choice(bot_ui.BUTTON_CONTINUE_MULTI(p.language))]]
@@ -907,8 +913,10 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
     if give_instruction:
         if 'DOMANDA_MEDIA' in current_mission:
             caption = current_mission.get('DOMANDA_MEDIA_CAPTION',None)
-            url_attachment = current_mission['DOMANDA_MEDIA'][0]['url']
-            send_media_url(p, url_attachment, caption=caption)
+            media_dict = current_mission['DOMANDA_MEDIA'][0]
+            type = media_dict['type'] # e.g., image/png
+            url_attachment = media_dict['url']
+            send_media_url(p, url_attachment, type, caption=caption)
             send_typing_action(p, sleep_time=1)                
         msg = current_mission['DOMANDA'] 
         if current_mission.get('INDIZIO_1',False):
@@ -996,8 +1004,10 @@ def send_post_message(p, current_mission):
     if post_msg_present or post_media_present:
         if post_media_present:
             caption = current_mission.get('POST_MEDIA_CAPTION',None)
-            url_attachment = current_mission['POST_MEDIA'][0]['url']
-            send_media_url(p, url_attachment, caption=caption)
+            media_dict = current_mission['POST_MEDIA'][0]
+            url_attachment = media_dict['url']
+            type = media_dict['type']
+            send_media_url(p, url_attachment, type, caption=caption)
             send_typing_action(p, sleep_time=1)
         msg = current_mission['POST_MESSAGE']
         send_message(p, msg, remove_keyboard=True)
