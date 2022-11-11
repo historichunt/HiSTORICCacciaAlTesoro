@@ -319,24 +319,26 @@ def get_random_missions(airtable_game_id, mission_tab_name):
         get_possible_start_and_final_missions_names(MISSIONI_ACTIVE)
     missioni_random_names = possible_starting_missions_names
 
-    chosen_final_mission = \
+    chosen_final_mission_name = \
         choice(list(final_missions_and_linked_names.keys())) \
         if final_missions_and_linked_names \
         else None    
     
-    if chosen_final_mission:
+    if chosen_final_mission_name:
         # adding non chosen final missions and linked to possible starting missions
         for f,l in final_missions_and_linked_names.items():
+            if f == chosen_final_mission_name:
+                continue
             missioni_random_names.append(f)
             missioni_random_names.extend(l)        
         
     shuffle(missioni_random_names)
 
-    if chosen_final_mission:
-        final_mission_linked = final_missions_and_linked_names[chosen_final_mission]
+    if chosen_final_mission_name:
+        final_mission_linked = final_missions_and_linked_names[chosen_final_mission_name]
         final_mission_linked.reverse() # mission close to final at the end
         missioni_random_names.extend(final_mission_linked)
-        missioni_random_names.append(chosen_final_mission)
+        missioni_random_names.append(chosen_final_mission_name)
 
     missioni_random = [MISSIONI_ACTIVE[m] for m in missioni_random_names]
 
