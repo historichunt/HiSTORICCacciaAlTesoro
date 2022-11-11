@@ -95,195 +95,6 @@ def get_hunt_ui(airtable_game_id, hunt_languages):
     }
     return UI
 
-def get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name):    
-    MISSIONI_TABLE = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_API_KEY)
-    next_missions = [
-        row['fields']['NEXT']
-        for row in MISSIONI_TABLE.get_all() 
-        if row['fields'].get('NEXT', '')
-    ]
-    all_gps = np.asarray(
-        [
-            utility.get_lat_lon_from_string(row['fields']['GPS']) 
-            for row in MISSIONI_TABLE.get_all() 
-            if (
-                row['fields'].get('ACTIVE',False) and          # must be active
-                row['fields'].get('GPS',False) and             # must have GPS
-                not row['fields'].get('FINALE',False) and      # must not be a FINAL mission
-                not row['fields']['NOME'] in next_missions     # must not be a NEXT mission
-            )
-        ]
-    )
-    current_pos = np.asarray(p.get_location())
-    dist_2 = np.sum((all_gps - current_pos)**2, axis=1)
-    idx = np.argmin(dist_2)
-    return all_gps[idx].tolist()
-
-
-def get_all_missions(airtable_game_id, mission_tab_name):
-    table = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_API_KEY)
-    all_missions = [row['fields'] for row in table.get_all() if row['fields'].get('ACTIVE',False)]    
-    return all_missions
-
-
-def get_random_missions(p, airtable_game_id, mission_tab_name):
-
-    MISSIONI_ALL = get_all_missions(airtable_game_id, mission_tab_name)
-    
-    next_missioni = [
-        m for m in MISSIONI_ALL if m['NOME'] in \
-        [row.get('NEXT') for row in MISSIONI_ALL if row.get('NEXT',False)]
-    ]
-    missioni_not_next = [m for m in MISSIONI_ALL if m not in next_missioni]    
-    
-    missioni_tmp = [row for row in missioni_not_next if not row.get('FINALE',False)]
-    missioni_finali = [row for row in missioni_not_next if row.get('FINALE',False)]    
-    missione_finale = choice(missioni_finali) if missioni_finali else None    
-
-    if missione_finale:
-        missioni_finali.remove(missione_finale)
-        missioni_tmp.extend(missioni_finali) # adding all missini_finali except one (the actual final one)
-
-    shuffle(missioni_tmp)
-
-    missioni_random = []
-    while len(missioni_tmp) > 0:
-        chosen_mission = missioni_tmp.pop()
-        missioni_random.append(chosen_mission)
-        next_mission_name = chosen_mission.get('NEXT',None)
-        while next_mission_name:
-            next_mission = next(m for m in next_missioni if next_mission_name==m.get('NOME',None))
-            missioni_random.append(next_mission)            
-            next_mission_name = next_mission.get('NEXT',None)
-    if missione_finale:
-        missioni_random.append(missione_finale)
-
-    if p.is_admin_current_hunt(): 
-        from historic.bot.bot_telegram import send_message   
-        random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_random,1)])
-        send_message(p, "DEBUG Random missioni:\n{}".format(random_missioni_names))
-
-    return missioni_random
-
-def get_missioni_routing(p, airtable_game_id, mission_tab_name):
-    
-    from historic.bot.bot_telegram import report_admins, send_message, send_photo_data
-
-    MISSIONI_TABLE = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_API_KEY)
-    MISSIONI_ALL = [row['fields'] for row in MISSIONI_TABLE.get_all() if row['fields'].get('ACTIVE',False)]    
-    MISSIONI_SKIP = [row['fields'] for row in MISSIONI_TABLE.get_all() if not row['fields'].get('ACTIVE',False)]    
-
-    game_dm = DataMatrices(
-        dataset_name = airtable_game_id,
-        api = api_google
-    )      
-
-    max_attempts = 15
-
-    lat, long = p.get_tmp_variable('HUNT_START_GPS')
-    start_idx = game_dm.get_coordinate_index(lat=lat, long=long)
-    skip_points_idx = [
-        game_dm.get_stop_name_index(m['NOME'])
-        for m in MISSIONI_SKIP
-    ]
-
-    profile = p.get_tmp_variable('ROUTE_TRANSPORT', api_google.PROFILE_FOOT_WALKING)
-    duration_min = p.get_tmp_variable('ROUTE_DURATION_MIN', 60) # 1 h default
-    circular_route = p.get_tmp_variable('ROUTE_CIRCULAR', False)
-
-    # manual fine tuning - TODO: make it more robust
-    # max_grid_overalapping, duration_tolerance_min = \
-    #     fine_tuning_trento_open(profile, circular_route, duration_min)
-
-    max_grid_overalapping = 20
-    duration_tolerance_min = 10    
-    route_planner = None                
-    found_solution = False                    
-    
-    for attempt in range(1,max_attempts+1): # attempts
-
-        duration_sec = duration_min * 60
-        duration_tolerance_sec = duration_tolerance_min * 60
-
-        route_planner = RoutePlanner(
-            dm = game_dm,
-            profile = profile,
-            metric = METRIC_DURATION,
-            start_idx = start_idx, 
-            min_dst = 60, # 2 min
-            max_dst = 720, # 12 min
-            goal_tot_dst = duration_sec,
-            tot_dst_tolerance = duration_tolerance_sec,
-            min_route_size = None,
-            max_route_size = None,
-            skip_points_idx = skip_points_idx,
-            check_convexity = False,
-            overlapping_criteria = 'GRID',
-            max_overalapping = max_grid_overalapping, # in meters/grids, None to ignore this constraint
-            stop_duration = 300, # da cambiare in 300 per 5 min
-            num_attempts = 10000, # set to None for exaustive search
-            random_seed = None, # only relevan if num_attempts is not None (non exhaustive serach)
-            exclude_neighbor_dst = 60,    
-            circular_route = circular_route,
-            num_best = 1,
-            stop_when_num_best_reached = True,
-            num_discarded = None,
-            show_progress_bar = False
-        )
-
-        route_planner.build_routes()
-
-        if len(route_planner.solutions) > 0:
-            found_solution = True
-            break
-        
-        max_grid_overalapping += 20
-        duration_tolerance_min += 10
-
-    if found_solution:
-
-        best_route_idx, stop_names, info, best_route_img, estimated_duration_min = \
-            route_planner.get_routes(
-                show_map=False,
-                log=False
-            )      
-
-        missioni_route = [
-            next(m for m in MISSIONI_ALL if mission_name==m.get('NOME',None))
-            for mission_name in stop_names
-        ]
-
-        info_msg = \
-            f'Ho selezionato per voi {len(stop_names)} tappe e dovreste metterci circa {estimated_duration_min} minuti. '\
-            'Ovviamente dipende da quanto sarete veloci e abili a risolvere gli indovinelli! 😉'     
-        send_message(p, info_msg)
-
-        if p.is_admin_current_hunt():                 
-            info_text = '\n'.join(info)
-            send_message(p, f"🐛 DEBUG:\n\n{info_text}", markdown=False)
-            send_photo_data(p, best_route_img)
-            # selected_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_route,1)])
-            # send_message(p, "DEBUG Selected missioni:\n{}".format(selected_missioni_names))
-        notify_group_id = get_notify_group_id(p)
-        if notify_group_id:
-            squadra_name = get_group_name(p)
-            info_text = f'La squadra {squadra_name} ha attenuto il seguente percorso:\n\n'
-            info_text += '\n'.join(info)
-            send_message(notify_group_id, info_text, markdown=False)
-            send_photo_data(notify_group_id, best_route_img)
-        return missioni_route
-
-    else:
-        error_msg = f'⚠️ User {p.get_id()} encountered error in routing:\n'\
-                    f'dataset name = {airtable_game_id}\n'\
-                    f'start num = {start_idx + 1}\n'\
-                    f'duration min = {duration_min}\n'\
-                    f'profile = {profile}\n'\
-                    f'circular route = {circular_route}\n'
-        report_admins(error_msg)
-        return None
-
-
 
 
 
@@ -404,16 +215,250 @@ def build_missions(p, test_all=False):
     airtable_game_id = tvar['HUNT_INFO']['Airtable_Game_ID']
     mission_tab_name = f'Missioni_{p.language}'
     if test_all:
-        missions = get_all_missions(airtable_game_id, mission_tab_name)    
+        missions_dict = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)    
+        missions = list(missions_dict.values())
     elif hunt_settings.get('MISSIONS_SELECTION', None) == 'ROUTING':
         missions = get_missioni_routing(p, airtable_game_id, mission_tab_name)
         if missions is None:            
             return False # problema selezione percorso
     else:
         # RANDOM - default
-        missions = get_random_missions(p, airtable_game_id, mission_tab_name)            
+        missions = get_random_missions(airtable_game_id, mission_tab_name)
+
+        if p.is_admin_current_hunt(): 
+            from historic.bot.bot_telegram import send_message   
+            random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missions,1)])
+            send_message(p, "DEBUG Random missioni:\n{}".format(random_missioni_names))
+
     tvar['MISSIONI_INFO'] = {'TODO': missions, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(missions)}
     return True
+
+def get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True):
+    # name -> fields dict (table row)
+    table = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_API_KEY)
+    missions_name_fields_dict = {
+        row['fields']['NOME']: row['fields'] 
+        for row in table.get_all() 
+        if row['fields'].get('ACTIVE',False)==active    
+    }
+    return missions_name_fields_dict
+
+def get_possible_start_and_final_missions_names(missions_name_fields_dict):
+    final_missions_names = [
+        m_name
+        for m_name,fields in missions_name_fields_dict.items() 
+        if fields.get('FINALE', False)
+    ]
+
+    # final missions and those connected to them via NEXT
+    all_final_missions_or_linked = []
+    final_missions_and_linked_names = {}
+    for final_mission in final_missions_names:
+        linked_missions = [final_mission]
+        final_missions_and_linked_names[final_mission] = linked_missions        
+        while True:
+            new_connections = [
+                m_name
+                for m_name,fields in missions_name_fields_dict.items() 
+                if (
+                    m_name not in linked_missions and
+                    fields.get('NEXT', '') in linked_missions
+                )
+            ]
+            if new_connections:
+                linked_missions.extend(new_connections)
+            else:
+                break
+        all_final_missions_or_linked.extend(linked_missions)
+        linked_missions.remove(final_mission)
+
+    possible_starting_missions_names = [
+        m_name
+        for m_name, fields in missions_name_fields_dict.items()
+        if  (
+            m_name not in all_final_missions_or_linked and    # must not be in the chain of final missions
+            fields.get('GPS',False)                           # must have GPS            
+        )
+    ]
+
+    assert len(possible_starting_missions_names)>0 
+    # this could happen if all misions are linked
+    # TODO: fix this
+
+    return possible_starting_missions_names, final_missions_and_linked_names
+
+
+def get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name):    
+    
+    MISSIONI_ACTIVE = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)
+    
+    possible_starting_missions_names, _ = get_possible_start_and_final_missions_names(MISSIONI_ACTIVE)
+        
+    all_gps = np.asarray(
+        [
+            utility.get_lat_lon_from_string(fields['GPS']) 
+            for m_name, fields in MISSIONI_ACTIVE.items()
+            if (
+                m_name in possible_starting_missions_names     # must not be in the chain of final missions
+            )
+        ]
+    )
+
+    current_pos = np.asarray(p.get_location())
+    dist_2 = np.sum((all_gps - current_pos)**2, axis=1)
+    idx = np.argmin(dist_2)
+    closest_gps = all_gps[idx].tolist()
+    return closest_gps
+
+
+def get_random_missions(airtable_game_id, mission_tab_name):
+
+    MISSIONI_ACTIVE = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)
+
+    possible_starting_missions_names, final_missions_and_linked_names = \
+        get_possible_start_and_final_missions_names(MISSIONI_ACTIVE)
+    missioni_random_names = possible_starting_missions_names
+
+    chosen_final_mission = \
+        choice(list(final_missions_and_linked_names.keys())) \
+        if final_missions_and_linked_names \
+        else None    
+    
+    if chosen_final_mission:
+        # adding non chosen final missions and linked to possible starting missions
+        for f,l in final_missions_and_linked_names.items():
+            missioni_random_names.append(f)
+            missioni_random_names.extend(l)        
+        
+    shuffle(missioni_random_names)
+
+    if chosen_final_mission:
+        final_mission_linked = final_missions_and_linked_names[chosen_final_mission]
+        final_mission_linked.reverse() # mission close to final at the end
+        missioni_random_names.extend(final_mission_linked)
+        missioni_random_names.append(chosen_final_mission)
+
+    missioni_random = [MISSIONI_ACTIVE[m] for m in missioni_random_names]
+
+    return missioni_random
+
+def get_missioni_routing(p, airtable_game_id, mission_tab_name):
+    
+    from historic.bot.bot_telegram import report_admins, send_message, send_photo_data
+
+    MISSIONI_ACTIVE = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)
+    MISSIONI_SKIP = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=False)
+
+    game_dm = DataMatrices(
+        dataset_name = airtable_game_id,
+        api = api_google
+    )      
+
+    max_attempts = 15
+
+    lat, long = p.get_tmp_variable('HUNT_START_GPS')
+    start_idx = game_dm.get_coordinate_index(lat=lat, long=long)
+    skip_points_idx = [
+        game_dm.get_stop_name_index(m)
+        for m in MISSIONI_SKIP
+    ]
+
+    profile = p.get_tmp_variable('ROUTE_TRANSPORT', api_google.PROFILE_FOOT_WALKING)
+    duration_min = p.get_tmp_variable('ROUTE_DURATION_MIN', 60) # 1 h default
+    circular_route = p.get_tmp_variable('ROUTE_CIRCULAR', False)
+
+    # manual fine tuning - TODO: make it more robust
+    # max_grid_overalapping, duration_tolerance_min = \
+    #     fine_tuning_trento_open(profile, circular_route, duration_min)
+
+    max_grid_overalapping = 20
+    duration_tolerance_min = 10    
+    route_planner = None                
+    found_solution = False                    
+    
+    for _ in range(1,max_attempts+1): # attempts
+
+        duration_sec = duration_min * 60
+        duration_tolerance_sec = duration_tolerance_min * 60
+
+        route_planner = RoutePlanner(
+            dm = game_dm,
+            profile = profile,
+            metric = METRIC_DURATION,
+            start_idx = start_idx, 
+            min_dst = 60, # 2 min
+            max_dst = 720, # 12 min
+            goal_tot_dst = duration_sec,
+            tot_dst_tolerance = duration_tolerance_sec,
+            min_route_size = None,
+            max_route_size = None,
+            skip_points_idx = skip_points_idx,
+            check_convexity = False,
+            overlapping_criteria = 'GRID',
+            max_overalapping = max_grid_overalapping, # in meters/grids, None to ignore this constraint
+            stop_duration = 300, # da cambiare in 300 per 5 min
+            num_attempts = 10000, # set to None for exaustive search
+            random_seed = None, # only relevan if num_attempts is not None (non exhaustive serach)
+            exclude_neighbor_dst = 60,    
+            circular_route = circular_route,
+            num_best = 1,
+            stop_when_num_best_reached = True,
+            num_discarded = None,
+            show_progress_bar = False
+        )
+
+        route_planner.build_routes()
+
+        if len(route_planner.solutions) > 0:
+            found_solution = True
+            break
+        
+        max_grid_overalapping += 20
+        duration_tolerance_min += 10
+
+    if found_solution:
+
+        _, stop_names, info, best_route_img, estimated_duration_min = \
+            route_planner.get_routes(
+                show_map=False,
+                log=False
+            )      
+
+        missioni_route = [
+            MISSIONI_ACTIVE[mission_name]
+            for mission_name in stop_names
+        ]
+
+        info_msg = \
+            f'Ho selezionato per voi {len(stop_names)} tappe e dovreste metterci circa {estimated_duration_min} minuti. '\
+            'Ovviamente dipende da quanto sarete veloci e abili a risolvere gli indovinelli! 😉'     
+        send_message(p, info_msg)
+
+        if p.is_admin_current_hunt():                 
+            info_text = '\n'.join(info)
+            send_message(p, f"🐛 DEBUG:\n\n{info_text}", markdown=False)
+            send_photo_data(p, best_route_img)
+            # selected_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_route,1)])
+            # send_message(p, "DEBUG Selected missioni:\n{}".format(selected_missioni_names))
+        notify_group_id = get_notify_group_id(p)
+        if notify_group_id:
+            squadra_name = get_group_name(p)
+            info_text = f'La squadra {squadra_name} ha attenuto il seguente percorso:\n\n'
+            info_text += '\n'.join(info)
+            send_message(notify_group_id, info_text, markdown=False)
+            send_photo_data(notify_group_id, best_route_img)
+        return missioni_route
+
+    else:
+        error_msg = f'⚠️ User {p.get_id()} encountered error in routing:\n'\
+                    f'dataset name = {airtable_game_id}\n'\
+                    f'start num = {start_idx + 1}\n'\
+                    f'duration min = {duration_min}\n'\
+                    f'profile = {profile}\n'\
+                    f'circular route = {circular_route}\n'
+        report_admins(error_msg)
+        return None
+
 
 def is_mission_selection_routing_based(p):
     tvar = p.tmp_variables

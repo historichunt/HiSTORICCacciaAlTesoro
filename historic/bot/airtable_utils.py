@@ -162,7 +162,8 @@ if __name__ == "__main__":
     options = [
         '1. Scaricare media',
         '2. Scaricare errori',
-        '3. Stampa statistiche squadre'
+        '3. Stampa statistiche squadre',
+        '4. Testa missioni (random)'
     ]
     
     while True:
@@ -185,3 +186,9 @@ if __name__ == "__main__":
         )
     elif opt==3:
         print(get_report(password))
+    elif opt==4:
+        from historic.bot.game import get_random_missions
+        airtable_game_id = game.HUNTS_PW[password]['Airtable_Game_ID']
+        missions = get_random_missions(airtable_game_id, 'Missioni_IT')
+        random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missions,1)])
+        print(random_missioni_names)
