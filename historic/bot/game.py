@@ -223,7 +223,8 @@ def build_missions(p, test_all=False):
             return False # problema selezione percorso
     else:
         # RANDOM - default
-        missions = get_random_missions(airtable_game_id, mission_tab_name)
+        start_lat_long = p.get_tmp_variable('HUNT_START_GPS')
+        missions = get_random_missions(airtable_game_id, mission_tab_name, start_lat_long)
 
         if p.is_admin_current_hunt(): 
             from historic.bot.bot_telegram import send_message   
@@ -291,6 +292,7 @@ def get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name):
     
     _, remaining_missions_names = get_final_missions_dict_names(MISSIONI_ACTIVE)
         
+    # exlude to chose closes mission among those in the final group (and linked)
     all_gps = np.asarray(
         [
             utility.get_lat_lon_from_string(fields['GPS']) 
@@ -309,20 +311,33 @@ def get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name):
     return closest_gps
 
 
-def get_random_missions(airtable_game_id, mission_tab_name):
+def get_random_missions(airtable_game_id, mission_tab_name, start_lat_long):
 
     MISSIONI_ACTIVE = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)
+
+    start_lat_long_str = ', '.join([str(x) for x in start_lat_long])
 
     final_missions_and_linked_names, remaining_missions_names = \
         get_final_missions_dict_names(MISSIONI_ACTIVE)
 
+    start_mission_name = [k for k,v in MISSIONI_ACTIVE.items() if v.get('GPS',None)==start_lat_long_str]
+
+    assert len(start_mission_name) == 1
+    start_mission_name = start_mission_name[0]    
+
+    missioni_random_names = [start_mission_name]
+    
+    assert start_mission_name in remaining_missions_names
+    remaining_missions_names.remove(start_mission_name)
+
+    # missions names in NEXT columns
     next_missions = [
         fields['NEXT'] for fields in MISSIONI_ACTIVE.values()
         if fields.get('NEXT',None)
     ]
     
     remaining_missions_names_no_next = [
-        m_name for m_name, m_fields in MISSIONI_ACTIVE.items()
+        m_name for m_name in MISSIONI_ACTIVE
         if (
             m_name in remaining_missions_names and
             m_name not in next_missions
@@ -346,8 +361,7 @@ def get_random_missions(airtable_game_id, mission_tab_name):
             remaining_missions_names_no_next.append(f) # this shouldn't have none by default
         
     shuffle(remaining_missions_names_no_next)
-
-    missioni_random_names = []
+    
     for m in remaining_missions_names_no_next:
         missioni_random_names.append(m)
         next = MISSIONI_ACTIVE[m].get('NEXT', None)

@@ -867,6 +867,9 @@ def state_GPS(p, message_obj=None, **kwargs):
         redirect_to_state(p, state_DOMANDA)
         return
     goal_position = utility.get_lat_lon_from_string(current_mission['GPS'])
+    if goal_position == p.get_tmp_variable('HUNT_START_GPS'):
+        redirect_to_state(p, state_DOMANDA)
+        return
     if give_instruction:        
         # skip GPS if already there (only for first mission and ROUTING driven hunt)
         testing = p.get_tmp_variable('TEST_HUNT_MISSION_ADMIN', False)
