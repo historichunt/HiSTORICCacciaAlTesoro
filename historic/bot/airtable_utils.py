@@ -149,15 +149,9 @@ def get_report(hunt_password, table_name='Results'):
 
 
 if __name__ == "__main__":    
-    
-    while True:
-        password = input('\nInserisci password caccia al tesoro: ').lower()
-        if password in game.HUNTS_PW:
-            break
-        print('\nPasswrod non valida.\n')
+    from historic.bot.utils_cli import get_hunt_from_password
 
-    hunt_name = game.HUNTS_PW[password]['Name']
-    print(f'\nTrovata caccia: {hunt_name}\n')
+    hunt_name, airtable_game_id = get_hunt_from_password()    
 
     options = [
         '1. Scaricare media',
@@ -188,7 +182,6 @@ if __name__ == "__main__":
         print(get_report(password))
     elif opt==4:
         from historic.bot.game import get_random_missions
-        airtable_game_id = game.HUNTS_PW[password]['Airtable_Game_ID']
         missions = get_random_missions(airtable_game_id, 'Missioni_IT')
         random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missions,1)])
         print(random_missioni_names)
