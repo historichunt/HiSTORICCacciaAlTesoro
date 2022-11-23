@@ -1,6 +1,9 @@
 # Change Log
 
+## 0.12
+- airtable base validation
 ## 0.11
+- bug fix in start mission
 - Incremental data matrices
 - Continue/Exit in Instructions
 - Exclude Final missions from first mission
