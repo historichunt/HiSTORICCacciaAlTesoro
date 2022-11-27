@@ -1504,7 +1504,8 @@ def deal_with_universal_command(p, message_obj):
         l = text_input[-2:].upper()
         if l in params.LANGUAGES:
             if game.user_in_game(p):
-                send_message(p, p.ui().MSG_NO_CHANGE_LANG_IN_HUNT, remove_keyboard=True)    
+                send_message(p, p.ui().MSG_NO_CHANGE_LANG_IN_HUNT, remove_keyboard=False)    
+                return True
             else:
                 p.set_language(l, put=True)
                 send_message(p, p.ui().MSG_LANGUAGE_SWITCHED)
