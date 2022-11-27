@@ -1463,11 +1463,13 @@ def deal_with_admin_commands(p, message_obj):
         if text_input.startswith('/text '):
             u_id, text = text_input.split(' ',2)[1:]
             u = Person.get_by_id(u_id)
-            if send_message(p, text, kb=p.get_keyboard()):
+            if u is None:
+                msg = 'ID not valid. Maybe you forgot T_?'
+            elif send_message(p, text, kb=p.get_keyboard()):
                 msg = 'Message successfully sent to {}'.format(u.get_first_last_username())
             else:
                 msg = 'Problems sending message to {}'.format(u.get_first_last_username())
-            send_message(p, msg)
+            send_message(p, msg, markdown=False)
             return True
         if text_input.startswith('/restart '):
             u_id = ' '.join(text_input.split(' ')[1:])
