@@ -1,3 +1,4 @@
+import sys
 import collections
 import requests
 import os
@@ -8,6 +9,7 @@ from historic.config import settings
 from historic.bot import game
 import zipfile
 from historic.bot.utility import append_num_to_filename, is_int_between
+import random
 
 def download_media_zip(hunt_password, table_name='Results', log=False):    
     from historic.config.params import MAX_SIZE_FILE_BYTES    
@@ -151,37 +153,43 @@ def get_report(hunt_password, table_name='Results'):
 if __name__ == "__main__":    
     from historic.bot.utils_cli import get_hunt_from_password
 
-    hunt_name, airtable_game_id = get_hunt_from_password()    
+    hunt_name, password, airtable_game_id = get_hunt_from_password()    
 
     options = [
         '1. Scaricare media',
         '2. Scaricare errori',
         '3. Stampa statistiche squadre',
-        '4. Testa missioni (random)'
+        '4. Testa missioni (random)',
+        'q  Exit'
     ]
     
     while True:
-        print('Opzioni:\n' + '\n'.join(options))
-        opt = input('\nLa tua scelta --> ')
-        if is_int_between(opt, 1, len(options)):
-            opt = int(opt)
-            break
-        print('\nScelta non valida, riprova.\n')
 
-    hunt_name_no_space = hunt_name.replace(' ', '_')[:20]
-    if opt==1:
-        output_file = os.path.join('data', hunt_name_no_space + '.zip')
-        download_media(password, output_file)
-        # download_media_zip(password)
-    elif opt==2:
-        get_wrong_answers(
-            password, 
-            f'{hunt_name_no_space}_errori.txt', f'{hunt_name_no_space}_errori_digested.txt'
-        )
-    elif opt==3:
-        print(get_report(password))
-    elif opt==4:
-        from historic.bot.game import get_random_missions
-        missions = get_random_missions(airtable_game_id, 'Missioni_IT')
-        random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missions,1)])
-        print(random_missioni_names)
+        while True:            
+            print('\nOpzioni:\n' + '\n'.join(options))
+            opt = input('\nLa tua scelta --> ')
+            if opt=='q':
+                sys.exit()
+            if is_int_between(opt, 1, len(options)):
+                opt = int(opt)
+                break
+            print('\nScelta non valida, riprova.\n')
+
+        hunt_name_no_space = hunt_name.replace(' ', '_')[:20]
+        if opt==1:
+            output_file = os.path.join('data', hunt_name_no_space + '.zip')
+            download_media(password, output_file)
+            # download_media_zip(password)
+        elif opt==2:
+            get_wrong_answers(
+                password, 
+                f'{hunt_name_no_space}_errori.txt', f'{hunt_name_no_space}_errori_digested.txt'
+            )
+        elif opt==3:
+            print(get_report(password))
+        elif opt==4:
+            mission_table_name = 'Missioni_IT'
+            start_lat_long = random.choice(game.get_all_missions_lat_lon(airtable_game_id, mission_table_name))
+            missions = game.get_random_missions(airtable_game_id, mission_table_name, start_lat_long)
+            random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missions,1)])
+            print(random_missioni_names)

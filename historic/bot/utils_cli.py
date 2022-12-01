@@ -13,5 +13,5 @@ def get_hunt_from_password(verbose=True):
     if verbose:
         print(f'\nTrovata caccia: {hunt_name}\n')
 
-    return hunt_name, airtable_game_id
+    return hunt_name, password, airtable_game_id
 

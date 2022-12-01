@@ -88,7 +88,7 @@ def download_hunt_schema(airtable_game_id, filepath, clean=True):
 if __name__ == "__main__":
     from historic.bot.utils_cli import get_hunt_from_password
 
-    hunt_name, airtable_game_id = get_hunt_from_password()    
+    hunt_name, password, airtable_game_id = get_hunt_from_password()    
     
     download_hunt_schema(
         airtable_game_id,
