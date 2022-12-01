@@ -1,7 +1,10 @@
 # Change Log
 
 ## 0.12
-- airtable base validation
+- airtable base validation [WIP]
+- fix bug in random missions
+- kids/adult option in instruction
+
 ## 0.11
 - bug fix in start mission
 - Incremental data matrices

@@ -593,6 +593,7 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
         media = current_step.get('Media', '')
         if input_type and input_type[0].startswith('BUTTON_'):
             # BUTTON_UNDERSTOOD, BUTTON_START_GAME
+            # BUTTON_ROUTE_KIDS, BUTTON_ROUTE_ADULTS
             # BUTTON_ROUTE_FOOT, BUTTON_ROUTE_BICYCLE
             # BUTTON_ROUTE_CIRCULAR_YES, BUTTON_ROUTE_CIRCULAR_NO
             # BUTTON_X_MIN
@@ -669,6 +670,7 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
         elif input_type.startswith('BUTTON_'):
             # BUTTON_UNDERSTOOD, BUTTON_START_GAME
+            # BUTTON_ROUTE_KIDS, BUTTON_ROUTE_ADULTS
             # BUTTON_ROUTE_FOOT, BUTTON_ROUTE_BICYCLE
             # BUTTON_ROUTE_CIRCULAR_YES, BUTTON_ROUTE_CIRCULAR_NO
             # BUTTON_X_MIN
@@ -681,6 +683,10 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                     game.exit_game(p, save_data=False, reset_current_hunt=True)
                     send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
                     restart(p)
+                elif text_input in [p.ui().BUTTON_ROUTE_KIDS]:
+                    p.set_tmp_variable('ROUTE_AGE_GROUP', 'KIDS', put=True)
+                elif text_input in [p.ui().BUTTON_ROUTE_ADULTS]:
+                    p.set_tmp_variable('ROUTE_AGE_GROUP', 'ADULTS', put=True)
                 elif text_input in [p.ui().BUTTON_ROUTE_FOOT]:
                     p.set_tmp_variable('ROUTE_TRANSPORT', api_google.PROFILE_FOOT_WALKING, put=True)
                 elif text_input in [p.ui().BUTTON_ROUTE_BICYCLE]:
