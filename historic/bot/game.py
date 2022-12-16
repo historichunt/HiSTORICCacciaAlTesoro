@@ -628,7 +628,16 @@ def set_end_mission_time(p):
 def set_mission_end_time(p):
     end_time = dtu.now_utc_iso_format()
     last_mission_time = p.tmp_variables['MISSION_TIMES'][-1]
-    last_mission_time.append(end_time)
+    
+    # bug on 2022/12/15 
+    # last_mission_time is supposed to have only 1 element
+    # in a specific case last_mission_time was already with 2 elements
+    if len(last_mission_time)==1:        
+        last_mission_time.append(end_time)
+    else:
+        from historic.bot.bot_telegram import report_admins
+        report_admins(f'Bug MISSION_TIMES (length={len(last_mission_time)}) for user {p.chat_id}')
+    
     mission_ellapsed = dtu.delta_seconds_iso(*last_mission_time)
     return mission_ellapsed
 
