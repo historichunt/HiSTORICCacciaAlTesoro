@@ -107,7 +107,10 @@ def send_media_url(p, url_attachment, type='image/png', kb=None, caption=None,
     attach_type = type.split('/')[1]    
     rm = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)       
     if attach_type in ['jpg','png','jpeg']:
-        BOT.send_photo(chat_id, photo=url_attachment, caption=caption, reply_markup=rm)
+        try:
+            BOT.send_photo(chat_id, photo=url_attachment, caption=caption, reply_markup=rm)
+        except telegram.error.BadRequest:
+            report_admins(f'Error on sending photo: {url_attachment}')
     elif attach_type in ['mp3']:
         BOT.send_audio(chat_id, audio=url_attachment, caption=caption, reply_markup=rm)
     elif attach_type in ['ogg']:
