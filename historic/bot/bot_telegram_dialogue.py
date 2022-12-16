@@ -1405,6 +1405,15 @@ def deal_with_admin_commands(p, message_obj):
             else:
                 send_message(p, f'User id {user_id} non valido')
             return True
+        if text_input == '/refresh_':
+            user_id = text_input.split('_',1)[1]
+            u = Person.get_by_id(user_id)
+            if u:
+                repeat_state(u)
+                send_message(p, f'User {user_id} refreshed!')
+            else:
+                send_message(p, f'User id {user_id} non valido')
+            return True
         if text_input.startswith('/terminate_'):
             user_id = text_input.split('_',1)[1]
             p.set_tmp_variable('TERMINATE_USER_ID', user_id)
