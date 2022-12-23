@@ -1603,6 +1603,20 @@ def deal_with_admin_commands(p, message_obj):
             else:
                 send_message(p, f'User id {user_id} non valido')
             return True
+        if text_input.startswith('/restart_'):
+            u_id = text_input.split('_',1)[1]
+            u = Person.get_by_id(u_id)
+            if u:
+                if game.user_in_game(u):
+                    game.exit_game(u, save_data=True, reset_current_hunt=True)
+                    send_message(u, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
+                restart(u)
+                msg_admin = 'User restarted: {}'.format(p.get_first_last_username())
+                send_message(p, msg_admin)
+            else:
+                msg_admin = 'No user found: {}'.format(u_id)
+                send_message(p, msg_admin)
+            return True
         if text_input == '/version':
             msg = f'{settings.ENV_VERSION} {settings.APP_VERSION}'
             send_message(p, msg)
@@ -1670,20 +1684,6 @@ def deal_with_admin_commands(p, message_obj):
             else:
                 msg = 'Problems sending message to {}'.format(u.get_first_last_username())
             send_message(p, msg, markdown=False)
-            return True
-        if text_input.startswith('/restart '):
-            u_id = ' '.join(text_input.split(' ')[1:])
-            u = Person.get_by_id(u_id)
-            if u:
-                if game.user_in_game(u):
-                    game.exit_game(u, save_data=False, reset_current_hunt=True)
-                    send_message(u, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
-                restart(u)
-                msg_admin = 'User restarted: {}'.format(p.get_first_last_username())
-                send_message(p, msg_admin)
-            else:
-                msg_admin = 'No user found: {}'.format(u_id)
-                send_message(p, msg_admin)
             return True
         if text_input == '/reset_all_users':            
             reset_all_users(message=None) #message=p.ui().MSG_THANKS_FOR_PARTECIPATING
