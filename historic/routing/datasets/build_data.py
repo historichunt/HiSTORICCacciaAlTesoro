@@ -72,7 +72,6 @@ def test_trento_dm_update():
     }
     dm.update_matrices(name_longlat, allow_change_gps=True)      
     # dm.update_matrices()
-    
 
 def test_airtable_map(base_key, max_points=None):
     import numpy as np
@@ -82,14 +81,26 @@ def test_airtable_map(base_key, max_points=None):
     assert all(len(c)==2 for c in name_longlat.values())
     render_map_with_coordinates(coordinates)
 
+def get_trento_data_info():
+    dm = DataMatrices(
+        dataset_name = TRENTO_BASE_KEY,        
+        api = api_google,
+        max_linear_dst_km = 2
+    )
+    print('Num points:',  dm.num_points)
+    print('Completed:', dm.completed)
+    print(dm.point_names)
+    
+
 if __name__ == "__main__":
-    # test_airtable_map(TRENTO_BASE_KEY, 'Missioni_IT')
+    test_airtable_map(TRENTO_BASE_KEY, 'Missioni_IT')
     # test_trento_dm_update()
-    build_or_update_dm_from_airtable(
-        api_google, 
-        TRENTO_BASE_KEY,
-        'Missioni_IT',
-        max_linear_dst_km=2.5
-        # max_points=3
-    ) 
+    # build_or_update_dm_from_airtable(
+    #     api_google, 
+    #     TRENTO_BASE_KEY,
+    #     'Missioni_IT',
+    #     max_linear_dst_km=2.5
+    #     # max_points=3
+    # ) 
+    # get_trento_data_info()
     

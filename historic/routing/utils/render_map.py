@@ -86,7 +86,7 @@ def render_map_with_coordinates(coordinates, width=1200, height=800):
     url_overlays = []
         
     for n, c in enumerate(coordinates,1):
-        url_overlays.append(f'pin-l-{n}+{STOP_PINS_COLOR}({c[0]},{c[1]})')
+        url_overlays.append(f'pin-l+{STOP_PINS_COLOR}({c[0]},{c[1]})')
 
     url += ','.join(url_overlays)
     url += f'/[{long_min},{lat_min},{long_max},{lat_max}]'
