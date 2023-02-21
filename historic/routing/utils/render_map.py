@@ -161,7 +161,7 @@ def render_map(route_points, path_points, unique_segments, segments_counts, all_
         for n, c in enumerate(all_coordinates):
             if c in route_points:
                 continue
-            url_overlays.append(f'pin-s-{n}+{OTHER_PINS_COLOR}({c[0]},{c[1]})')
+            url_overlays.append(f'pin-s+{OTHER_PINS_COLOR}({c[0]},{c[1]})')
     
     # route stops (big) - skip last if cyclic route
     skip_last = np.all(route_points[0]==route_points[-1])

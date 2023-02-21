@@ -42,8 +42,8 @@ def test_single_route():
     metric = METRIC_DURATION
     profile = api_google.PROFILE_FOOT_WALKING
     # profile = api_google.PROFILE_CYCLING_REGULAR    
-    
-    start_point_name = 'POVO Mesiano vecchio sanatorio'
+
+    start_point_name = 'GARDOLO Aeroporto'    
     duration_min = 120
     exclude_neighbor_dst = None
     circular_route = False
@@ -163,7 +163,7 @@ def test_multi_routes():
 
 
 if __name__ == "__main__":
-    # test_single_route()
-    test_multi_routes()
+    test_single_route()
+    # test_multi_routes()
     
     
