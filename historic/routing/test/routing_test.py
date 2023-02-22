@@ -32,7 +32,7 @@ def get_route_planner(datamatrix, profile, metric, start_idx, duration_sec, tot_
         circular_route = circular_route,
         num_best = 1,
         stop_when_num_best_reached = True,
-        num_discarded = 1, # for debugging purpose
+        num_discarded = None, # for debugging purpose
         show_progress_bar = show_progress_bar
     )
 
@@ -70,7 +70,7 @@ def test_single_route():
     route_planner = get_route_planner(
         trento_dm, profile, metric, start_idx, duration_sec, 
         tot_dst_tolerance=10*60,
-        max_grid_overalapping=100,        
+        max_grid_overalapping=20,        
         exclude_neighbor_dst=exclude_neighbor_dst,
         circular_route=circular_route,         
         show_progress_bar=True
@@ -83,12 +83,6 @@ def test_single_route():
         log=True
     )
 
-    if len(route_planner.solutions) == 0:
-        print(f'Missing route for start_idx {start_idx}')
-        route_planner.get_routes(
-            show_map=False,
-            log=True
-        )            
 
 def test_multi_routes():
 
@@ -146,8 +140,8 @@ def test_multi_routes():
                             solution_counter[attempt]+=1
                             break
                         
-                        max_grid_overalapping += 20
-                        duration_tolerance_min += 10                        
+                        # max_grid_overalapping += 20
+                        # duration_tolerance_min += 10                        
 
                     if not found_solution:
                         missing_route_start.append(start_point_name)                        
@@ -163,7 +157,7 @@ def test_multi_routes():
 
 
 if __name__ == "__main__":
-    test_single_route()
-    # test_multi_routes()
+    # test_single_route()
+    test_multi_routes()
     
     
