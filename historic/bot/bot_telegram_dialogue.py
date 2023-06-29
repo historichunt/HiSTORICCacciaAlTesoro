@@ -587,17 +587,20 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
         redirect_to_state(p, state_CHECK_INITIAL_POSITION)
         return
     current_step = steps[completed]
-    input_type = current_step.get('Input_Type',[])
+    input_type = current_step.get('Input_Type',[]) # list of buttons, special types (e.g., EMAIL)
+    input_buttons = [x for x in input_type if x.startswith('BUTTON_')]
+    first_input_button = input_buttons[0] if input_buttons else None
+    all_inputs_are_buttons = len(input_buttons) == len(input_type)
     if give_instruction:                
         msg = current_step.get('Text','')
         media = current_step.get('Media', '')
-        if input_type and input_type[0].startswith('BUTTON_'):
+        if input_buttons:
             # BUTTON_UNDERSTOOD, BUTTON_START_GAME
             # BUTTON_ROUTE_KIDS, BUTTON_ROUTE_ADULTS
             # BUTTON_ROUTE_FOOT, BUTTON_ROUTE_BICYCLE
             # BUTTON_ROUTE_CIRCULAR_YES, BUTTON_ROUTE_CIRCULAR_NO
             # BUTTON_X_MIN
-            buttons = [p.ui()[b] for b in input_type]
+            buttons = [p.ui()[b] for b in input_buttons]
             kb = make_2d_array(buttons, length=2)
             if media:
                 media_dict = media[0]
@@ -624,6 +627,45 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
             return
         text_input = message_obj.text
         input_type = input_type[0] # take first element in the list
+        if input_buttons:
+            # BUTTON_UNDERSTOOD, BUTTON_START_GAME
+            # BUTTON_ROUTE_KIDS, BUTTON_ROUTE_ADULTS
+            # BUTTON_ROUTE_FOOT, BUTTON_ROUTE_BICYCLE
+            # BUTTON_ROUTE_CIRCULAR_YES, BUTTON_ROUTE_CIRCULAR_NO
+            # BUTTON_X_MIN
+            kb = p.get_keyboard()
+            if text_input in flatten(kb):
+                if text_input == p.ui().BUTTON_EXIT:
+                    game.exit_game(p, save_data=False, reset_current_hunt=True)
+                    send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
+                    restart(p)
+                elif text_input in [p.ui().BUTTON_ROUTE_KIDS]:
+                    p.set_tmp_variable('ROUTE_AGE_GROUP', 'KIDS', put=True)
+                elif text_input in [p.ui().BUTTON_ROUTE_ADULTS]:
+                    p.set_tmp_variable('ROUTE_AGE_GROUP', 'ADULTS', put=True)
+                elif text_input in [p.ui().BUTTON_ROUTE_FOOT]:
+                    p.set_tmp_variable('ROUTE_TRANSPORT', api_google.PROFILE_FOOT_WALKING, put=True)
+                elif text_input in [p.ui().BUTTON_ROUTE_BICYCLE]:
+                    p.set_tmp_variable('ROUTE_TRANSPORT', api_google.PROFILE_CYCLING_REGULAR, put=True)
+                elif text_input in [p.ui().BUTTON_ROUTE_CIRCULAR_YES]:
+                    p.set_tmp_variable('ROUTE_CIRCULAR', True, put=True)
+                elif text_input in [p.ui().BUTTON_ROUTE_CIRCULAR_NO]:
+                    p.set_tmp_variable('ROUTE_CIRCULAR', False, put=True)
+                elif text_input in [p.ui().BUTTON_45_MIN, p.ui().BUTTON_60_MIN,
+                                    p.ui().BUTTON_90_MIN, p.ui().BUTTON_120_MIN]:                    
+                    duration_min = int(text_input.split()[1])
+                    p.set_tmp_variable('ROUTE_DURATION_MIN', duration_min, put=True)
+                else:
+                    # BUTTON_CONTINUE, BUTTON_UNDERSTOOD, BUTTON_START_GAME: 
+                    # do nothing except for repeating state                
+                    pass                    
+                send_typing_action(p, sleep_time=1)
+                repeat_state(p, next_step=True)
+                return
+            elif all_inputs_are_buttons:            
+                send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)  
+                return
+        
         if input_type == 'EMAIL':
             if text_input:
                 if utility.check_email(text_input):                
@@ -667,45 +709,7 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p, next_step=True)
             else:
-                send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
-        elif input_type.startswith('BUTTON_'):
-            # BUTTON_UNDERSTOOD, BUTTON_START_GAME
-            # BUTTON_ROUTE_KIDS, BUTTON_ROUTE_ADULTS
-            # BUTTON_ROUTE_FOOT, BUTTON_ROUTE_BICYCLE
-            # BUTTON_ROUTE_CIRCULAR_YES, BUTTON_ROUTE_CIRCULAR_NO
-            # BUTTON_X_MIN
-            kb = p.get_keyboard()
-            if text_input in flatten(kb):
-                if text_input == p.ui().BUTTON_CONTINUE:
-                    send_typing_action(p, sleep_time=1)
-                    repeat_state(p, next_step=True)
-                elif text_input == p.ui().BUTTON_EXIT:
-                    game.exit_game(p, save_data=False, reset_current_hunt=True)
-                    send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
-                    restart(p)
-                elif text_input in [p.ui().BUTTON_ROUTE_KIDS]:
-                    p.set_tmp_variable('ROUTE_AGE_GROUP', 'KIDS', put=True)
-                elif text_input in [p.ui().BUTTON_ROUTE_ADULTS]:
-                    p.set_tmp_variable('ROUTE_AGE_GROUP', 'ADULTS', put=True)
-                elif text_input in [p.ui().BUTTON_ROUTE_FOOT]:
-                    p.set_tmp_variable('ROUTE_TRANSPORT', api_google.PROFILE_FOOT_WALKING, put=True)
-                elif text_input in [p.ui().BUTTON_ROUTE_BICYCLE]:
-                    p.set_tmp_variable('ROUTE_TRANSPORT', api_google.PROFILE_CYCLING_REGULAR, put=True)
-                elif text_input in [p.ui().BUTTON_ROUTE_CIRCULAR_YES]:
-                    p.set_tmp_variable('ROUTE_CIRCULAR', True, put=True)
-                elif text_input in [p.ui().BUTTON_ROUTE_CIRCULAR_NO]:
-                    p.set_tmp_variable('ROUTE_CIRCULAR', False, put=True)
-                elif text_input in [p.ui().BUTTON_45_MIN, p.ui().BUTTON_60_MIN,
-                                    p.ui().BUTTON_90_MIN, p.ui().BUTTON_120_MIN]:                    
-                    duration_min = int(text_input.split()[1])
-                    p.set_tmp_variable('ROUTE_DURATION_MIN', duration_min, put=True)
-                else:
-                    # BUTTON_UNDERSTOOD, BUTTON_START_GAME: do nothing except for repeating state                
-                    pass                    
-                send_typing_action(p, sleep_time=1)
-                repeat_state(p, next_step=True)
-            else:            
-                send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)                  
+                send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)                
         elif input_type == 'GROUP_SIZE':
             if text_input: 
                 if utility.is_int(text_input):

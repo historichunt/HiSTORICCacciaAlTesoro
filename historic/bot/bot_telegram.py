@@ -1,7 +1,6 @@
 import telegram
 import telegram.error
-from telegram.error import (TelegramError, Unauthorized, 
-    BadRequest, TimedOut, ChatMigrated, NetworkError)
+from telegram.error import (TelegramError, Unauthorized)
 import logging
 import time
 from historic.bot.bot_ui import COMMANDS_LANG
@@ -99,16 +98,17 @@ def send_photo_data(p, img_content, kb=None, caption=None,
     )
 
 def send_media_url(p, url_attachment, type='image/png', kb=None, caption=None,
-    remove_keyboard=False, inline_keyboard=False):
+    remove_keyboard=False, inline_keyboard=False, markdown=True):
     chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
     # attach_type = url_attachment.rsplit('.',1)[1].lower()     
     # if '?' in attach_type:
     #     attach_type = attach_type.split('?')[0]
     attach_type = type.split('/')[1]    
     rm = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)       
+    parse_mode = telegram.ParseMode.MARKDOWN if markdown else None 
     if attach_type in ['jpg','png','jpeg']:
         try:
-            BOT.send_photo(chat_id, photo=url_attachment, caption=caption, reply_markup=rm)
+            BOT.send_photo(chat_id, photo=url_attachment, caption=caption, reply_markup=rm, parse_mode=parse_mode)
         except telegram.error.BadRequest:
             report_admins(f'Error on sending photo: {url_attachment}')
     elif attach_type in ['mp3']:
