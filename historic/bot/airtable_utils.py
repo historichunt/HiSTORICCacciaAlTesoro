@@ -13,8 +13,8 @@ import random
 
 def download_media_zip(hunt_password, table_name='Results', log=False):    
     from historic.config.params import MAX_SIZE_FILE_BYTES    
-    table_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
-    RESULTS_TABLE = Airtable(table_id, table_name, api_key=settings.AIRTABLE_API_KEY)
+    base_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
+    RESULTS_TABLE = Airtable(base_id, table_name, api_key=settings.AIRTABLE_API_KEY)
     table_entries = RESULTS_TABLE.get_all()
     zip_buffer = io.BytesIO()
     zf = zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED)
@@ -69,8 +69,8 @@ def get_rows(table, view=None, filter=None, sort_key=None):
 
 def get_wrong_answers(hunt_password, table_name='Results', output_file=None, output_file_digested=None):
     from collections import defaultdict    
-    table_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
-    RESULTS_TABLE = Airtable(table_id, table_name, api_key=settings.AIRTABLE_API_KEY)
+    base_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
+    RESULTS_TABLE = Airtable(base_id, table_name, api_key=settings.AIRTABLE_API_KEY)
     table_entries = RESULTS_TABLE.get_all()
     mission_error_dict = defaultdict(list)
     for entry in table_entries:
@@ -121,8 +121,8 @@ def process_errori(mission_error_dict):
     return '\n'.join(output)
 
 def get_report(hunt_password, table_name='Results'):
-    table_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
-    RESULTS_TABLE = Airtable(table_id, table_name, api_key=settings.AIRTABLE_API_KEY)
+    base_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
+    RESULTS_TABLE = Airtable(base_id, table_name, api_key=settings.AIRTABLE_API_KEY)
     table_entries = RESULTS_TABLE.get_all()
 
     result = []
