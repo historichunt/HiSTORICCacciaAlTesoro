@@ -317,6 +317,9 @@ def get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name):
 
     all_gps = get_all_missions_lat_lon(airtable_game_id, mission_tab_name)
 
+    if len(all_gps) == 0:
+        return None
+
     current_pos = np.asarray(p.get_location())
     dist_2 = np.sum((all_gps - current_pos)**2, axis=1)
     idx = np.argmin(dist_2)
@@ -328,15 +331,17 @@ def get_random_missions(airtable_game_id, mission_tab_name, start_lat_long):
 
     MISSIONI_ACTIVE = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)
 
-    start_lat_long_str = ', '.join([str(x) for x in start_lat_long])
+    if start_lat_long is None:
+        # in a hunt with no GPS initial location choose a random initial mission
+        start_mission_name = choice(list(MISSIONI_ACTIVE.keys()))
+    else:
+        start_lat_long_str = ', '.join([str(x) for x in start_lat_long])
+        start_mission_name = [k for k,v in MISSIONI_ACTIVE.items() if v.get('GPS',None)==start_lat_long_str]
+        assert len(start_mission_name) == 1
+        start_mission_name = start_mission_name[0]  # get first (only one)
 
     final_missions_and_linked_names, remaining_missions_names = \
         get_final_missions_dict_names(MISSIONI_ACTIVE)
-
-    start_mission_name = [k for k,v in MISSIONI_ACTIVE.items() if v.get('GPS',None)==start_lat_long_str]
-
-    assert len(start_mission_name) == 1
-    start_mission_name = start_mission_name[0]    
 
     assert start_mission_name in remaining_missions_names
     remaining_missions_names.remove(start_mission_name)

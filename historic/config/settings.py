@@ -1,14 +1,14 @@
 import os
 from airtable import Airtable
-from historic.bot import ndb_envvar
 from historic.config.params import ROOT_DIR
 
 APP_NAME = 'historictrentobot'
-APP_VERSION = '0.13.4'
+APP_VERSION = '0.14.0'
 CLOUD_ENVS = ['test', 'production']
 GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
 
 if GAE_SERVER:
+    from historic.bot import ndb_envvar
     # cloud version
     ENV_VERSION = os.environ.get('GAE_VERSION') # test or production
     APP_BASE_URL = 'https://{}-dot-{}.appspot.com'.format(ENV_VERSION, APP_NAME)    
@@ -35,10 +35,13 @@ else:
         LOCAL_ENV = os.path.join(ROOT_DIR, LOCAL_ENV_FILES[0])
         ENV_VERSION = LOCAL_ENV.split('.env_')[1] # what follows '.env_'        
         ENV_VARS = dotenv_values(LOCAL_ENV)
+        # need to load the current project in gcloud settings
+        os.environ["GCLOUD_PROJECT"] = ENV_VARS["GCLOUD_PROJECT"]
     else:
+        from historic.bot import ndb_envvar
         ENV_VERSION = 'test'
         print(f'Using test bot')
-        ENV_VARS = ndb_envvar.get_all(ENV_VERSION)
+        ENV_VARS = ndb_envvar.get_all(ENV_VERSION)        
     print(f'Using settings: {ENV_VERSION}')
 
 

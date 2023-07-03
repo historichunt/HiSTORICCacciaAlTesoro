@@ -14,6 +14,7 @@ from historic.bot.utility import escape_markdown, flatten, get_str_param_boolean
 from historic.bot.ndb_person import Person
 from historic.bot.ndb_utils import client_context
 from historic.routing.api import api_google
+from historic.bot.bot_telegram import get_photo_url_from_telegram
 
 # ================================
 # RESTART
@@ -110,7 +111,11 @@ def access_hunt_via_password(p, hunt_password, send_msg_if_wrong_pw):
             or game.is_person_hunt_admin(p, hunt_password)
         ):
             p.set_tmp_variable('HUNT_PW', hunt_password)
-            redirect_to_state(p, state_ASK_GPS_TO_START_HUNT)
+            check_location = game.HUNTS_PW[hunt_password].get('GPS', False)             
+            if check_location == False:
+                redirect_to_state(p, state_CHECK_LANGUAGE_AND_START_HUNT)            
+            else:
+                redirect_to_state(p, state_ASK_GPS_TO_START_HUNT)                
             return True
         else:
             if send_msg_if_wrong_pw:
@@ -437,7 +442,7 @@ def state_ASK_GPS_TO_START_HUNT(p, message_obj=None, **kwargs):
             else:
                 send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
         elif location:            
-            p.set_location(location['latitude'], location['longitude'])
+            p.set_location(location['latitude'], location['longitude'])            
             redirect_to_state(p, state_CHECK_LANGUAGE_AND_START_HUNT)
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
@@ -774,6 +779,12 @@ def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
 def state_CHECK_INITIAL_POSITION(p, message_obj=None, **kwargs):    
     give_instruction = message_obj is None
     goal_position = p.get_tmp_variable('HUNT_START_GPS')
+    # CHECK_LOCATION = p.tmp_variables['SETTINGS'].get('CHECK_INITIAL_LOCATION', True)
+    if goal_position is None:
+        load_missions(p)
+        return
+    # TODO: consider to use START_LOCATION 
+    # START_LOCATION = p.tmp_variables['SETTINGS'].get('START_LOCATION', 'PROXIMITY')
     GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
     if give_instruction:
         current_position = p.get_location()
@@ -862,9 +873,25 @@ def state_MISSION_INTRO(p, message_obj=None, **kwargs):
         if text_input in flatten(kb):
             if text_input in bot_ui.BUTTON_CONTINUE_MULTI(p.language):
                 current_mission = game.get_current_mission(p)
-                redirect_to_state(p, state_GPS)
+                redirect_to_state(p, state_VERIFY_LOCATION)
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)            
+
+# ================================
+# VERIFY_LOCATION state
+# ================================  
+
+def state_VERIFY_LOCATION(p, message_obj=None, **kwargs):        
+    current_mission = game.get_current_mission(p)
+    if 'GPS' in current_mission:
+        redirect_to_state(p, state_GPS)
+        return
+    elif 'QR'in current_mission:
+        redirect_to_state(p, state_QR)
+        return
+    else:
+        redirect_to_state(p, state_DOMANDA)
+        return
 
 # ================================
 # GPS state
@@ -873,9 +900,6 @@ def state_MISSION_INTRO(p, message_obj=None, **kwargs):
 def state_GPS(p, message_obj=None, **kwargs):        
     give_instruction = message_obj is None
     current_mission = game.get_current_mission(p)
-    if 'GPS' not in current_mission:
-        redirect_to_state(p, state_DOMANDA)
-        return
     goal_position = utility.get_lat_lon_from_string(current_mission['GPS'])
     if goal_position == p.get_tmp_variable('HUNT_START_GPS'):
         redirect_to_state(p, state_DOMANDA)
@@ -916,6 +940,38 @@ def state_GPS(p, message_obj=None, **kwargs):
                 repeat_state(p)
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
+
+
+# ================================
+# GPS state
+# ================================  
+
+def state_QR(p, message_obj=None, **kwargs):            
+    give_instruction = message_obj is None
+    current_mission = game.get_current_mission(p)
+    goal_qr_code = current_mission['QR']
+    if give_instruction:        
+        msg = p.ui().MSG_GO_TO_QR
+        send_message(p, msg, remove_keyboard=True)
+    else:
+        photo = message_obj.photo        
+        if photo is None or len(photo)==0:            
+            send_message(p, p.ui().MSG_WRONG_INPUT_SEND_PHOTO)
+            return
+        else:
+            file_id = photo[-1]['file_id']
+            qr_url = get_photo_url_from_telegram(file_id)
+            qr_code = utility.read_qr_from_url(qr_url)
+            qr_is_valid = goal_qr_code in qr_code # TODO: verify QR better        
+            if qr_is_valid:
+                send_message(p, p.ui().MSG_GPS_OK, remove_keyboard=True)
+                send_typing_action(p, sleep_time=1)
+                redirect_to_state(p, state_DOMANDA)
+            else:
+                msg = p.ui().MSG_QR_ERROR
+                send_message(p, msg)
+                send_typing_action(p, sleep_time=1)
+                repeat_state(p)
 
 # ================================
 # DOMANDA state
@@ -1438,7 +1494,7 @@ def deal_with_admin_commands(p, message_obj):
         if text_input == '/version':
             msg = f'{settings.ENV_VERSION} {settings.APP_VERSION}'
             send_message(p, msg)
-            return True
+            return True        
         if text_input.startswith('/test_zip'):
             pw = text_input.split()[1]
             zip_content = airtable_utils.download_media_zip(pw)
@@ -1515,8 +1571,13 @@ def deal_with_universal_command(p, message_obj):
     if not text_input.startswith('/'):
         return False
     if text_input.startswith('/start'):
+        text_input_split = text_input.split()
         if game.user_in_game(p):
-            send_message(p, p.ui().MSG_YOU_ARE_IN_A_GAME_EXIT_FIRST)
+            if len(text_input_split)>1 and text_input_split[1].startswith('verify_qr_'):
+                qr_code = text_input_split[1].rsplit('_',1)[1] # code after last underscore
+                # send_message(p, qr_code)      
+            else:
+                send_message(p, p.ui().MSG_YOU_ARE_IN_A_GAME_EXIT_FIRST)
         else:
             redirect_to_state(p, state_INITIAL, message_obj)
         return True

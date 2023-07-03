@@ -2,6 +2,10 @@ import re
 import textwrap
 
 from google.cloud.ndb import utils
+import requests
+from io import BytesIO
+import cv2
+import numpy as np
 
 
 def check_email(text_input):
@@ -253,6 +257,15 @@ def sec_to_hms(elapsed_sec):
     hour, mins = divmod(mins, 60)
     time_str = "%d:%02d:%02d" % (hour, mins, sec)
     return time_str
+
+def read_qr_from_url(file_url):    
+    img_content = requests.get(file_url).content
+    img_array = np.asarray(bytearray(img_content), dtype=np.uint8)    
+    img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+    detect = cv2.QRCodeDetector()
+    value, _, _ = detect.detectAndDecode(img) # html address
+    code = value.rsplit('/',1)[-1] # last field after last forward slash
+    return code 
 
 def get_str_param_boolean(d, param):
     return d.get(param, 'False').lower() in ['true', '1', 't', 'y', 'yes']
