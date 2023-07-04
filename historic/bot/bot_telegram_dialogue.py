@@ -1082,9 +1082,10 @@ def send_post_message(p, current_mission, after_loc=False):
             type = media_dict['type']
             send_media_url(p, url_attachment, type, caption=caption)
             send_typing_action(p, sleep_time=1)
-        msg = current_mission[f'{prefix}_MESSAGE'] # POST_MESSAGE, POST_LOC_MESSAGE
-        send_message(p, msg, remove_keyboard=True)
-        send_typing_action(p, sleep_time=1)
+        if post_msg_present:
+            msg = current_mission[f'{prefix}_MESSAGE'] # POST_MESSAGE, POST_LOC_MESSAGE
+            send_message(p, msg, remove_keyboard=True)
+            send_typing_action(p, sleep_time=1)
         return True
     return False
 

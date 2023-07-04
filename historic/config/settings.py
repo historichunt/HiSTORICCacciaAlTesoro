@@ -3,7 +3,7 @@ from airtable import Airtable
 from historic.config.params import ROOT_DIR
 
 APP_NAME = 'historictrentobot'
-APP_VERSION = '0.14.1'
+APP_VERSION = '0.14.2'
 CLOUD_ENVS = ['test', 'production']
 GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
 
