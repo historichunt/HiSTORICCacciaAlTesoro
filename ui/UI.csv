@@ -204,7 +204,8 @@ MSG_PRESS_FOR_ENDING,,"La caccia al tesoro è terminata! Siete stati bravissimi!
 🎇 Ora premete il pulsante per terminare la caccia e bloccare il tempo!",🎇 Press the button to end the game.,🎇 [ボタンを押してゲームを終了します。,"🎇 Drücke die Taste, um das Spiel zu beenden.",
 MSG_PRESS_FOR_NEXT_MISSION,,🎳 Premi sul pulsante per andare alla prossima missione.,🎳 Press the button to go to the next mission.,🎳 ボタンを押して、次のミッションに移動します。,"🎳 Drücke die Taste, um zur nächsten Mission zu gehen.",
 MSG_PRESS_TO_START,,Quando siete pronti per iniziare premete il pulsante qua sotto.,When you are ready to start press the button below.,準備ができたら、下のボタンを押します。,"Wenn ihr bereit seid, drücke die Taste unten zu starten.",
-MSG_QR_ERROR,,"⛝ QR errato o non riconosciuto, riprova!","⛝ QR wrong or unrecognized, try again!",⛝ QR間違っているか認識されていないQR、もう一度やり直してください！,"⛝ QR falsch oder nicht anerkannt, versuchen Sie es erneut!",
+MSG_QR_ERROR,,"❌ QR errato o non riconosciuto, riprova!","❌ QR wrong or unrecognized, try again!",❌ QR間違っているか認識されていないQR、もう一度やり直してください！,"❌ QR falsch oder nicht anerkannt, versuchen Sie es erneut!",
+MSG_QR_OK,,✅ QR valido!,✅ QR valid!,✅QR有効！,✅ QR Gültig!,
 MSG_RECORDING_MISSIONE_WRONG,,"🤔 Mi dispiace, la registrazione non è stata accettata.
 
 🎤 Riprovate a mandarmi una nuova registrazione!","🤔 Unfortunately the recording wasn't accepted.
@@ -214,6 +215,7 @@ MSG_RECORDING_MISSIONE_WRONG,,"🤔 Mi dispiace, la registrazione non è stata a
 🎤 私たちに新しい録音を送ってみてください！","🤔Die Aufnahme ist nich gultig.                                         
 🎤 Versuchen Sie uns eine neue Aufnahme zu senden!",
 MSG_RELOADED_HUNTS_CONFIG,,💨 Configurazione cacce aggiornata,💨 Hunt config updated,💨 が更新されました,💨 Hunt config aktualisiert,
+MSG_SCAN_QR_CODE,,🤳 Scannerizza il prossimo QR code,🤳 Scan the next QR code,🤳 次のQRコードをスキャンします,🤳 Scannen Sie den nächsten QR -Code,
 MSG_SELFIE_INIZIALE,,"📷 Ora voglio vedere quanto belli siete.
 Mandatemi un bel selfie di gruppo!
 

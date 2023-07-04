@@ -241,11 +241,11 @@ def format_distance(dst_km):
         return str(round(dst_km, 1)) + " Km"
     return str(int(dst_km * 1000)) + " m"
 
-def makeListOfList(L):
+def make_list_of_list(L):
     result = [[l] for l in L]
     return result
 
-def removeDuplicatesFromList(list):
+def remove_duplicates_from_list(list):
     no_dupicated_list = []
     for x in list:
         if x not in no_dupicated_list:
@@ -263,9 +263,12 @@ def read_qr_from_url(file_url):
     img_array = np.asarray(bytearray(img_content), dtype=np.uint8)    
     img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
     detect = cv2.QRCodeDetector()
-    value, _, _ = detect.detectAndDecode(img) # html address
-    code = value.rsplit('/',1)[-1] # last field after last forward slash
-    return code 
+    value, _, _ = detect.detectAndDecode(img) 
+    return value # full code potentially including html address    
+
+def qr_matches(goal, target):
+    # last field after last forward slash 
+    return goal == target.rsplit('/',1)[-1]
 
 def get_str_param_boolean(d, param):
     return d.get(param, 'False').lower() in ['true', '1', 't', 'y', 'yes']

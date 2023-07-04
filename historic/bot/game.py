@@ -699,11 +699,13 @@ def get_num_compleded_missions(p):
     indovinello_info = p.tmp_variables['MISSIONI_INFO']
     return len(indovinello_info['COMPLETED'])
 
-def set_next_mission(p, current_mission=None):
+def set_next_mission(p, current_mission=None, remove_from_todo=False):
     indovinello_info = p.tmp_variables['MISSIONI_INFO']    
-    if current_mission is None:
-        todo_missioni = indovinello_info['TODO']
+    todo_missioni = indovinello_info['TODO']
+    if current_mission is None:        
         current_mission = todo_missioni.pop(0)
+    elif remove_from_todo:
+        todo_missioni.remove(current_mission)
     indovinello_info['CURRENT'] = current_mission
     current_mission['wrong_answers'] = []    
     return current_mission
@@ -712,6 +714,16 @@ def get_current_mission(p):
     indovinello_info = p.tmp_variables['MISSIONI_INFO']
     return indovinello_info['CURRENT']
 
+def get_mission_matching_qr(p, qr_code):
+    indovinello_info = p.tmp_variables['MISSIONI_INFO']    
+    todo_missioni = indovinello_info['TODO']
+    for mission in todo_missioni:
+        goal_qr = mission.get('QR', False)
+        if goal_qr:
+            if utility.qr_matches(goal_qr, qr_code):
+                return mission
+    return None
+    
 def append_group_media_input_file_id(p, file_id):
     p.tmp_variables['GROUP_MEDIA_FILE_IDS'].append(file_id)
 

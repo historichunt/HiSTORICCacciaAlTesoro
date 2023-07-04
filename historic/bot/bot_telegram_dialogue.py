@@ -783,7 +783,7 @@ def state_CHECK_INITIAL_POSITION(p, message_obj=None, **kwargs):
     if goal_position is None:
         load_missions(p)
         return
-    START_LOCATION = p.tmp_variables['SETTINGS'].get('START_LOCATION', 'PROXIMITY')
+    # START_LOCATION = p.tmp_variables['SETTINGS'].get('START_LOCATION', 'PROXIMITY')
     GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
     if give_instruction:
         current_position = p.get_location()
@@ -819,7 +819,7 @@ def state_CHECK_INITIAL_POSITION(p, message_obj=None, **kwargs):
 # ================================
 
 def load_missions(p):        
-    success = game.build_missions(p)
+    success = game.build_missions(p)    
     if not success:
         send_message(p, p.ui().MSG_ERROR_ROUTING)
         send_typing_action(p, sleep_time=1)
@@ -828,26 +828,65 @@ def load_missions(p):
         send_text_document(p, 'tmp_vars.json', game.debug_tmp_vars(p), caption=msg_admin)
         report_admins(msg_admin)
     else:
+        WAIT_QR_MODE = p.tmp_variables['SETTINGS'].get('WAIT_QR_MODE', False)                
         send_message(p, p.ui().MSG_GO)
-        redirect_to_state(p, state_MISSION_INTRO)
+        if WAIT_QR_MODE:            
+            redirect_to_state(p, state_MISSION_WAIT_QR)
+        else:
+            redirect_to_state(p, state_MISSION_INTRO)
+
+# ================================
+# MISSION WAIT QR
+# ================================
+
+def state_MISSION_WAIT_QR(p, message_obj=None, **kwargs):    
+    first_call = kwargs.get('first_call', True)
+    give_instruction = message_obj is None
+    if give_instruction:
+        if first_call:
+            check_if_first_mission_and_start_time(p)
+        msg = p.ui().MSG_SCAN_QR_CODE
+        send_message(p, msg, remove_keyboard=True)
+    else:
+        text_input = message_obj.text
+        photo = message_obj.photo     
+        testing = p.get_tmp_variable('TEST_HUNT_MISSION_ADMIN', False)   
+        kb = p.get_keyboard()        
+        if text_input:
+            qr_code = text_input
+        elif photo is None or len(photo)==0:            
+            send_message(p, p.ui().MSG_WRONG_INPUT_SEND_PHOTO)
+            return
+        else:            
+            file_id = photo[-1]['file_id']
+            qr_url = get_photo_url_from_telegram(file_id)
+            qr_code = utility.read_qr_from_url(qr_url)
+        current_mission = game.get_current_mission(p) if testing else game.get_mission_matching_qr(p, qr_code)
+        if current_mission:
+            game.set_next_mission(p, current_mission, remove_from_todo=True)
+            send_message(p, p.ui().MSG_QR_OK, remove_keyboard=True)                
+            if not send_post_message(p, current_mission, after_loc=True):
+                send_typing_action(p, sleep_time=1)                    
+            redirect_to_state(p, state_DOMANDA)
+        else:
+            msg = p.ui().MSG_QR_ERROR
+            send_message(p, msg)
+            send_typing_action(p, sleep_time=1)
+            repeat_state(p, first_call=False)
+        
 
 # ================================
 # MISSION INTRO
 # ================================
 
-def state_MISSION_INTRO(p, message_obj=None, **kwargs):        
+def state_MISSION_INTRO(p, message_obj=None, first_call=True, **kwargs):            
     give_instruction = message_obj is None
     if give_instruction:
         testing = p.get_tmp_variable('TEST_HUNT_MISSION_ADMIN', False)
         # if testing next mission is already set up
         current_mission = game.get_current_mission(p) if testing else game.set_next_mission(p)        
         if not testing:
-            mission_number = game.get_num_compleded_missions(p) + 1        
-            if mission_number == 1:
-                # first one
-                send_message(p, p.ui().MSG_START_TIME, remove_keyboard=True)            
-                game.set_game_start_time(p)
-                send_typing_action(p, sleep_time=1)        
+            check_if_first_mission_and_start_time(p)            
             total_missioni = game.get_total_missions(p)
             msg = p.ui().MSG_MISSION_N_TOT.format(mission_number, total_missioni)
             send_message(p, msg, remove_keyboard=True)
@@ -875,6 +914,14 @@ def state_MISSION_INTRO(p, message_obj=None, **kwargs):
                 redirect_to_state(p, state_VERIFY_LOCATION)
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)            
+
+def check_if_first_mission_and_start_time(p):
+    mission_number = game.get_num_compleded_missions(p) + 1        
+    if mission_number == 1:
+        # first one
+        send_message(p, p.ui().MSG_START_TIME, remove_keyboard=True)            
+        game.set_game_start_time(p)
+        send_typing_action(p, sleep_time=1)        
 
 # ================================
 # VERIFY_LOCATION state
@@ -950,7 +997,7 @@ def state_QR(p, message_obj=None, **kwargs):
     give_instruction = message_obj is None
     current_mission = game.get_current_mission(p)
     goal_qr_code = current_mission['QR']
-    if give_instruction:        
+    if give_instruction:                
         msg = p.ui().MSG_GO_TO_QR
         send_message(p, msg, remove_keyboard=True)
     else:
@@ -962,9 +1009,8 @@ def state_QR(p, message_obj=None, **kwargs):
             file_id = photo[-1]['file_id']
             qr_url = get_photo_url_from_telegram(file_id)
             qr_code = utility.read_qr_from_url(qr_url)
-            qr_is_valid = goal_qr_code in qr_code # TODO: verify QR better        
-            if qr_is_valid:
-                send_message(p, p.ui().MSG_GPS_OK, remove_keyboard=True)
+            if utility.qr_matches(goal_qr_code, qr_code):
+                send_message(p, p.ui().MSG_QR_OK, remove_keyboard=True)
                 if not send_post_message(p, current_mission, after_loc=True):
                     send_typing_action(p, sleep_time=1)                    
                 redirect_to_state(p, state_DOMANDA)
@@ -974,6 +1020,7 @@ def state_QR(p, message_obj=None, **kwargs):
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p)
         
+
 
 
 # ================================
@@ -1279,9 +1326,12 @@ def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
             kb = [[p.ui().BUTTON_END]]
             send_message(p, msg, kb)
         else:        
-            msg = p.ui().MSG_PRESS_FOR_NEXT_MISSION
-            kb = [[p.ui().BUTTON_NEXT_MISSION]]            
-            send_message(p, msg, kb)
+            if p.tmp_variables['SETTINGS'].get('WAIT_QR_MODE', False):
+                redirect_to_state(p, state_MISSION_WAIT_QR)                
+            else:
+                msg = p.ui().MSG_PRESS_FOR_NEXT_MISSION
+                kb = [[p.ui().BUTTON_NEXT_MISSION]]            
+                send_message(p, msg, kb)
     else:
         text_input = message_obj.text
         kb = p.get_keyboard()
