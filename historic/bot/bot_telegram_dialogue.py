@@ -783,8 +783,7 @@ def state_CHECK_INITIAL_POSITION(p, message_obj=None, **kwargs):
     if goal_position is None:
         load_missions(p)
         return
-    # TODO: consider to use START_LOCATION 
-    # START_LOCATION = p.tmp_variables['SETTINGS'].get('START_LOCATION', 'PROXIMITY')
+    START_LOCATION = p.tmp_variables['SETTINGS'].get('START_LOCATION', 'PROXIMITY')
     GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
     if give_instruction:
         current_position = p.get_location()
@@ -931,7 +930,8 @@ def state_GPS(p, message_obj=None, **kwargs):
             GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
             if distance <= GPS_TOLERANCE_METERS:
                 send_message(p, p.ui().MSG_GPS_OK, remove_keyboard=True)
-                send_typing_action(p, sleep_time=1)
+                if not send_post_message(p, current_mission, after_loc=True):
+                    send_typing_action(p, sleep_time=1)                    
                 redirect_to_state(p, state_DOMANDA)
             else:
                 msg = p.ui().MSG_TOO_FAR.format(distance)
@@ -965,13 +965,16 @@ def state_QR(p, message_obj=None, **kwargs):
             qr_is_valid = goal_qr_code in qr_code # TODO: verify QR better        
             if qr_is_valid:
                 send_message(p, p.ui().MSG_GPS_OK, remove_keyboard=True)
-                send_typing_action(p, sleep_time=1)
+                if not send_post_message(p, current_mission, after_loc=True):
+                    send_typing_action(p, sleep_time=1)                    
                 redirect_to_state(p, state_DOMANDA)
             else:
                 msg = p.ui().MSG_QR_ERROR
                 send_message(p, msg)
                 send_typing_action(p, sleep_time=1)
                 repeat_state(p)
+        
+
 
 # ================================
 # DOMANDA state
@@ -1067,18 +1070,19 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
 
-def send_post_message(p, current_mission):
-    post_msg_present = 'POST_MESSAGE' in current_mission
-    post_media_present = 'POST_MEDIA' in current_mission
+def send_post_message(p, current_mission, after_loc=False):
+    prefix = 'POST_LOC' if after_loc else 'POST'
+    post_msg_present = f'{prefix}_MESSAGE' in current_mission # POST_MESSAGE, POST_LOC_MESSAGE
+    post_media_present = f'{prefix}_MEDIA' in current_mission # POST_MEDIA, POST_LOC_MEDIA
     if post_msg_present or post_media_present:
         if post_media_present:
-            caption = current_mission.get('POST_MEDIA_CAPTION',None)
-            media_dict = current_mission['POST_MEDIA'][0]
+            caption = current_mission.get(f'{prefix}_MEDIA_CAPTION',None) # POST_MEDIA_CAPTION, POST_LOC_MEDIA_CAPTION
+            media_dict = current_mission[f'{prefix}_MEDIA'][0] # POST_MEDIA, POST_LOC_MEDIA
             url_attachment = media_dict['url']
             type = media_dict['type']
             send_media_url(p, url_attachment, type, caption=caption)
             send_typing_action(p, sleep_time=1)
-        msg = current_mission['POST_MESSAGE']
+        msg = current_mission[f'{prefix}_MESSAGE'] # POST_MESSAGE, POST_LOC_MESSAGE
         send_message(p, msg, remove_keyboard=True)
         send_typing_action(p, sleep_time=1)
         return True
