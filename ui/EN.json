@@ -133,6 +133,7 @@
    "MSG_WELCOME": "😀 Hi,  I'm Nett1 🔱, welcome to hiSTORIC!\n\n🎛️ Please use the buttons below to interact with me!",
    "MSG_WELCOME_IN_HUNT": "😀 Hi!\nWelcome to the treasure hunt of hiSTORIC: *{}*!",
    "MSG_WORK_IN_PROGRESS": "🏗 System under maintenance, please try again later.",
+   "MSG_WRONG_INPUT": "⛔️ Not a valid input.",
    "MSG_WRONG_INPUT_INSERT_TEXT": "⛔️ Not a valid input, you have to insert some text.",
    "MSG_WRONG_INPUT_INSERT_TEXT_OR_BUTTONS": "⛔️ Not a valid input, you have to insert some text or use the buttons below 🎛",
    "MSG_WRONG_INPUT_SEND_LOCATION": "⛔️ Not a valid input, you have to send me your position using the button below or pressing the clip 📎 below and select LOCATION from he menu. Remember to activate the GPS in your device.",

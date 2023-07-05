@@ -841,7 +841,8 @@ def load_missions(p):
 
 def state_WAIT_FOR_QR(p, message_obj=None, **kwargs):    
     first_call = kwargs.get('first_call', True)
-    give_instruction = message_obj is None    
+    qr_code = kwargs.get('qr_code', False)
+    give_instruction = qr_code==False and message_obj is None    
     if give_instruction:
         if first_call:
             check_if_first_mission_and_start_time(p)
@@ -850,11 +851,13 @@ def state_WAIT_FOR_QR(p, message_obj=None, **kwargs):
         kb = [[p.ui().BUTTON_EXIT]]    
         send_message(p, msg, kb=kb)
     else:
-        text_input = message_obj.text
-        photo = message_obj.photo     
+        text_input = message_obj.text if message_obj else None
+        photo = message_obj.photo if message_obj else None
         testing = p.get_tmp_variable('TEST_HUNT_MISSION_ADMIN', False)   
         kb = p.get_keyboard()        
-        if text_input:
+        if qr_code:
+            pass
+        elif text_input:
             if text_input in flatten(kb):
                 assert text_input == p.ui().BUTTON_EXIT
                 redirect_to_state(p, state_EXIT_CONFIRMATION)
@@ -1668,9 +1671,12 @@ def deal_with_universal_command(p, message_obj):
     if text_input.startswith('/start'):
         text_input_split = text_input.split()
         if game.user_in_game(p):
-            if len(text_input_split)>1 and text_input_split[1].startswith('verify_qr_'):
+            if len(text_input_split)>1 and text_input_split[1].startswith('QR_'):
                 qr_code = text_input_split[1].rsplit('_',1)[1] # code after last underscore
-                # send_message(p, qr_code)      
+                if p.state == 'state_WAIT_FOR_QR':
+                    redirect_to_state(p, state_WAIT_FOR_QR, qr_code=qr_code)
+                else:
+                    send_message(p, p.ui().MSG_WRONG_INPUT)
             else:
                 send_message(p, p.ui().MSG_YOU_ARE_IN_A_GAME_EXIT_FIRST)
         else:

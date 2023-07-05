@@ -133,6 +133,7 @@
    "MSG_WELCOME": "😀 Hallo, ich bin nett1 🔱, willkommen in hiSTORIC!\n\n🎛️ Bitte verwende die folgenden Tasten, um mit mir zu interagieren!",
    "MSG_WELCOME_IN_HUNT": "😀 Hallo!\nWillkommen zur Schatzsuche von hiSTORIC: *{} *!",
    "MSG_WORK_IN_PROGRESS": "🏗 System unter Wartung, bitte versuche es später erneut.",
+   "MSG_WRONG_INPUT": "⛔️ Ungültiger Befehl.",
    "MSG_WRONG_INPUT_INSERT_TEXT": "⛔️ Ungültiger Befehl, du kannst nur einen Text einfügen.",
    "MSG_WRONG_INPUT_INSERT_TEXT_OR_BUTTONS": "⛔️ Ungültiger Befehl, du kannst nur einen Text einfügen oder die Schaltflächen unten verwenden 🎛",
    "MSG_WRONG_INPUT_SEND_LOCATION": "⛔️ Ungültiger Befehl, du kannst nur deine Position mit dem Taste unten oder drücke des Clips 📎 unten senden und den Speicherort aus dem Menü auswählen. Denken Sie daran, das GPS in Ihrem Gerät zu aktivieren.",
