@@ -831,7 +831,7 @@ def load_missions(p):
         WAIT_QR_MODE = p.tmp_variables['SETTINGS'].get('WAIT_QR_MODE', False)                
         send_message(p, p.ui().MSG_GO)
         if WAIT_QR_MODE:            
-            redirect_to_state(p, state_MISSION_WAIT_QR)
+            redirect_to_state(p, state_WAIT_FOR_QR)
         else:
             redirect_to_state(p, state_MISSION_INTRO)
 
@@ -839,13 +839,15 @@ def load_missions(p):
 # MISSION WAIT QR
 # ================================
 
-def state_MISSION_WAIT_QR(p, message_obj=None, **kwargs):    
+def state_WAIT_FOR_QR(p, message_obj=None, **kwargs):    
     first_call = kwargs.get('first_call', True)
     give_instruction = message_obj is None
     if give_instruction:
         if first_call:
             check_if_first_mission_and_start_time(p)
+        send_msg_mission_number(p)
         msg = p.ui().MSG_SCAN_QR_CODE
+        kb = [[p.ui().BUTTON_CONTINUE]]
         send_message(p, msg, remove_keyboard=True)
     else:
         text_input = message_obj.text
@@ -887,12 +889,9 @@ def state_MISSION_INTRO(p, message_obj=None, first_call=True, **kwargs):
         current_mission = game.get_current_mission(p) if testing else game.set_next_mission(p)        
         if not testing:
             check_if_first_mission_and_start_time(p)            
-            total_missioni = game.get_total_missions(p)
-            msg = p.ui().MSG_MISSION_N_TOT.format(mission_number, total_missioni)
-            send_message(p, msg, remove_keyboard=True)
-            send_typing_action(p, sleep_time=1)        
+            send_msg_mission_number()            
         if 'INTRODUZIONE_LOCATION' not in current_mission:
-            redirect_to_state(p, state_GPS)
+            redirect_to_state(p, state_MISSION_GPS)
             return
         if 'INTRO_MEDIA' in current_mission:
             caption = current_mission.get('INTRO_MEDIA_CAPTION',None)
@@ -923,6 +922,13 @@ def check_if_first_mission_and_start_time(p):
         game.set_game_start_time(p)
         send_typing_action(p, sleep_time=1)        
 
+def send_msg_mission_number(p):
+    mission_number = game.get_num_compleded_missions(p) + 1        
+    total_missioni = game.get_total_missions(p)
+    msg = p.ui().MSG_MISSION_N_TOT.format(mission_number, total_missioni)
+    send_message(p, msg, remove_keyboard=True)
+    send_typing_action(p, sleep_time=1)        
+
 # ================================
 # VERIFY_LOCATION state
 # ================================  
@@ -930,10 +936,10 @@ def check_if_first_mission_and_start_time(p):
 def state_VERIFY_LOCATION(p, message_obj=None, **kwargs):        
     current_mission = game.get_current_mission(p)
     if 'GPS' in current_mission:
-        redirect_to_state(p, state_GPS)
+        redirect_to_state(p, state_MISSION_GPS)
         return
     elif 'QR'in current_mission:
-        redirect_to_state(p, state_QR)
+        redirect_to_state(p, state_MISSION_QR)
         return
     else:
         redirect_to_state(p, state_DOMANDA)
@@ -943,7 +949,7 @@ def state_VERIFY_LOCATION(p, message_obj=None, **kwargs):
 # GPS state
 # ================================  
 
-def state_GPS(p, message_obj=None, **kwargs):        
+def state_MISSION_GPS(p, message_obj=None, **kwargs):        
     give_instruction = message_obj is None
     current_mission = game.get_current_mission(p)
     goal_position = utility.get_lat_lon_from_string(current_mission['GPS'])
@@ -993,7 +999,7 @@ def state_GPS(p, message_obj=None, **kwargs):
 # GPS state
 # ================================  
 
-def state_QR(p, message_obj=None, **kwargs):            
+def state_MISSION_QR(p, message_obj=None, **kwargs):            
     give_instruction = message_obj is None
     current_mission = game.get_current_mission(p)
     goal_qr_code = current_mission['QR']
@@ -1117,20 +1123,21 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
         else:
             send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
 
-def send_post_message(p, current_mission, after_loc=False):
-    prefix = 'POST_LOC' if after_loc else 'POST'
-    post_msg_present = f'{prefix}_MESSAGE' in current_mission # POST_MESSAGE, POST_LOC_MESSAGE
-    post_media_present = f'{prefix}_MEDIA' in current_mission # POST_MEDIA, POST_LOC_MEDIA
+def send_post_message(p, current_mission, after_loc=False, after_input=False):
+    assert not (after_loc and after_input) # can't be both True
+    prefix = 'POST_LOC' if after_loc else 'POST_INPUT' if after_input else 'POST'
+    post_msg_present = f'{prefix}_MESSAGE' in current_mission # POST_MESSAGE, POST_LOC_MESSAGE, POST_INPUT_MESSAGE
+    post_media_present = f'{prefix}_MEDIA' in current_mission # POST_MEDIA, POST_LOC_MEDIA, POST_INPUT_MEDIA
     if post_msg_present or post_media_present:
         if post_media_present:
-            caption = current_mission.get(f'{prefix}_MEDIA_CAPTION',None) # POST_MEDIA_CAPTION, POST_LOC_MEDIA_CAPTION
-            media_dict = current_mission[f'{prefix}_MEDIA'][0] # POST_MEDIA, POST_LOC_MEDIA
+            caption = current_mission.get(f'{prefix}_MEDIA_CAPTION',None) # POST_MEDIA_CAPTION, POST_LOC_MEDIA_CAPTION, POST_INPUT_MEDIA_CAPTION
+            media_dict = current_mission[f'{prefix}_MEDIA'][0] # POST_MEDIA, POST_LOC_MEDIA, POST_INPUT_MEDIA
             url_attachment = media_dict['url']
             type = media_dict['type']
             send_media_url(p, url_attachment, type, caption=caption)
             send_typing_action(p, sleep_time=1)
         if post_msg_present:
-            msg = current_mission[f'{prefix}_MESSAGE'] # POST_MESSAGE, POST_LOC_MESSAGE
+            msg = current_mission[f'{prefix}_MESSAGE'] # POST_MESSAGE, POST_LOC_MESSAGE, POST_INPUT_MESSAGE
             send_message(p, msg, remove_keyboard=True)
             send_typing_action(p, sleep_time=1)
         return True
@@ -1260,9 +1267,7 @@ def approve_media_input_indovinello(p, approved, signature):
             else: # input_type=='VIDEO':
                 BOT.send_video(notify_group_id, video=file_id, caption=msg)
         game.append_group_media_input_file_id(p, file_id)        
-        if 'POST_INPUT' in current_mission:                        
-            msg = current_mission['POST_INPUT']
-            send_message(p, msg, remove_keyboard=True)
+        if not send_post_message(p, current_mission, after_input=True):
             send_typing_action(p, sleep_time=1)
         redirect_to_state(p, state_COMPLETE_MISSION)
     else:
@@ -1325,19 +1330,19 @@ def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
             msg = p.ui().MSG_PRESS_FOR_ENDING
             kb = [[p.ui().BUTTON_END]]
             send_message(p, msg, kb)
-        else:        
-            if p.tmp_variables['SETTINGS'].get('WAIT_QR_MODE', False):
-                redirect_to_state(p, state_MISSION_WAIT_QR)                
-            else:
-                msg = p.ui().MSG_PRESS_FOR_NEXT_MISSION
-                kb = [[p.ui().BUTTON_NEXT_MISSION]]            
-                send_message(p, msg, kb)
+        else:                    
+            msg = p.ui().MSG_PRESS_FOR_NEXT_MISSION
+            kb = [[p.ui().BUTTON_NEXT_MISSION]]            
+            send_message(p, msg, kb)            
     else:
         text_input = message_obj.text
         kb = p.get_keyboard()
         if text_input in flatten(kb):
             if text_input == p.ui().BUTTON_NEXT_MISSION:
-                redirect_to_state(p, state_MISSION_INTRO)
+                if p.tmp_variables['SETTINGS'].get('WAIT_QR_MODE', False):
+                    redirect_to_state(p, state_WAIT_FOR_QR)                
+                else:
+                    redirect_to_state(p, state_MISSION_INTRO)
             elif text_input == p.ui().BUTTON_END:
                 send_message(p, p.ui().MSG_TIME_STOP, remove_keyboard=True)
                 send_typing_action(p, sleep_time=1)
