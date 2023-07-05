@@ -102,15 +102,24 @@ def get_hunt_ui(airtable_game_id, hunt_languages):
 # RESULT GAME TABLE
 #################
 
-RESULTS_GAME_TABLE_HEADERS = \
-    ['ID', 'GROUP_NAME', 'NOME', 'COGNOME', 'USERNAME', 'EMAIL', \
-    'START_TIME', 'END_TIME', 'ELAPSED GAME', 'ELAPSED MISSIONS', \
-    'PENALTIES', 'PENALTY TIME', 'FINISHED', 'TOTAL TIME GAME', 'TOTAL TIME MISSIONS']
+RESULTS_GAME_TABLE_HEADERS = [
+    'ID', 'GROUP_NAME', 'NOME', 'COGNOME', 'USERNAME', 'EMAIL',
+    'START_TIME', 'END_TIME', 'ELAPSED GAME', 'ELAPSED MISSIONS',
+    'COMPLETED_MISSIONS', 'INCOMPLETED_MISSIONS',
+    'PENALTIES', 'PENALTY TIME', 
+    'FINISHED',
+    'TOTAL TIME GAME', 'TOTAL TIME MISSIONS'
+]
 
-def save_game_data_in_airtable(p):
+def save_game_data_in_airtable(p, compute_times):
     from historic.bot.bot_telegram import get_photo_url_from_telegram
     import json
+    
+    if compute_times:
+        set_elapsed_and_penalty_and_compute_total(p)
+    
     game_data = p.tmp_variables
+    
     airtable_game_id = game_data['HUNT_INFO']['Airtable_Game_ID']
 
     RESULTS_GAME_TABLE = Airtable(
@@ -205,6 +214,8 @@ def load_game(p, hunt_password, test_hunt_admin=False):
     tvar['PENALTY TIME'] = -1
     tvar['TOTAL TIME GAME'] = -1
     tvar['TOTAL TIME MISSIONS'] = -1
+    tvar['COMPLETED_MISSIONS'] = -1
+    tvar['INCOMPLETED_MISSIONS'] = -1
     tvar['PENALTIES'] = 0    
     tvar['PENALTY TIME'] = 0 # seconds
     tvar['FINISHED'] = False # seconds
@@ -534,7 +545,7 @@ def exit_game(p, save_data=True, reset_current_hunt=True, put=True):
         finished = p.tmp_variables.get('FINISHED', False)
         if not finished:
             set_game_end_time(p, finished=False)
-            save_game_data_in_airtable(p)
+            save_game_data_in_airtable(p, compute_times=True)
     if reset_current_hunt:
         p.current_hunt = None
     if put:
@@ -673,6 +684,8 @@ def set_elapsed_and_penalty_and_compute_total(p):
     tvar['PENALTY TIME'] = penalty_sec # seconds
     tvar['TOTAL TIME GAME'] = elapsed_sec_game + penalty_sec
     tvar['TOTAL TIME MISSIONS'] = elapsed_sec_missions + penalty_sec
+    tvar['COMPLETED_MISSIONS'] = len(tvar['MISSIONI_INFO'].get('TODO', []))
+    tvar['INCOMPLETED_MISSIONS'] = len(tvar['MISSIONI_INFO'].get('COMPLETED', []))
     
     p.put()
 

@@ -947,12 +947,16 @@ def state_MISSION_INTRO(p, message_obj=None, **kwargs):
             send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)            
 
 def check_if_first_mission_and_start_time(p):
+    if p.get_tmp_variable('TIME_STARTED', init_value=False):
+        return False
     mission_number = game.get_num_compleded_missions(p) + 1        
     if mission_number == 1:
         # first one
         send_message(p, p.ui().MSG_START_TIME, remove_keyboard=True)            
         game.set_game_start_time(p)
-        send_typing_action(p, sleep_time=1)        
+        p.set_tmp_variable('TIME_STARTED', True)        
+        send_typing_action(p, sleep_time=1)                
+        return True
 
 def send_msg_mission_number(p):
     mission_number = game.get_num_compleded_missions(p) + 1        
@@ -1382,9 +1386,8 @@ def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
                 send_typing_action(p, sleep_time=1)                
                 settings = p.tmp_variables['SETTINGS']
                 skip_survey = get_str_param_boolean(settings, 'SKIP_SURVEY')
-                # saving data in airtable
-                game.set_elapsed_and_penalty_and_compute_total(p)
-                game.save_game_data_in_airtable(p)
+                # saving data in airtable                
+                game.save_game_data_in_airtable(p, compute_times=True)
                 if not skip_survey:
                     redirect_to_state(p, state_SURVEY)
                 else:
@@ -1576,7 +1579,7 @@ def deal_with_admin_commands(p, message_obj):
             u = Person.get_by_id(user_id)
             if u:   
                 if game.user_in_game(u):
-                    game.save_game_data_in_airtable(u)
+                    game.save_game_data_in_airtable(u, compute_times=True)
                     send_message(p, f'Dati salvati in airtable per {u.get_first_last_username()}')
                 else:
                     send_message(p, f'User id {user_id} non è in una caccia')
