@@ -841,21 +841,26 @@ def load_missions(p):
 
 def state_WAIT_FOR_QR(p, message_obj=None, **kwargs):    
     first_call = kwargs.get('first_call', True)
-    give_instruction = message_obj is None
+    give_instruction = message_obj is None    
     if give_instruction:
         if first_call:
             check_if_first_mission_and_start_time(p)
         send_msg_mission_number(p)
-        msg = p.ui().MSG_SCAN_QR_CODE
-        kb = [[p.ui().BUTTON_CONTINUE]]
-        send_message(p, msg, remove_keyboard=True)
+        msg = p.ui().MSG_SCAN_QR_CODE    
+        kb = [[p.ui().BUTTON_EXIT]]    
+        send_message(p, msg, kb=kb)
     else:
         text_input = message_obj.text
         photo = message_obj.photo     
         testing = p.get_tmp_variable('TEST_HUNT_MISSION_ADMIN', False)   
         kb = p.get_keyboard()        
         if text_input:
-            qr_code = text_input
+            if text_input in flatten(kb):
+                assert text_input == p.ui().BUTTON_EXIT
+                redirect_to_state(p, state_EXIT_CONFIRMATION)
+                return
+            else:
+                qr_code = text_input
         elif photo is None or len(photo)==0:            
             send_message(p, p.ui().MSG_WRONG_INPUT_SEND_PHOTO)
             return
@@ -876,12 +881,39 @@ def state_WAIT_FOR_QR(p, message_obj=None, **kwargs):
             send_typing_action(p, sleep_time=1)
             repeat_state(p, first_call=False)
         
+# ================================
+#  EXIT CONFIRMATION
+# ================================
+
+def state_EXIT_CONFIRMATION(p, message_obj=None,  **kwargs):            
+    give_instruction = message_obj is None
+    if give_instruction:
+        kb = [
+            [p.ui().BUTTON_YES, p.ui().BUTTON_NO]
+        ]
+        msg = p.ui().MSG_EXIT_FROM_GAME_CONFIRM
+        send_message(p, msg, kb)
+    else:
+        text_input = message_obj.text
+        kb = p.get_keyboard()
+        if text_input in flatten(kb):
+            if text_input == p.ui().BUTTON_YES:
+                game.exit_game(p, save_data=False, reset_current_hunt=True)
+                send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
+                restart(p)
+            else: 
+                assert text_input == p.ui().BUTTON_NO
+                prev_state_func = possibles.get(p.last_state)
+                redirect_to_state(p, prev_state_func)
+        else:
+            send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)  
+
 
 # ================================
 # MISSION INTRO
 # ================================
 
-def state_MISSION_INTRO(p, message_obj=None, first_call=True, **kwargs):            
+def state_MISSION_INTRO(p, message_obj=None, **kwargs):            
     give_instruction = message_obj is None
     if give_instruction:
         testing = p.get_tmp_variable('TEST_HUNT_MISSION_ADMIN', False)
@@ -1656,7 +1688,7 @@ def deal_with_universal_command(p, message_obj):
                 return True
     if text_input == '/exit':
         if game.user_in_game(p):
-            msg = p.ui().MSG_EXITED_FROM_GAME_CONFIRM.format(escape_markdown('/exit_for_real'))
+            msg = p.ui().MSG_EXIT_FROM_GAME_CONFIRM_COMMAND.format(escape_markdown('/exit_for_real'))
             send_message(p, msg)
         else:
             send_message(p, p.ui().MSG_NOT_IN_GAME)
