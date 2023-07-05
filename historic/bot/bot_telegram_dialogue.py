@@ -898,7 +898,7 @@ def state_EXIT_CONFIRMATION(p, message_obj=None,  **kwargs):
         kb = p.get_keyboard()
         if text_input in flatten(kb):
             if text_input == p.ui().BUTTON_YES:
-                game.exit_game(p, save_data=False, reset_current_hunt=True)
+                game.exit_game(p, save_data=True, reset_current_hunt=True)
                 send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
                 restart(p)
             else: 
@@ -1686,21 +1686,22 @@ def deal_with_universal_command(p, message_obj):
                 send_typing_action(p, sleep_time=1)                    
                 repeat_state(p)
                 return True
-    if text_input == '/exit':
+    if text_input == '/exit':        
         if game.user_in_game(p):
-            msg = p.ui().MSG_EXIT_FROM_GAME_CONFIRM_COMMAND.format(escape_markdown('/exit_for_real'))
-            send_message(p, msg)
+            redirect_to_state(p, state_EXIT_CONFIRMATION)
+            # msg = p.ui().MSG_EXIT_FROM_GAME_CONFIRM_COMMAND.format(escape_markdown('/exit_for_real'))
+            # send_message(p, msg)            
         else:
             send_message(p, p.ui().MSG_NOT_IN_GAME)
         return True
-    if text_input == '/exit_for_real':
-        if game.user_in_game(p):
-            game.exit_game(p, save_data=False, reset_current_hunt=True)
-            send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
-            restart(p)
-        else:
-            send_message(p, p.ui().MSG_NOT_IN_GAME)
-        return True
+    # if text_input == '/exit_for_real':
+    #     if game.user_in_game(p):
+    #         game.exit_game(p, save_data=False, reset_current_hunt=True)
+    #         send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
+    #         restart(p)
+    #     else:
+    #         send_message(p, p.ui().MSG_NOT_IN_GAME)
+    #     return True
     if text_input == '/state':
         state = p.get_state()
         msg = "You are in state {}".format(state)
