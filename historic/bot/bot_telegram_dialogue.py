@@ -14,7 +14,7 @@ from historic.bot.utility import escape_markdown, flatten, get_str_param_boolean
 from historic.bot.ndb_person import Person
 from historic.bot.ndb_utils import client_context
 from historic.routing.api import api_google
-from historic.bot.bot_telegram import get_photo_url_from_telegram
+from historic.bot.bot_telegram import get_photo_url_from_telegram, send_photo_data, send_sticker_data
 
 # ================================
 # RESTART
@@ -1600,6 +1600,11 @@ def deal_with_admin_commands(p, message_obj):
                 send_message(p, 'No media found')
             else:
                 send_text_document(p, 'media.zip', zip_content)      
+            return True
+        if text_input.startswith('/QR'):
+            code = text_input.split()[1]
+            img_bytes = utility.create_qr(code)
+            send_sticker_data(p, img_bytes)
             return True
         if text_input == '/test_inline_kb':
             send_message(p, "Test inline keypboard", kb=[[p.ui().BUTTON_YES_CALLBACK('test'), p.ui().BUTTON_NO_CALLBACK('test')]], inline_keyboard=True)

@@ -97,6 +97,17 @@ def send_photo_data(p, img_content, kb=None, caption=None,
         reply_markup=rm, parse_mode=parse_mode
     )
 
+def send_sticker_data(p, img_content, kb=None, 
+    remove_keyboard=False, inline_keyboard=False, markdown=True):
+    
+    rm = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)      
+    chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
+    data = BytesIO(img_content)
+    BOT.send_sticker(
+        chat_id, sticker=data,
+        reply_markup=rm
+    )
+
 def send_media_url(p, url_attachment, type='image/png', kb=None, caption=None,
     remove_keyboard=False, inline_keyboard=False, markdown=True):
     chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)

@@ -82,6 +82,7 @@ pylint==2.10.2
 pymemcache==3.4.0
 pyngrok==5.0.5
 pyparsing==2.4.7
+pypng==0.20220715.0
 pyproj==3.2.1
 python-dateutil==2.8.2
 python-dotenv==0.19.0
@@ -89,6 +90,7 @@ python-telegram-bot==13.15
 pytz==2021.3
 pytz-deprecation-shim==0.1.0.post0
 PyYAML==5.4.1
+qrcode==7.4.2
 rdflib==6.0.0
 redis==3.5.3
 regex==2021.4.4
