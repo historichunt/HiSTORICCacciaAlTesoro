@@ -278,12 +278,10 @@ def create_qr(text, transparent) -> None:
     qr.add_data(text)
     qr.make(fit=True)
     img = qr.make_image(fill="black", back_color="white")
-
-    # img = Image.open('img.png')
-    img = img.convert("RGBA")
-    datas = img.getdata()
-
+    
     if transparent:
+        img = img.convert("RGBA")
+        datas = img.getdata()
         newData = []
         for item in datas:
             if item[0] == 255 and item[1] == 255 and item[2] == 255:
@@ -292,10 +290,13 @@ def create_qr(text, transparent) -> None:
                 newData.append(item)
 
         img.putdata(newData)
+        format='WEBP'
+    else:
+        format='JPEG'
 
     # tmp_filename = "tmp_qrcode.webp"
     img_bytes = io.BytesIO()
-    img.save(img_bytes, format='WEBP')
+    img.save(img_bytes, format=format)
     img_bytes.seek(0)    
     return img_bytes.read() # convert to byte-like object
 

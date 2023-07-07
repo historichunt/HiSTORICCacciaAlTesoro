@@ -3,7 +3,7 @@ from airtable import Airtable
 from historic.config.params import ROOT_DIR
 
 APP_NAME = 'historictrentobot'
-APP_VERSION = '0.14.12'
+APP_VERSION = '0.14.13'
 CLOUD_ENVS = ['test', 'production']
 GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
 
@@ -22,7 +22,7 @@ else:
 
     # check local environments    
     LOCAL_ENV_FILES = [
-        f for f in os.listdir(ROOT_DIR) 
+        f for f in sorted(os.listdir(ROOT_DIR))
         if (
             f.startswith('.env') and
             not any(f.endswith(x) for x in CLOUD_ENVS)
@@ -85,6 +85,21 @@ HUNT_ADMIN_IDS = set([
         not row['fields'].get('Disabled', False)
     )
 ])
+
+BOT_UI_TABLE_NAME = Airtable(
+    AIRTABLE_CONFIG_ID, 
+    'Bot_UI', 
+    api_key=AIRTABLE_API_KEY
+)
+
+BOT_UI_BASE_ID, BOT_UI_TABLE_NAME = next(
+    (
+        (row['fields']['Airtable_UI_Base_ID'], row['fields']['UI_Table_Name'])
+        for row in BOT_UI_TABLE_NAME.get_all()
+        if row['fields']['Bot_Username'] == TELEGRAM_BOT_USERNAME
+    ),
+    (None, None)
+)
 
 if LOCAL_ENV_FILES:
     ERROR_REPORTERS_IDS = [ENV_VARS['ERROR_REPORTERS_ID']]

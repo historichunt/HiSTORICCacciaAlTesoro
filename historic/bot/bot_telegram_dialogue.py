@@ -1611,7 +1611,7 @@ def deal_with_admin_commands(p, message_obj):
             img_bytes = utility.create_qr(code, transparent=False)
             send_sticker_data(p, img_bytes)
             return True
-        if text=='/botname':
+        if text_input=='/botname':
             send_message(p, settings.TELEGRAM_BOT_USERNAME)
             return True
         if text_input == '/test_inline_kb':

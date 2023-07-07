@@ -2,7 +2,9 @@ import os
 import json
 import telegram
 import random
+from airtable import Airtable
 from historic.config.params import ROOT_DIR, LANGUAGES
+from historic.config import settings, params
 
 UI_DIR = os.path.join(ROOT_DIR, 'ui')
 UI_CSV_FILE = os.path.join(UI_DIR, 'UI.csv')
@@ -12,10 +14,26 @@ UI_DICT = None
 
 def build_ui_dict():
     global UI_DICT
+
     UI_DICT = {
         lang: json.load(open(os.path.join(UI_DIR, f'{lang}.json')))
         for lang in LANGUAGES
     }
+
+    # update entries bot specific
+
+    if settings.BOT_UI_BASE_ID is not None:
+
+        bot_ui_table_rows = Airtable(
+            settings.BOT_UI_BASE_ID, 
+            settings.BOT_UI_TABLE_NAME, 
+            api_key=settings.AIRTABLE_API_KEY
+        ).get_all()
+
+        for row in bot_ui_table_rows:
+            for lang in params.LANGUAGES:
+                if lang in row['fields']:
+                    UI_DICT[lang][row['fields']['VAR']] = row['fields'][lang]
 
 build_ui_dict()
 
