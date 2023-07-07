@@ -1,7 +1,7 @@
 # gcloud config set project historictrentobot
 
 entrypoint: gunicorn -b :$PORT main:app --chdir historic
-runtime: python38
+runtime: python311
 
 # change instance class
 # https://cloud.google.com/appengine/docs/standard
