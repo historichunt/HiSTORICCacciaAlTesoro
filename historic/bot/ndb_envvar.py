@@ -25,10 +25,10 @@ def get_env_var(name, version):
     return retval.value
 
 @client_context
-def set_all():
+def set_all(versions):
     from dotenv import dotenv_values
     new_envvars = []
-    for version in ['test', 'production']:
+    for version in versions:
         dotenv_file = f'.env_{version}'
         vars_values = dotenv_values(dotenv_file)
         for name,value in vars_values.items():
@@ -64,6 +64,7 @@ def print_all():
         print()
 
 if __name__ == "__main__":
-    delete_all()
-    set_all()
+    # delete_all()
+    # set_all(['test', 'production'])
+    set_all(['oist'])
     # print_all()
