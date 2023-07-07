@@ -1601,10 +1601,18 @@ def deal_with_admin_commands(p, message_obj):
             else:
                 send_text_document(p, 'media.zip', zip_content)      
             return True
+        if text_input.startswith('/QRT'):
+            code = text_input.split()[1]
+            img_bytes = utility.create_qr(code, transparent=True)
+            send_sticker_data(p, img_bytes)
+            return True
         if text_input.startswith('/QR'):
             code = text_input.split()[1]
-            img_bytes = utility.create_qr(code)
+            img_bytes = utility.create_qr(code, transparent=False)
             send_sticker_data(p, img_bytes)
+            return True
+        if text=='/botname':
+            send_message(p, settings.TELEGRAM_BOT_USERNAME)
             return True
         if text_input == '/test_inline_kb':
             send_message(p, "Test inline keypboard", kb=[[p.ui().BUTTON_YES_CALLBACK('test'), p.ui().BUTTON_NO_CALLBACK('test')]], inline_keyboard=True)

@@ -3,7 +3,7 @@ from airtable import Airtable
 from historic.config.params import ROOT_DIR
 
 APP_NAME = 'historictrentobot'
-APP_VERSION = '0.14.11'
+APP_VERSION = '0.14.12'
 CLOUD_ENVS = ['test', 'production']
 GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
 
@@ -46,6 +46,7 @@ else:
 
 
 # ENVIRONMENT VARIABLES (SECRETS IN DB/.env_ file)
+TELEGRAM_BOT_USERNAME = ENV_VARS.get("TELEGRAM_BOT_USERNAME")
 TELEGRAM_API_TOKEN = ENV_VARS.get("TELEGRAM_API_TOKEN")
 AIRTABLE_API_KEY = ENV_VARS.get("AIRTABLE_API_KEY")
 AIRTABLE_ACCESS_TOKEN = ENV_VARS.get("AIRTABLE_ACCESS_TOKEN")

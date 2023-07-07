@@ -97,8 +97,8 @@ class Person(ndb.Model):
         return self.state
 
     def ui(self):
-        ui_custom_dict = self.tmp_variables.get('UI', None)
-        return bot_ui.UI_LANG(self.language, ui_custom_dict)
+        hunt_custom_dict = self.tmp_variables.get('HUNT_UI', None)        
+        return bot_ui.UI_LANG(self.language, hunt_custom_dict)
 
     def set_language(self, l, put=False):
         self.language = l

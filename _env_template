@@ -2,7 +2,7 @@
 # 1. duplicate this file and save it as .env_yourname
 # 2. fill in the value below accordingly
 
-# TELEGRAM_BOT_USERNAME = "<YOUR BOT NAME (NOT REQUIRED)>"
+TELEGRAM_BOT_USERNAME = "<YOUR BOT USERNAME>"
 TELEGRAM_API_TOKEN = "<TOKEN>"
 AIRTABLE_API_KEY = "<KEY>"
 AIRTABLE_ACCESS_TOKEN = "<TOKEN>"

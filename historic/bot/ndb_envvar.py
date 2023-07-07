@@ -64,7 +64,7 @@ def print_all():
         print()
 
 if __name__ == "__main__":
-    # delete_all()
-    # set_all(['test', 'production'])
-    set_all(['oist'])
+    delete_all()
+    set_all(['test', 'production', 'oist'])
+    # set_all(['oist'])
     # print_all()

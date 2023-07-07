@@ -270,7 +270,7 @@ def qr_matches(goal, target):
     # last field after last forward slash 
     return goal == target.rsplit('/',1)[-1]
 
-def create_qr(text) -> None:
+def create_qr(text, transparent) -> None:
     import qrcode
     import io
     """Create QR from the user message."""
@@ -283,14 +283,15 @@ def create_qr(text) -> None:
     img = img.convert("RGBA")
     datas = img.getdata()
 
-    newData = []
-    for item in datas:
-        if item[0] == 255 and item[1] == 255 and item[2] == 255:
-            newData.append((255, 255, 255, 0))
-        else:
-            newData.append(item)
+    if transparent:
+        newData = []
+        for item in datas:
+            if item[0] == 255 and item[1] == 255 and item[2] == 255:
+                newData.append((255, 255, 255, 0))
+            else:
+                newData.append(item)
 
-    img.putdata(newData)
+        img.putdata(newData)
 
     # tmp_filename = "tmp_qrcode.webp"
     img_bytes = io.BytesIO()
