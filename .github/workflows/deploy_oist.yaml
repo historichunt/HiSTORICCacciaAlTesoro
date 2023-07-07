@@ -17,5 +17,5 @@ jobs:
           args: app deploy app.yaml -q -v oist
       - uses: distributhor/workflow-webhook@v1
         env:
-          webhook_url: ${{ secrets.DEPLOY_NOTIFICATION_WEBHOOK_URL_TEST }}
+          webhook_url: ${{ secrets.DEPLOY_NOTIFICATION_WEBHOOK_URL_OIST }}
           webhook_secret: ${{ secrets.DEPLOY_NOTIFICATION_WEBHOOK_SECRET }}
