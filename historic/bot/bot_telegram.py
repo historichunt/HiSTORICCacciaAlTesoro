@@ -122,6 +122,11 @@ def send_media_url(p, url_attachment, type='image/png', kb=None, caption=None,
             BOT.send_photo(chat_id, photo=url_attachment, caption=caption, reply_markup=rm, parse_mode=parse_mode)
         except telegram.error.BadRequest:
             report_admins(f'Error on sending photo: {url_attachment}')
+    elif attach_type in ['webp']:
+        try:
+            BOT.send_sticker(chat_id, sticker=url_attachment, reply_markup=rm)
+        except telegram.error.BadRequest:
+            report_admins(f'Error on sending sticker: {url_attachment}')
     elif attach_type in ['mp3']:
         BOT.send_audio(chat_id, audio=url_attachment, caption=caption, reply_markup=rm)
     elif attach_type in ['ogg']:
