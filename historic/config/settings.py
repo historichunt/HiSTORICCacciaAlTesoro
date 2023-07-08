@@ -3,8 +3,8 @@ from airtable import Airtable
 from historic.config.params import ROOT_DIR
 
 APP_NAME = 'historictrentobot'
-APP_VERSION = '0.14.15'
-CLOUD_ENVS = ['test', 'production']
+APP_VERSION = '0.14.16'
+# CLOUD_ENVS = ['test', 'production', 'oist']
 GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
 
 if GAE_SERVER:
@@ -24,8 +24,7 @@ else:
     LOCAL_ENV_FILES = [
         f for f in sorted(os.listdir(ROOT_DIR))
         if (
-            f.startswith('.env') and
-            not any(f.endswith(x) for x in CLOUD_ENVS)
+            f.startswith('.env')
         )
     ]
 
