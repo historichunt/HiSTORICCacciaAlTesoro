@@ -3,7 +3,7 @@ from airtable import Airtable
 from historic.config.params import ROOT_DIR
 
 APP_NAME = 'historictrentobot'
-APP_VERSION = '0.14.14'
+APP_VERSION = '0.14.15'
 CLOUD_ENVS = ['test', 'production']
 GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
 
@@ -88,7 +88,7 @@ HUNT_ADMIN_IDS = set([
 
 BOT_UI_TABLE_NAME = Airtable(
     AIRTABLE_CONFIG_ID, 
-    'Bot_UI', 
+    'Bots', 
     api_key=AIRTABLE_API_KEY
 )
 

@@ -38,10 +38,12 @@ def reload_config_hunt():
     HUNTS_PW = {
         d['Password']: d
         for d in hunts
+        if settings.TELEGRAM_BOT_USERNAME in d['Bots Username']
     }
     HUNTS_NAME = {
         d['Name']: d
         for d in hunts
+        if settings.TELEGRAM_BOT_USERNAME in d['Bots Username']
     }
     
 
