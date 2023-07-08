@@ -64,7 +64,8 @@ def print_all():
         print()
 
 if __name__ == "__main__":
-    delete_all()
-    set_all(['test', 'production', 'oist'])
-    # set_all(['oist'])
+    #TODO use settings.LOCAL_ENV_FILES
+    # delete_all()
+    # set_all(['fede', 'test', 'production', 'oist'])
+    set_all(['fede'])
     # print_all()

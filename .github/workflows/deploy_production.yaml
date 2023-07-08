@@ -19,3 +19,6 @@ jobs:
         env:
           webhook_url: ${{ secrets.DEPLOY_NOTIFICATION_WEBHOOK_URL_PRODUCTION }}
           webhook_secret: ${{ secrets.DEPLOY_NOTIFICATION_WEBHOOK_SECRET }}
+
+# DEPLOY_NOTIFICATION_WEBHOOK_URL_OIST should be
+# https://<env_name>.<google_project>.appspot.com/<DEPLOY_NOTIFICATION_WEBHOOK_URL_ROUTING>
