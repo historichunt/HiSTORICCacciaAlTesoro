@@ -684,8 +684,8 @@ def set_elapsed_and_penalty_and_compute_total(p):
     tvar['PENALTY TIME'] = penalty_sec # seconds
     tvar['TOTAL TIME GAME'] = elapsed_sec_game + penalty_sec
     tvar['TOTAL TIME MISSIONS'] = elapsed_sec_missions + penalty_sec
-    tvar['COMPLETED_MISSIONS'] = len(tvar['MISSIONI_INFO'].get('TODO', []))
-    tvar['INCOMPLETED_MISSIONS'] = len(tvar['MISSIONI_INFO'].get('COMPLETED', []))
+    tvar['COMPLETED_MISSIONS'] = len(tvar['MISSIONI_INFO'].get('COMPLETED', []))
+    tvar['INCOMPLETED_MISSIONS'] = len(tvar['MISSIONI_INFO'].get('TODO', []))
     
     p.put()
 
