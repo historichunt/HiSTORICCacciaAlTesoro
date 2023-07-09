@@ -639,12 +639,10 @@ def start_mission(p):
     current_mission['start_time'] = start_time
     p.tmp_variables['MISSION_TIMES'].append([start_time])
 
-def set_end_mission_time(p):
-    current_mission = get_current_mission(p)
-    current_mission['end_time'] = dtu.now_utc_iso_format()
-
 def set_mission_end_time(p):
     end_time = dtu.now_utc_iso_format()
+    current_mission = get_current_mission(p)
+    current_mission['end_time'] = end_time
     last_mission_time = p.tmp_variables['MISSION_TIMES'][-1]
     
     # bug on 2022/12/15 

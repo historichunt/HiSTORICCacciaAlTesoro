@@ -924,7 +924,7 @@ def state_MISSION_INTRO(p, message_obj=None, **kwargs):
         current_mission = game.get_current_mission(p) if testing else game.set_next_mission(p)        
         if not testing:
             check_if_first_mission_and_start_time(p)            
-            send_msg_mission_number()            
+            send_msg_mission_number(p)            
         if 'INTRODUZIONE_LOCATION' not in current_mission:
             redirect_to_state(p, state_MISSION_GPS)
             return
@@ -1088,12 +1088,14 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
             send_message(p, msg, kb)
         else:
             send_message(p, msg, remove_keyboard=True)
-        game.start_mission(p)
+        game.start_mission(p) # set start time of the mission
         p.put()
-        if 'SOLUZIONI' not in current_mission:
-            # if there is no solution required go to required_input (photo or voice)
-            assert all(x in current_mission for x in ['INPUT_INSTRUCTIONS', 'INPUT_TYPE'])
-            redirect_to_state(p, state_MEDIA_INPUT_MISSION)
+        
+        # SOLUZIONI must be present, below old code when it was optional
+        # if 'SOLUZIONI' not in current_mission:
+        #     # if there is no solution required go to required_input (photo or voice)
+        #     assert all(x in current_mission for x in ['INPUT_INSTRUCTIONS', 'INPUT_TYPE'])
+        #     redirect_to_state(p, state_MEDIA_INPUT_MISSION)
     else:
         text_input = message_obj.text
         if text_input:            
@@ -1139,7 +1141,7 @@ def state_DOMANDA(p, message_obj=None, **kwargs):
                     except regex.error: correct_answers_regex.remove(r)
                 #correct_answers_upper_word_set = set(flatten([x.split() for x in correct_answers_upper]))
                 if text_input.upper() in correct_answers_upper or functools.reduce(lambda a, r: a or regex.match(r, text_input, regex.I), correct_answers_regex, False):
-                    game.set_end_mission_time(p)
+                    game.set_mission_end_time(p) # set time of ending the mission (after solution)
                     if not send_post_message(p, current_mission):
                         send_message(p, bot_ui.MSG_ANSWER_OK(p.language), remove_keyboard=True)
                         send_typing_action(p, sleep_time=1)                    
@@ -1287,7 +1289,6 @@ def approve_media_input_indovinello(p, approved, signature):
         # if 'sign' is not in current_mission it means we are in INPUT_CONFIRMATION mode 
         return False
     if approved:
-        game.set_end_mission_time(p)
         send_message(p, bot_ui.MSG_MEDIA_INPUT_MISSIONE_OK(p.language))        
         notify_group_id = game.get_notify_group_id(p)
         if notify_group_id:
@@ -1363,7 +1364,6 @@ def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
                 game.get_num_compleded_missions(p) == params.JUMP_TO_SURVEY_AFTER
             )
         )
-        game.set_mission_end_time(p)
         if survery_time:            
             game.set_game_end_time(p, finished=True)
             msg = p.ui().MSG_PRESS_FOR_ENDING
