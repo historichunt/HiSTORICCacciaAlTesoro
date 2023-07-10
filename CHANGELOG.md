@@ -1,5 +1,22 @@
 # Change Log
 
+## 0.15
+
+## 0.14
+- QR code mode
+- fixed/refactoring post-message 
+- improving exit hunt
+- py38
+- _env_template
+- bot specific UI
+- constraint hunts on specific bots
+- fixed end time missions
+- fix timing in results
+- added complete/incomplete missions in results
+## 0.13
+- Fixed instructions
+- Fixed markdown in captions
+
 ## 0.12
 - airtable base validation [WIP]
 - fix bug in random missions
