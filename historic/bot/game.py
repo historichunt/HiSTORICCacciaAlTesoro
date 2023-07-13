@@ -662,6 +662,10 @@ def set_elapsed_and_penalty_and_compute_total(p):
     end_time = get_end_time(p)
     start_time = get_game_start_time(p)
     
+    if start_time == 0:
+        # this is when /exit is used during instructions before hunt starts
+        start_time = end_time
+    
     elapsed_sec_game = dtu.delta_seconds_iso(start_time, end_time)
     elapsed_sec_missions = sum(dtu.delta_seconds_iso(s, e) for s,e in tvar['MISSION_TIMES'])            
 
@@ -684,8 +688,8 @@ def set_elapsed_and_penalty_and_compute_total(p):
     tvar['PENALTY TIME'] = penalty_sec # seconds
     tvar['TOTAL TIME GAME'] = elapsed_sec_game + penalty_sec
     tvar['TOTAL TIME MISSIONS'] = elapsed_sec_missions + penalty_sec
-    tvar['COMPLETED_MISSIONS'] = len(tvar['MISSIONI_INFO'].get('COMPLETED', []))
-    tvar['INCOMPLETED_MISSIONS'] = len(tvar['MISSIONI_INFO'].get('TODO', []))
+    tvar['COMPLETED_MISSIONS'] = len(tvar.get('MISSIONI_INFO',{}).get('COMPLETED', []))
+    tvar['INCOMPLETED_MISSIONS'] = len(tvar.get('MISSIONI_INFO',{}).get('TODO', []))
     
     p.put()
 

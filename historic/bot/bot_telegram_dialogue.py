@@ -1288,8 +1288,10 @@ def approve_media_input_indovinello(p, approved, signature):
     if game.manual_validation(p) and signature != current_mission.get('sign', signature):
         # if 'sign' is not in current_mission it means we are in INPUT_CONFIRMATION mode 
         return False
-    if approved:
-        send_message(p, bot_ui.MSG_MEDIA_INPUT_MISSIONE_OK(p.language))        
+    if approved:        
+        if not send_post_message(p, current_mission, after_input=True):
+            send_message(p, bot_ui.MSG_MEDIA_INPUT_MISSIONE_OK(p.language))        
+            send_typing_action(p, sleep_time=1)
         notify_group_id = game.get_notify_group_id(p)
         if notify_group_id:
             squadra_name = game.get_group_name(p)
@@ -1307,8 +1309,6 @@ def approve_media_input_indovinello(p, approved, signature):
             else: # input_type=='VIDEO':
                 BOT.send_video(notify_group_id, video=file_id, caption=msg)
         game.append_group_media_input_file_id(p, file_id)        
-        if not send_post_message(p, current_mission, after_input=True):
-            send_typing_action(p, sleep_time=1)
         redirect_to_state(p, state_COMPLETE_MISSION)
     else:
         if input_type=='PHOTO':
