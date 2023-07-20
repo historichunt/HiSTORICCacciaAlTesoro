@@ -1563,6 +1563,20 @@ def deal_with_admin_commands(p, message_obj):
             else:
                 send_message(p, f'User id {user_id} non valido')
             return True
+        if text_input.startswith('/update_airtable_urls'):
+            cmd_user_id = text_input.split()
+            if len(cmd_user_id)==2:
+                user_id = cmd_user_id[1]
+                u = Person.get_by_id(user_id)    
+            else:
+                u = p
+            if game.user_in_game(p):
+                send_message(p, 'Updating airtable urls... please wait...')
+                updated_missions, updated_urls = game.update_airtable_urls_missions(u)
+                send_message(p, f'Done! Updated {updated_missions} missions and a total of {updated_urls} urls')
+            else:
+                send_message(p, p.ui().MSG_NOT_IN_GAME)
+            return True
         if text_input.startswith('/refresh_'):
             user_id = text_input.split('_',1)[1]
             u = Person.get_by_id(user_id)

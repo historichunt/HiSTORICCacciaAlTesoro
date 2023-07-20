@@ -257,6 +257,38 @@ def get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=Tru
     }
     return missions_name_fields_dict
 
+def update_airtable_urls_missions(p):
+    tvar = p.tmp_variables
+    airtable_game_id = tvar['HUNT_INFO']['Airtable_Game_ID']
+    mission_tab_name = f'Missioni_{p.language}'
+    missions_dict = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)    
+    missions = list(missions_dict.values())
+    todo_missions = tvar['MISSIONI_INFO']['TODO']
+    current_mission_list = [tvar['MISSIONI_INFO']['CURRENT']]
+    completed_missions = tvar['MISSIONI_INFO']['COMPLETED']
+    all_mission_types = [todo_missions, current_mission_list, completed_missions]
+    updated_missions = 0
+    updated_urls = 0
+    for new_mission in missions:
+        name = new_mission['NOME']
+        for mission_type in all_mission_types:
+            for old_mission in mission_type:
+                if old_mission is None:
+                    continue
+                if old_mission['NOME'] == name:                                        
+                    updated = False
+                    for k,v in new_mission.items():
+                        if type(v)==list and len(v)>0 and 'url' in v[0]:
+                            old_mission[k] = v
+                            updated_urls += 1                        
+                            updated = True
+                    if updated:
+                        updated_missions += 1
+                    break
+    return updated_missions, updated_urls
+
+
+
 def get_final_missions_dict_names(missions_name_fields_dict):
     final_missions_names = [
         m_name
