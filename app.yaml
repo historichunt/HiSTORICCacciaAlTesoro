@@ -1,7 +1,7 @@
 # gcloud config set project historictrentobot
 
 entrypoint: gunicorn -b :$PORT main:app --chdir historic
-runtime: python38
+runtime: python
 
 # change instance class
 # https://cloud.google.com/appengine/docs/standard
@@ -10,4 +10,9 @@ runtime: python38
 # pricing: https://cloud.google.com/appengine/pricing
 # API usage: https://console.cloud.google.com/apis/dashboard?project=historictrentobot
 
-instance_class: F2
+# instance_class: F2
+
+env: flex
+runtime_config:
+    operating_system: "ubuntu18"
+    runtime_version: "3.8"
