@@ -267,7 +267,9 @@ def read_qr_from_url(file_url):
     return value # full code potentially including html address    
 
 def qr_matches(goal, target):
-    # last field after last forward slash 
+    if 'QR_' in target:
+        return goal == target.rsplit('QR_',1)[-1]    
+    # last field after last forward slash (not necessary)
     return goal == target.rsplit('/',1)[-1]
 
 def create_qr(text, transparent) -> None:

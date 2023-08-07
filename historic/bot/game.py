@@ -813,7 +813,7 @@ def increase_intro_completed(p):
 def set_next_survey_question(p):
     survey_info = p.tmp_variables['SURVEY_INFO']
     todo_questions = survey_info['TODO']
-    current_question = todo_questions.pop(0)
+    current_question = todo_questions.pop(0) # TODO: check if the list is empty
     survey_info['CURRENT'] = current_question
     return current_question
 
