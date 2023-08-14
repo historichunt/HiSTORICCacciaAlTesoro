@@ -2,7 +2,7 @@ from json.tool import main
 from google.cloud import ndb
 from historic.bot.ndb_utils import client_context
 from historic.bot import utility, bot_ui
-from historic.config import settings
+from historic.config import settings, params
 
 class Person(ndb.Model):
     chat_id = ndb.StringProperty()
@@ -161,6 +161,8 @@ def get_person_by_id(uid):
     return Person.get_by_id(uid)
 
 def add_person(chat_id, name, last_name, username, lang, application):
+    if lang is None:
+        lang = 'en'
     p = Person(
         id=make_id(chat_id, application),
         chat_id=str(chat_id),
@@ -168,7 +170,7 @@ def add_person(chat_id, name, last_name, username, lang, application):
         last_name=last_name,
         username=username,
         application=application,
-        language = 'IT' if lang is None or lang.upper()=='IT' else 'EN',
+        language = lang.upper() if lang.upper() in params.LANGUAGES else 'EN',
         tmp_variables={}
     )
     p.put()
