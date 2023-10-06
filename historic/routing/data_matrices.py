@@ -215,7 +215,7 @@ class DataMatrices:
         self.modified = True
         self.completed = False 
 
-        print(f'Num new points found: {len(new_points)}')
+        print(f'Num new points found {len(new_points)}: {", ".join(new_points)}')
         print(f'Total points increased from {old_num_points} to {self.num_points}')
 
     def __update_dst_matrices(self):

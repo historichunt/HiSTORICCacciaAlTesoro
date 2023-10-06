@@ -93,14 +93,14 @@ def get_trento_data_info():
     
 
 if __name__ == "__main__":
-    test_airtable_map(TRENTO_BASE_KEY, 'Missioni_IT')
+    # test_airtable_map(TRENTO_BASE_KEY, 'Missioni_IT')
     # test_trento_dm_update()
-    # build_or_update_dm_from_airtable(
-    #     api_google, 
-    #     TRENTO_BASE_KEY,
-    #     'Missioni_IT',
-    #     max_linear_dst_km=2.5
-    #     # max_points=3
-    # ) 
+    build_or_update_dm_from_airtable(
+        api_google, 
+        TRENTO_BASE_KEY,
+        'Missioni_IT',
+        max_linear_dst_km=2.5
+        # max_points=3
+    ) 
     # get_trento_data_info()
     
