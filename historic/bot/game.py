@@ -503,7 +503,7 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
             stop_duration = 300, # da cambiare in 300 per 5 min
             num_attempts = 10000, # set to None for exaustive search
             random_seed = None, # only relevan if num_attempts is not None (non exhaustive serach)
-            exclude_neighbor_dst = 60,    
+            exclude_neighbor_dst = 60, # exclude neighbour stop within 1 min    
             circular_route = circular_route,
             num_best = 1,
             stop_when_num_best_reached = True,

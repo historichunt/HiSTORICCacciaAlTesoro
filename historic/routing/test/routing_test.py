@@ -43,9 +43,9 @@ def test_single_route():
     profile = api_google.PROFILE_FOOT_WALKING
     # profile = api_google.PROFILE_CYCLING_REGULAR    
 
-    start_point_name = 'GARDOLO Aeroporto'    
-    duration_min = 120
-    exclude_neighbor_dst = None
+    start_point_name = 'CRISTO RE La SLOI'    
+    duration_min = 45
+    exclude_neighbor_dst = 60
     circular_route = False
     plot_dm_stats = False
     
