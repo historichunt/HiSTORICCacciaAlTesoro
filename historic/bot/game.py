@@ -4,14 +4,10 @@ from random import shuffle, choice
 from historic.config import params, settings
 from historic.bot import utility, airtable_utils
 import historic.bot.date_time_util as dtu
-from historic.routing import route_planner
 from historic.routing.api import api_google
 from historic.routing.data_matrices import DataMatrices
-from historic.routing.route_planner import RoutePlanner
-from historic.routing.metrics import METRIC_DISTANCE, METRIC_DURATION, METRICS
+from historic.routing.datasets.trento_hunt_params import get_trento_route_planner, NUM_PLANNER_ATTEMPTS
 import numpy as np
-
-# from historic.hunt_route.trento_open_params import fine_tuning_trento_open
 
 #################
 # GAMES CONFIG
@@ -231,6 +227,8 @@ def build_missions(p, test_all=False):
         missions_dict = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)    
         missions = list(missions_dict.values())
     elif hunt_settings.get('MISSIONS_SELECTION', None) == 'ROUTING':
+        from historic.bot.bot_telegram import send_message   
+        send_message(p, p.ui().MSG_GAME_IS_LOADING, remove_keyboard=True)
         missions = get_missioni_routing(p, airtable_game_id, mission_tab_name)
         if missions is None:            
             return False # problema selezione percorso
@@ -458,8 +456,6 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
         api = api_google
     )      
 
-    max_attempts = 15
-
     lat, long = p.get_tmp_variable('HUNT_START_GPS')
     start_idx = game_dm.get_coordinate_index(lat=lat, long=long)
     skip_points_idx = [
@@ -471,44 +467,14 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
     duration_min = p.get_tmp_variable('ROUTE_DURATION_MIN', 60) # 1 h default
     circular_route = p.get_tmp_variable('ROUTE_CIRCULAR', False)
 
-    # manual fine tuning - TODO: make it more robust
-    # max_grid_overalapping, duration_tolerance_min = \
-    #     fine_tuning_trento_open(profile, circular_route, duration_min)
-
-    max_grid_overalapping = 20
-    duration_tolerance_min = 10    
     route_planner = None                
     found_solution = False                    
     
-    for _ in range(1,max_attempts+1): # attempts
+    for planner_attempt in range(NUM_PLANNER_ATTEMPTS): # attempts        
 
-        duration_sec = duration_min * 60
-        duration_tolerance_sec = duration_tolerance_min * 60
-
-        route_planner = RoutePlanner(
-            dm = game_dm,
-            profile = profile,
-            metric = METRIC_DURATION,
-            start_idx = start_idx, 
-            min_dst = 60, # 2 min
-            max_dst = 720, # 12 min
-            goal_tot_dst = duration_sec,
-            tot_dst_tolerance = duration_tolerance_sec,
-            min_route_size = None,
-            max_route_size = None,
-            skip_points_idx = skip_points_idx,
-            check_convexity = False,
-            overlapping_criteria = 'GRID',
-            max_overalapping = max_grid_overalapping, # in meters/grids, None to ignore this constraint
-            stop_duration = 300, # da cambiare in 300 per 5 min
-            num_attempts = 10000, # set to None for exaustive search
-            random_seed = None, # only relevan if num_attempts is not None (non exhaustive serach)
-            exclude_neighbor_dst = 60, # exclude neighbour stop within 1 min    
-            circular_route = circular_route,
-            num_best = 1,
-            stop_when_num_best_reached = True,
-            num_discarded = None,
-            show_progress_bar = False
+        route_planner = get_trento_route_planner(
+            game_dm, profile, start_idx, duration_min, skip_points_idx, circular_route,
+            planner_attempt
         )
 
         route_planner.build_routes()
@@ -517,9 +483,6 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
             found_solution = True
             break
         
-        max_grid_overalapping += 20
-        duration_tolerance_min += 10
-
     if found_solution:
 
         _, stop_names, info, best_route_img, estimated_duration_min = \
