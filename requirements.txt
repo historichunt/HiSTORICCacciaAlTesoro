@@ -115,7 +115,7 @@ typing-extensions==3.10.0.2
 tzdata==2023.3
 tzlocal==4.2
 uritemplate==3.0.1
-urllib3==1.26.17
+urllib3==1.26.18
 wcwidth==0.2.5
 Werkzeug==2.2.3
 wrapt==1.12.1
