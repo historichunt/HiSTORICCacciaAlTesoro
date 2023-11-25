@@ -2,17 +2,17 @@ import logging
 import telegram
 import json
 import random
+import asyncio
 from historic.config import params, settings
 from historic.bot import airtable_utils, utility, ndb_person, bot_ui, game, geo_utils
 from historic.bot import date_time_util as dtu
 from historic.bot.bot_telegram import BOT, delete_commands, get_commands, get_menu, remove_menu, send_message, send_location, send_typing_action, \
     report_admins, send_text_document, send_media_url, \
-    broadcast, report_admins, reset_all_users, report_location_admin, set_commands, set_menu
+    broadcast, reset_all_users, report_location_admin, set_commands, set_menu, get_photo_url_from_telegram, send_sticker_data
 from historic.config import params
 from historic.bot.utility import flatten, get_str_param_boolean, make_2d_array
 from historic.bot.ndb_person import Person
 from historic.routing.api import api_google
-from historic.bot.bot_telegram import get_photo_url_from_telegram, send_sticker_data
 from historic.bot.main_exception import exception_reporter
 
 # ================================
@@ -82,7 +82,7 @@ async def state_INITIAL(p, message_obj=None, **kwargs):
                     await redirect_to_state(p, state_ASK_GPS_TO_LIST_HUNTS)
                 elif text_input == p.ui().BUTTON_INFO:
                     await send_message(p, p.ui().MSG_HISTORIC_INFO, remove_keyboard=True)
-                    send_typing_action(p, sleep_time=5)
+                    await send_typing_action(p, sleep_time=5)
                     await repeat_state(p)
                 elif text_input == p.ui().BUTTON_SWITCH_LANGUAGE:
                     await redirect_to_state(p, state_CHANGE_LANGUAGE)
@@ -96,7 +96,7 @@ async def state_INITIAL(p, message_obj=None, **kwargs):
                 hunt_password = text_input.lower().split()[1]
             else: 
                 hunt_password = text_input.lower()
-            correct_password = access_hunt_via_password(p, hunt_password, send_msg_if_wrong_pw=False)
+            correct_password = await access_hunt_via_password(p, hunt_password, send_msg_if_wrong_pw=False)
             if not correct_password:
                 await send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)    
         else:
@@ -119,13 +119,13 @@ async def access_hunt_via_password(p, hunt_password, send_msg_if_wrong_pw):
         else:
             if send_msg_if_wrong_pw:
                 await send_message(p, p.ui().MSG_HUNT_DISABLED)
-                send_typing_action(p, 1)
+                await send_typing_action(p, 1)
                 await repeat_state(p)
             return False
     else:
         if send_msg_if_wrong_pw:
             await send_message(p, p.ui().MSG_WRONG_PASSWORD)
-            send_typing_action(p, 1)
+            await send_typing_action(p, 1)
             await repeat_state(p)
         return False
 
@@ -155,7 +155,7 @@ async def state_CHANGE_LANGUAGE(p, message_obj=None, **kwargs):
                         if text_input == p.ui().get_var(f'BUTTON_SWITCH_{l}'):
                             p.set_language(l)
                             await send_message(p, p.ui().MSG_LANGUAGE_SWITCHED)
-                            send_typing_action(p, sleep_time=1)                    
+                            await send_typing_action(p, sleep_time=1)                    
                             await redirect_to_state(p, state_INITIAL)
         else:
             await send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)
@@ -250,7 +250,7 @@ async def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                         if len(msg)>4000:
                             file_name_prefix = 'stats_' + hunt_name.replace(' ','_')[:30]
                             timestamp = dtu.timestamp_yyyymmdd()
-                            send_text_document(p, f'{file_name_prefix}_{timestamp}.txt', msg)      
+                            await send_text_document(p, f'{file_name_prefix}_{timestamp}.txt', msg)      
                         else:
                             await send_message(p, msg, markdown=False)    
                     else:
@@ -272,18 +272,18 @@ async def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                     else:
                         timestamp = dtu.timestamp_yyyymmdd()
                         zip_file_name = 'media_' + hunt_name.replace(' ','_')[:30] + f"_{timestamp}.zip"
-                        send_text_document(p, zip_file_name, zip_content)      
+                        await send_text_document(p, zip_file_name, zip_content)      
                 elif text_input == p.ui().BUTTON_DOWNLOAD_ERRORS:
                     mission_errors, errors_digested = airtable_utils.get_wrong_answers(hunt_pw)
                     file_name_prefix = 'errori_' + hunt_name.replace(' ','_')[:30]
                     timestamp = dtu.timestamp_yyyymmdd()
-                    send_text_document(p, f'{file_name_prefix}_{timestamp}.txt', mission_errors)      
-                    send_text_document(p, f'{file_name_prefix}_{timestamp}_digested.txt', errors_digested)      
+                    await send_text_document(p, f'{file_name_prefix}_{timestamp}.txt', mission_errors)      
+                    await send_text_document(p, f'{file_name_prefix}_{timestamp}_digested.txt', errors_digested)      
                 elif text_input == p.ui().BUTTON_DOWNLOAD_REPORT:
                     report_text = airtable_utils.get_report(hunt_pw)
                     file_name = 'report_' + hunt_name.replace(' ','_')[:30] + '.txt'
                     timestamp = dtu.timestamp_yyyymmdd()
-                    send_text_document(p, file_name, report_text)      
+                    await send_text_document(p, file_name, report_text)      
             else:
                 await send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)     
         else:
@@ -352,7 +352,7 @@ async def state_TERMINATE_HUNT_CONFIRM(p, message_obj=None, **kwargs):
                             teminate_hunt(remaining_person)
                     msg = "Mandato messaggio di termine a {} squadre.".format(len(remaining_people))
                     await send_message(p, msg, remove_keyboard=True)
-                    send_typing_action(p, sleep_time=1)
+                    await send_typing_action(p, sleep_time=1)
                     await restart(p)
             else:
                 await send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)     
@@ -396,7 +396,7 @@ async def state_TERMINATE_USER_CONFIRM(p, message_obj=None, **kwargs):
                         await send_message(p, f'Caccia terminata per {u_info}')
                     else:
                         await send_message(p, f'User id {user_id} non è in una caccia')
-                    send_typing_action(p, sleep_time=1)
+                    await send_typing_action(p, sleep_time=1)
                     await redirect_to_state(p, prev_state_func)
             else:
                 await send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)     
@@ -407,7 +407,7 @@ async def teminate_hunt(p):
     reset_hunt_after_completion = get_str_param_boolean(p.tmp_variables['SETTINGS'], 'RESET_HUNT_AFTER_COMPLETION')
     terminate_message_key = 'MSG_HUNT_TERMINATED_RESET_ON' if reset_hunt_after_completion else 'MSG_HUNT_TERMINATED_RESET_OFF'
     result = await send_message(p, p.ui().get_var(terminate_message_key), remove_keyboard=True, sleep=True)
-    # send_typing_action(p, sleep_time=1)
+    # await send_typing_action(p, sleep_time=1)
     if not p.tmp_variables.get('FINISHED', False):                   
         game.exit_game(p, save_data=True, reset_current_hunt=True)
         await restart(p)
@@ -502,14 +502,14 @@ async def state_SHOW_AVAILABLE_HUNTS_NEARBY(p, message_obj=None, **kwargs):
             await send_message(p, p.ui().MSG_HUNT_NEARBY_YES, kb)
         else:
             await send_message(p, p.ui().MSG_HUNT_NEARBY_NO)
-            send_typing_action(p, 1)
+            await send_typing_action(p, 1)
             await redirect_to_state(p, state_ASK_GPS_TO_LIST_HUNTS)        
         # notify admin with position
         p_name = p.get_first_last_username_id(escape_markdown=False)
         hunt_names_str = ', '.join([h['Name'] for h in open_hunts])
         admin_msg = f'{p_name} ha mandato GPS per inizio caccia - cacce aperte trovate {num_open_hunts}: ({hunt_names_str})'
         await report_admins(admin_msg)
-        report_location_admin(lat_lon[0], lat_lon[1])
+        await report_location_admin(lat_lon[0], lat_lon[1])
     else:
         text_input = message_obj.text
         kb = p.get_keyboard()
@@ -540,7 +540,7 @@ async def state_CHECK_LANGUAGE_AND_START_HUNT(p, message_obj=None, **kwargs):
             kb.append([p.ui().BUTTON_ANNULLA])
             await send_message(p, p.ui().MSG_HUNT_NOT_AVAILABLE_IN_YOUR_LANGUAGE, kb)
         else:
-            start_hunt(p, hunt_password)
+            await start_hunt(p, hunt_password)
     else: 
         text_input = message_obj.text
         kb = p.get_keyboard()
@@ -553,10 +553,10 @@ async def state_CHECK_LANGUAGE_AND_START_HUNT(p, message_obj=None, **kwargs):
                         if text_input == p.ui().get_var(f'BUTTON_SWITCH_{l}'):
                             p.set_language(l)
                             await send_message(p, p.ui().MSG_LANGUAGE_SWITCHED)
-                            send_typing_action(p, sleep_time=1)     
-                            start_hunt(p, hunt_password)                                                   
+                            await send_typing_action(p, sleep_time=1)     
+                            await start_hunt(p, hunt_password)                                                   
         else:
-            await send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)       
+            await send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
 async def start_hunt(p, hunt_password): 
     await send_message(p, p.ui().MSG_GAME_IS_LOADING, remove_keyboard=True)
@@ -610,7 +610,7 @@ async def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 media_dict = media[0]
                 url_attachment = media_dict['url']
                 type = media_dict['type']
-                send_media_url(p, url_attachment, type, kb, caption=msg)
+                await send_media_url(p, url_attachment, type, kb, caption=msg)
             else:
                 await send_message(p, msg, kb)
         else:
@@ -618,12 +618,12 @@ async def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 media_dict = media[0]
                 url_attachment = media_dict['url']
                 type = media_dict['type']
-                send_media_url(p, url_attachment, type, caption=msg, remove_keyboard=True)
+                await send_media_url(p, url_attachment, type, caption=msg, remove_keyboard=True)
             else:
                 await send_message(p, msg, remove_keyboard=True)        
             if not input_type: 
                 # no input, go to next instruction after 1 sec
-                send_typing_action(p, sleep_time=1)
+                await send_typing_action(p, sleep_time=1)
                 await repeat_state(p, next_step=True)        
     else:
         if len(input_type)==0:
@@ -663,7 +663,7 @@ async def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                     # BUTTON_CONTINUE, BUTTON_UNDERSTOOD, BUTTON_START_GAME: 
                     # do nothing except for repeating state                
                     pass                    
-                send_typing_action(p, sleep_time=1)
+                await send_typing_action(p, sleep_time=1)
                 await repeat_state(p, next_step=True)
                 return
             elif all_inputs_are_buttons:            
@@ -674,7 +674,7 @@ async def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
             if text_input:
                 if utility.check_email(text_input):                
                     p.set_tmp_variable('EMAIL', text_input, put=True)
-                    send_typing_action(p, sleep_time=1)
+                    await send_typing_action(p, sleep_time=1)
                     await repeat_state(p, next_step=True)
                 else:
                     await send_message(p, p.ui().MSG_EMAIL_WRONG)
@@ -683,14 +683,14 @@ async def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
         elif input_type == 'CONTACT_PERSON_NAME':
             if text_input:
                 p.set_tmp_variable('CONTACT_PERSON_NAME', text_input, put=True)
-                send_typing_action(p, sleep_time=1)
+                await send_typing_action(p, sleep_time=1)
                 await repeat_state(p, next_step=True)                    
             else:
                 await send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
         elif input_type == 'CONTACT_PERSON_PHONE':
             if text_input:
                 p.set_tmp_variable('CONTACT_PERSON_PHONE', text_input, put=True)
-                send_typing_action(p, sleep_time=1)
+                await send_typing_action(p, sleep_time=1)
                 await repeat_state(p, next_step=True)
             else:
                 await send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
@@ -710,7 +710,7 @@ async def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                         f'Nuova squadra registrata: {text_input}'
                     ])
                     await send_message(notify_group_id, msg)
-                send_typing_action(p, sleep_time=1)
+                await send_typing_action(p, sleep_time=1)
                 await repeat_state(p, next_step=True)
             else:
                 await send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)                
@@ -719,7 +719,7 @@ async def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 if utility.is_int(text_input):
                     group_size = int(text_input)
                     p.set_tmp_variable('GROUP_SIZE', group_size, put=True)
-                    send_typing_action(p, sleep_time=1)
+                    await send_typing_action(p, sleep_time=1)
                     await repeat_state(p, next_step=True)
                 else:
                     await send_message(p, p.ui().MSG_WRONG_NUMBER_OF_PEOPLE) 
@@ -728,7 +728,7 @@ async def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
         elif input_type == 'TEST_POSITION':
             location = message_obj.location
             if location:            
-                send_typing_action(p, sleep_time=1)
+                await send_typing_action(p, sleep_time=1)
                 await repeat_state(p, next_step=True)
             else:
                 await send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
@@ -737,7 +737,7 @@ async def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
             if photo is not None and len(photo)>0:
                 photo_file_id = photo[-1]['file_id']
                 game.append_group_media_input_file_id(p, photo_file_id)
-                send_typing_action(p, sleep_time=1)                            
+                await send_typing_action(p, sleep_time=1)                            
                 notify_group_id = game.get_notify_group_id(p)
                 if notify_group_id:
                     msg = '\n'.join([
@@ -745,7 +745,7 @@ async def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                         f'Selfie iniziale {game.get_group_name(p)}'
                     ])
                     BOT.send_photo(notify_group_id, photo=photo_file_id, caption=msg)
-                send_typing_action(p, sleep_time=1)
+                await send_typing_action(p, sleep_time=1)
                 await repeat_state(p, next_step=True)
             else:
                 await send_message(p, p.ui().MSG_WRONG_INPUT_SEND_PHOTO)
@@ -754,7 +754,7 @@ async def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
             if voice is not None:
                 voice_file_id = voice['file_id']
                 game.append_group_media_input_file_id(p, voice_file_id)
-                send_typing_action(p, sleep_time=1)
+                await send_typing_action(p, sleep_time=1)
                 await repeat_state(p, next_step=True)
             else:
                 await send_message(p, p.ui().MSG_WRONG_INPUT_SEND_VOICE)
@@ -763,7 +763,7 @@ async def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
             if video is not None:
                 video_file_id = video['file_id']
                 game.append_group_media_input_file_id(p, video_file_id)
-                send_typing_action(p, sleep_time=1)
+                await send_typing_action(p, sleep_time=1)
                 await repeat_state(p, next_step=True)
             else:
                 if message_obj.video_note is not None:
@@ -780,7 +780,7 @@ async def state_CHECK_INITIAL_POSITION(p, message_obj=None, **kwargs):
     goal_position = p.get_tmp_variable('HUNT_START_GPS')
     # CHECK_LOCATION = p.tmp_variables['SETTINGS'].get('CHECK_INITIAL_LOCATION', True)
     if goal_position is None:
-        load_missions(p)
+        await load_missions(p)
         return
     # START_LOCATION = p.tmp_variables['SETTINGS'].get('START_LOCATION', 'PROXIMITY')
     GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
@@ -788,12 +788,12 @@ async def state_CHECK_INITIAL_POSITION(p, message_obj=None, **kwargs):
         current_position = p.get_location()
         distance = geo_utils.distance_meters(goal_position, current_position)        
         if distance <= GPS_TOLERANCE_METERS:            
-            load_missions(p)
+            await load_missions(p)
         else:
             msg = p.ui().MSG_GO_TO_START_LOCATION
             kb = [[bot_ui.BUTTON_LOCATION(p.language)]]
             await send_message(p, msg, kb)
-            send_location(p, goal_position[0], goal_position[1])
+            await send_location(p, goal_position[0], goal_position[1])
     else:
         location = message_obj.location
         if location:          
@@ -803,12 +803,12 @@ async def state_CHECK_INITIAL_POSITION(p, message_obj=None, **kwargs):
             distance = geo_utils.distance_meters(goal_position, given_position)
             if distance <= GPS_TOLERANCE_METERS:
                 await send_message(p, p.ui().MSG_GPS_OK, remove_keyboard=True)
-                send_typing_action(p, sleep_time=1)
-                load_missions(p)
+                await send_typing_action(p, sleep_time=1)
+                await load_missions(p)
             else:
                 msg = p.ui().MSG_TOO_FAR.format(distance)
                 await send_message(p, msg)
-                send_typing_action(p, sleep_time=1)
+                await send_typing_action(p, sleep_time=1)
                 await repeat_state(p)
         else:
             await send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)    
@@ -821,10 +821,10 @@ async def load_missions(p):
     success = game.build_missions(p)    
     if not success:
         await send_message(p, p.ui().MSG_ERROR_ROUTING)
-        send_typing_action(p, sleep_time=1)
+        await send_typing_action(p, sleep_time=1)
         await restart(p)
         msg_admin = f"Problema percorso per {p.get_first_last_username_id()}"
-        send_text_document(p, 'tmp_vars.json', game.debug_tmp_vars(p), caption=msg_admin)
+        await send_text_document(p, 'tmp_vars.json', game.debug_tmp_vars(p), caption=msg_admin)
         await report_admins(msg_admin)
     else:
         WAIT_QR_MODE = p.tmp_variables['SETTINGS'].get('WAIT_QR_MODE', False)                
@@ -868,19 +868,19 @@ async def state_WAIT_FOR_QR(p, message_obj=None, **kwargs):
             return
         else:            
             file_id = photo[-1]['file_id']
-            qr_url = get_photo_url_from_telegram(file_id)
+            qr_url = await get_photo_url_from_telegram(file_id)
             qr_code = utility.read_qr_from_url(qr_url)
         current_mission = game.get_current_mission(p) if testing else game.get_mission_matching_qr(p, qr_code)
         if current_mission:
             game.set_next_mission(p, current_mission, remove_from_todo=True)
             await send_message(p, p.ui().MSG_QR_OK, remove_keyboard=True)                
             if not send_post_message(p, current_mission, after_loc=True):
-                send_typing_action(p, sleep_time=1)                    
+                await send_typing_action(p, sleep_time=1)                    
             await redirect_to_state(p, state_DOMANDA)
         else:
             msg = p.ui().MSG_QR_ERROR
             await send_message(p, msg)
-            send_typing_action(p, sleep_time=1)
+            await send_typing_action(p, sleep_time=1)
             await repeat_state(p, first_call=False)
         
 # ================================
@@ -932,8 +932,8 @@ async def state_MISSION_INTRO(p, message_obj=None, **kwargs):
             media_dict = current_mission['INTRO_MEDIA'][0]
             url_attachment = media_dict['url']
             type = media_dict['type']
-            send_media_url(p, url_attachment, type, caption=caption)
-            send_typing_action(p, sleep_time=1)
+            await send_media_url(p, url_attachment, type, caption=caption)
+            await send_typing_action(p, sleep_time=1)
         msg = current_mission['INTRODUZIONE_LOCATION'] # '*Introduzione*: ' + 
         kb = [[random.choice(bot_ui.BUTTON_CONTINUE_MULTI(p.language))]]
         await send_message(p, msg, kb)
@@ -957,7 +957,7 @@ async def check_if_first_mission_and_start_time(p):
         await send_message(p, p.ui().MSG_START_TIME, remove_keyboard=True)            
         game.set_game_start_time(p)
         p.set_tmp_variable('TIME_STARTED', True)        
-        send_typing_action(p, sleep_time=1)                
+        await send_typing_action(p, sleep_time=1)                
         return True
 
 async def send_msg_mission_number(p):
@@ -965,7 +965,7 @@ async def send_msg_mission_number(p):
     total_missioni = game.get_total_missions(p)
     msg = p.ui().MSG_MISSION_N_TOT.format(mission_number, total_missioni)
     await send_message(p, msg, remove_keyboard=True)
-    send_typing_action(p, sleep_time=1)        
+    await send_typing_action(p, sleep_time=1)        
 
 # ================================
 # VERIFY_LOCATION state
@@ -1010,7 +1010,7 @@ async def state_MISSION_GPS(p, message_obj=None, **kwargs):
         msg = p.ui().MSG_GO_TO_PLACE
         kb = [[bot_ui.BUTTON_LOCATION(p.language)]]
         await send_message(p, msg, kb)
-        send_location(p, goal_position[0], goal_position[1])
+        await send_location(p, goal_position[0], goal_position[1])
     else:
         location = message_obj.location
         if location:            
@@ -1022,12 +1022,12 @@ async def state_MISSION_GPS(p, message_obj=None, **kwargs):
             if distance <= GPS_TOLERANCE_METERS:
                 await send_message(p, p.ui().MSG_GPS_OK, remove_keyboard=True)
                 if not send_post_message(p, current_mission, after_loc=True):
-                    send_typing_action(p, sleep_time=1)                    
+                    await send_typing_action(p, sleep_time=1)                    
                 await redirect_to_state(p, state_DOMANDA)
             else:
                 msg = p.ui().MSG_TOO_FAR.format(distance)
                 await send_message(p, msg)
-                send_typing_action(p, sleep_time=1)
+                await send_typing_action(p, sleep_time=1)
                 await repeat_state(p)
         else:
             await send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
@@ -1051,17 +1051,17 @@ async def state_MISSION_QR(p, message_obj=None, **kwargs):
             return
         else:
             file_id = photo[-1]['file_id']
-            qr_url = get_photo_url_from_telegram(file_id)
+            qr_url = await get_photo_url_from_telegram(file_id)
             qr_code = utility.read_qr_from_url(qr_url)
             if utility.qr_matches(goal_qr_code, qr_code):
                 await send_message(p, p.ui().MSG_QR_OK, remove_keyboard=True)
                 if not send_post_message(p, current_mission, after_loc=True):
-                    send_typing_action(p, sleep_time=1)                    
+                    await send_typing_action(p, sleep_time=1)                    
                 await redirect_to_state(p, state_DOMANDA)
             else:
                 msg = p.ui().MSG_QR_ERROR
                 await send_message(p, msg)
-                send_typing_action(p, sleep_time=1)
+                await send_typing_action(p, sleep_time=1)
                 await repeat_state(p)
         
 
@@ -1079,8 +1079,8 @@ async def state_DOMANDA(p, message_obj=None, **kwargs):
             media_dict = current_mission['DOMANDA_MEDIA'][0]
             type = media_dict['type'] # e.g., image/png
             url_attachment = media_dict['url']
-            send_media_url(p, url_attachment, type, caption=caption)
-            send_typing_action(p, sleep_time=1)                
+            await send_media_url(p, url_attachment, type, caption=caption)
+            await send_typing_action(p, sleep_time=1)                
         msg = current_mission['DOMANDA'] 
         if current_mission.get('INDIZIO_1',False):
             kb = [[p.ui().BUTTON_FIRST_HINT]]
@@ -1143,7 +1143,7 @@ async def state_DOMANDA(p, message_obj=None, **kwargs):
                     game.set_mission_end_time(p) # set time of ending the mission (after solution)
                     if not send_post_message(p, current_mission):
                         await send_message(p, bot_ui.MSG_ANSWER_OK(p.language), remove_keyboard=True)
-                        send_typing_action(p, sleep_time=1)                    
+                        await send_typing_action(p, sleep_time=1)                    
                     if 'INPUT_INSTRUCTIONS' in current_mission:
                         # only missioni with GPS require selfies
                         await redirect_to_state(p, state_MEDIA_INPUT_MISSION)
@@ -1174,12 +1174,12 @@ async def send_post_message(p, current_mission, after_loc=False, after_input=Fal
             media_dict = current_mission[f'{prefix}_MEDIA'][0] # POST_MEDIA, POST_LOC_MEDIA, POST_INPUT_MEDIA
             url_attachment = media_dict['url']
             type = media_dict['type']
-            send_media_url(p, url_attachment, type, caption=caption)
-            send_typing_action(p, sleep_time=1)
+            await send_media_url(p, url_attachment, type, caption=caption)
+            await send_typing_action(p, sleep_time=1)
         if post_msg_present:
             msg = current_mission[f'{prefix}_MESSAGE'] # POST_MESSAGE, POST_LOC_MESSAGE, POST_INPUT_MESSAGE
             await send_message(p, msg, remove_keyboard=True)
-            send_typing_action(p, sleep_time=1)
+            await send_typing_action(p, sleep_time=1)
         return True
     return False
 
@@ -1290,7 +1290,7 @@ async def approve_media_input_indovinello(p, approved, signature):
     if approved:        
         if not send_post_message(p, current_mission, after_input=True):
             await send_message(p, bot_ui.MSG_MEDIA_INPUT_MISSIONE_OK(p.language))        
-            send_typing_action(p, sleep_time=1)
+            await send_typing_action(p, sleep_time=1)
         notify_group_id = game.get_notify_group_id(p)
         if notify_group_id:
             squadra_name = game.get_group_name(p)
@@ -1341,7 +1341,7 @@ async def state_CONFIRM_MEDIA_INPUT(p, message_obj=None, **kwargs):
                 assert text_input == p.ui().BUTTON_NO
                 msg = p.ui().MSG_MEDIA_INPUT_ABORTED
                 await send_message(p, msg, remove_keyboard=True)
-                send_typing_action(p, sleep_time=1)
+                await send_typing_action(p, sleep_time=1)
                 await redirect_to_state(p, state_MEDIA_INPUT_MISSION)
         else:
             await send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)  
@@ -1383,13 +1383,13 @@ async def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
                     await redirect_to_state(p, state_MISSION_INTRO)
             elif text_input == p.ui().BUTTON_END:
                 await send_message(p, p.ui().MSG_TIME_STOP, remove_keyboard=True)
-                send_typing_action(p, sleep_time=1)
+                await send_typing_action(p, sleep_time=1)
                 await send_message(p, p.ui().MSG_CONGRATS_PRE_SURVEY)
-                send_typing_action(p, sleep_time=1)                
+                await send_typing_action(p, sleep_time=1)                
                 settings = p.tmp_variables['SETTINGS']
                 skip_survey = get_str_param_boolean(settings, 'SKIP_SURVEY')
                 # saving data in airtable                
-                game.save_game_data_in_airtable(p, compute_times=True)
+                await game.save_game_data_in_airtable(p, compute_times=True)
                 if not skip_survey:
                     await redirect_to_state(p, state_SURVEY)
                 else:
@@ -1409,7 +1409,7 @@ async def state_SURVEY(p, message_obj=None, **kwargs):
         questions_number = game.get_num_completed_survey_questions(p) + 1
         if questions_number == 1:
             await send_message(p, p.ui().MSG_SURVEY_INTRO)
-            send_typing_action(p, sleep_time=1)
+            await send_typing_action(p, sleep_time=1)
         total_questions = game.get_tot_survey_questions(p)
         msg = '*Domanda {}/{}*: {}'.format(questions_number, total_questions, current_question['DOMANDA'])
         if 'RISPOSTE' in current_question:
@@ -1530,35 +1530,35 @@ async def deal_with_admin_commands(p, message_obj):
     text_input = message_obj.text
     if p.is_error_reporter():
         if text_input == '/get_menu':
-            menu = get_menu(p)
+            menu = await get_menu(p)
             await send_message(p, menu.type)
             return True            
         if text_input == '/set_menu':
             assert set_menu(p)
             return True
         if text_input == '/del_menu':
-            assert remove_menu(p)
+            assert await remove_menu(p)
             return True
         if text_input == '/get_cmd':
-            cmds = get_commands(p)      
+            cmds = await get_commands(p)      
             await send_message(p, json.dumps(cmds, indent=3, ensure_ascii=False))
             return True            
         if text_input == '/set_cmd':
             assert await set_commands(p)            
             return True
         if text_input == '/del_cmd':
-            assert delete_commands(p)            
+            assert await delete_commands(p)            
             return True            
         if text_input == '/debug':
             #await send_message(p, game.debug_tmp_vars(p), markdown=False)
-            send_text_document(p, 'tmp_vars.json', game.debug_tmp_vars(p))
+            await send_text_document(p, 'tmp_vars.json', game.debug_tmp_vars(p))
             return True
         if text_input.startswith('/debug_'):
             user_id = text_input.split('_',1)[1]
             u = Person.get_by_id(user_id)
             if u:
                 #await send_message(p, game.debug_tmp_vars(p), markdown=False)
-                send_text_document(p, 'tmp_vars.json', game.debug_tmp_vars(u))
+                await send_text_document(p, 'tmp_vars.json', game.debug_tmp_vars(u))
             else:
                 await send_message(p, f'User id {user_id} non valido')
             return True
@@ -1595,7 +1595,7 @@ async def deal_with_admin_commands(p, message_obj):
             u = Person.get_by_id(user_id)
             if u:   
                 if game.user_in_game(u):
-                    game.save_game_data_in_airtable(u, compute_times=True)
+                    await game.save_game_data_in_airtable(u, compute_times=True)
                     await send_message(p, f'Dati salvati in airtable per {u.get_first_last_username()}')
                 else:
                     await send_message(p, f'User id {user_id} non è in una caccia')
@@ -1626,17 +1626,17 @@ async def deal_with_admin_commands(p, message_obj):
             if zip_content is None:
                 await send_message(p, 'No media found')
             else:
-                send_text_document(p, 'media.zip', zip_content)      
+                await send_text_document(p, 'media.zip', zip_content)      
             return True
         if text_input.startswith('/QRT'):
             code = text_input.split()[1]
             img_bytes = utility.create_qr(code, transparent=True)
-            send_sticker_data(p, img_bytes)
+            await send_sticker_data(p, img_bytes)
             return True
         if text_input.startswith('/QR'):
             code = text_input.split()[1]
             img_bytes = utility.create_qr(code, transparent=False)
-            send_sticker_data(p, img_bytes)
+            await send_sticker_data(p, img_bytes)
             return True
         if text_input=='/botname':
             await send_message(p, settings.TELEGRAM_BOT_USERNAME)
@@ -1655,10 +1655,9 @@ async def deal_with_admin_commands(p, message_obj):
             1/0
             return True
         if text_input == '/wait':
-            import time
             for i in range(5):
                 await send_message(p, str(i+1))
-                time.sleep(i+1)
+                await asyncio.sleep(i+1)
             await send_message(p, "end")
             return True
         if text_input.startswith('/echo '):
@@ -1671,7 +1670,7 @@ async def deal_with_admin_commands(p, message_obj):
             text = text_input.split(' ', 1)[1]
             msg = '🔔 *Messaggio da hiSTORIC* 🔔\n\n' + text
             logging.debug("Starting to broadcast " + msg)
-            broadcast(p, msg)
+            await broadcast(p, msg)
             return True
         if text_input.startswith('/text '):
             u_id, text = text_input.split(' ',2)[1:]
@@ -1685,7 +1684,7 @@ async def deal_with_admin_commands(p, message_obj):
             await send_message(p, msg, markdown=False)
             return True
         if text_input == '/reset_all_users':            
-            reset_all_users(message=None) #message=p.ui().MSG_THANKS_FOR_PARTECIPATING
+            await reset_all_users(message=None) #message=p.ui().MSG_THANKS_FOR_PARTECIPATING
             return True
     return False
 
@@ -1718,7 +1717,7 @@ async def deal_with_universal_command(p, message_obj):
             else:
                 p.set_language(l, put=True)
                 await send_message(p, p.ui().MSG_LANGUAGE_SWITCHED)
-                send_typing_action(p, sleep_time=1)                    
+                await send_typing_action(p, sleep_time=1)                    
                 await repeat_state(p)
                 return True
     if text_input == '/exit':        

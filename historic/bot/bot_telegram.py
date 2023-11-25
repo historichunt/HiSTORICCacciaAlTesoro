@@ -1,9 +1,9 @@
+import asyncio
 import telegram
 import telegram.error
 from telegram.error import TelegramError, Forbidden
-from telegram.constants import ParseMode 
+from telegram.constants import ParseMode, ChatAction
 import logging
-import time
 from historic.bot.bot_ui import COMMANDS_LANG
 from historic.config import settings
 from historic.bot import game, utility
@@ -69,7 +69,7 @@ async def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
         logging.debug('Exception in reaching user {}: {}'.format(chat_id, e))
         return False
     if sleep:
-        time.sleep(0.1)
+        await asyncio.sleep(0.1)
     return True
 
 async def send_location(p, lat, lon):
@@ -79,12 +79,12 @@ async def send_location(p, lat, lon):
 
 async def send_typing_action(p, sleep_time=None):    
     chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
-    await BOT.sendChatAction(
+    await BOT.send_chat_action(
         chat_id = chat_id,
-        action = telegram.ChatAction.TYPING
+        action = ChatAction.TYPING
     )
     if sleep_time:
-        time.sleep(sleep_time)
+        await asyncio.sleep(sleep_time)
 
 async def send_photo_data(p, img_content, kb=None, caption=None,
     remove_keyboard=False, inline_keyboard=False, markdown=True):
@@ -180,7 +180,7 @@ async def report_admins(message):
 
 async def report_location_admin(lat, lon):
     for id in settings.ERROR_REPORTERS_IDS:
-        send_location(id, lat, lon)
+        await send_location(id, lat, lon)
 
 # ---------
 # MENU
@@ -295,12 +295,12 @@ async def reset_all_users(qry = None, message=None):
                 total += 1
                 if game.user_in_game(p):
                     game.exit_game(p, save_data=False, reset_current_hunt=True)
-                    # send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
+                    # await send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
                 if message:
                     await send_message(p, message, remove_keyboard=True)
                 p.reset_tmp_variables()
                 restart(p)
-                time.sleep(0.2)
+                await asyncio.sleep(0.2)
 
     msg_admin = 'Resetted {} users.'.format(total)
     await report_admins(msg_admin)

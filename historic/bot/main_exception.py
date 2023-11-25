@@ -1,7 +1,7 @@
+import asyncio
 import logging
 import traceback
 import telegram
-import time
 from historic.bot.bot_telegram import report_admins
 
 def exception_reporter(func, *args, **kwargs):    
@@ -30,7 +30,7 @@ def retry_on_network_error(func):
                 report_string = '⚠️️ Caught network error, on {} attemp. Retrying after {} secs...'.format(retry_num,sleep_secs)
                 logging.warning(report_string)                 
                 await report_admins(report_string)
-                time.sleep(sleep_secs)
+                await asyncio.sleep(sleep_secs)
         report_string = '❗️ Exception: persistent network error'
         logging.error(report_string)            
         await report_admins(report_string)            

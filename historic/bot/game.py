@@ -109,7 +109,7 @@ RESULTS_GAME_TABLE_HEADERS = [
     'TOTAL TIME GAME', 'TOTAL TIME MISSIONS'
 ]
 
-def save_game_data_in_airtable(p, compute_times):
+async def save_game_data_in_airtable(p, compute_times):
     from historic.bot.bot_telegram import get_photo_url_from_telegram
     import json
     
@@ -131,7 +131,7 @@ def save_game_data_in_airtable(p, compute_times):
         games_row[h] = game_data[h]
     games_row['GAME VARS'] = json.dumps(game_data,ensure_ascii=False)
     games_row['GROUP_MEDIA_FILE_IDS'] = [
-        {'url': get_photo_url_from_telegram(file_id)} 
+        {'url': await get_photo_url_from_telegram(file_id)} 
         for file_id in game_data['GROUP_MEDIA_FILE_IDS']
     ]
     RESULTS_GAME_TABLE.insert(games_row)
@@ -504,7 +504,7 @@ async def get_missioni_routing(p, airtable_game_id, mission_tab_name):
         if p.is_admin_current_hunt():                 
             info_text = '\n'.join(info)
             await send_message(p, f"🐛 DEBUG:\n\n{info_text}", markdown=False)
-            send_photo_data(p, best_route_img)
+            await send_photo_data(p, best_route_img)
             # selected_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_route,1)])
             # send_message(p, "DEBUG Selected missioni:\n{}".format(selected_missioni_names))
         notify_group_id = get_notify_group_id(p)
@@ -513,7 +513,7 @@ async def get_missioni_routing(p, airtable_game_id, mission_tab_name):
             info_text = f'La squadra {squadra_name} ha attenuto il seguente percorso:\n\n'
             info_text += '\n'.join(info)
             await send_message(notify_group_id, info_text, markdown=False)
-            send_photo_data(notify_group_id, best_route_img)
+            await send_photo_data(notify_group_id, best_route_img)
         return missioni_route
 
     else:

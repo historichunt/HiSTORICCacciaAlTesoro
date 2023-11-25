@@ -76,7 +76,7 @@ async def dayly_check_terminate_hunt(req: Request):
                 await send_message(p, p.ui().MSG_AUTO_QUIT)
                 teminate_hunt(p)
                 terminated_people_list.append(p)
-                time.sleep(1)
+                await asyncio.sleep(1)
         if terminated_people_list:
             msg_admin = "Caccia auto-terminata per:"
             for n,p in enumerate(terminated_people_list,1):
