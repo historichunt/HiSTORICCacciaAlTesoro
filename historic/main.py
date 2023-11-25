@@ -1,36 +1,36 @@
-from flask import Flask, request
+from fastapi import FastAPI, Request
 from historic.bot.bot_telegram import report_admins
-from historic.bot.utility import escape_markdown
 from historic.config import settings
-from historic.bot.ndb_utils import client_context
-
+import asyncio
 import logging
 import google.cloud.logging
+
 client = google.cloud.logging.Client()
 # logging.debug #format='%(asctime)s  [%(levelname)s]: %(message)s'
-client.setup_logging(log_level=logging.DEBUG)
-
+client.setup_logging(log_level=logging.DEBUG) # INFO
 
 # If `entrypoint` is not defined in app.yaml, App Engine will look for an app
 # called `app` in `main.py`.
-app = Flask(__name__)
+app = FastAPI()
 
-# run once
-with app.app_context():
+@app.get('/set_webhook')
+async def set_webhook(): 
     from historic.bot import bot_telegram_admin
-    bot_telegram_admin.set_webhook()
+    await bot_telegram_admin.set_webhook()
 
-@app.route('/')
-def root():
+asyncio.gather((set_webhook()))
+
+@app.get('/')
+async def root():
     logging.debug("in root function")
     """Return a friendly HTTP greeting."""
     return "hiSTORIC!!", 200
 
-@app.route(settings.DEPLOY_NOTIFICATION_WEBHOOK_URL_ROUTING, methods=['POST'])
-def new_deploy():    
+@app.post(settings.DEPLOY_NOTIFICATION_WEBHOOK_URL_ROUTING, status_code=201)
+async def new_deploy(req: Request):    
     from historic.bot.bot_telegram import report_admins
     from historic.config.settings import APP_VERSION, ENV_VERSION
-    payload_json = request.get_json(force=True)
+    payload_json = await req.json()
     # payload has the following struture
     # {
     #     "event": "push",
@@ -46,41 +46,15 @@ def new_deploy():
     if ENV_VERSION != 'production':
         msg += f' ({branch})' # issue #
     # msg += f'\n{payload_json_str}'
-    report_admins(msg)
-    return msg, 200
-
-@app.errorhandler(404)
-def page_not_found(e):
-    logging.debug("page_not_found")
-    # note that we set the 404 status explicitly
-    return "url not found", 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    return "500 error: {}".format(error), 500
-
-@app.route(settings.WEBHOOK_TELEGRAM_ROUTING, methods=['POST'])
-def telegram_webhook_handler():
-    from historic.bot.main_exception import run_new_thread_and_report_exception
-    from historic.bot.bot_telegram_dialogue import deal_with_request    
-    import json
-
-    request_json = request.get_json(force=True)
-
-    logging.debug("TELEGRAM POST REQUEST: {}".format(json.dumps(request_json)))
-
-    run_new_thread_and_report_exception(deal_with_request, request_json)
-
-    return '', 200
+    await report_admins(msg)
 
 # ================================
 # CRON TASKS
 # ================================
 
-@app.route('/dayly_check_terminate_hunt', methods=['GET'])
-@client_context
-def dayly_check_terminate_hunt():
-    headers = request.headers
+@app.get('/dayly_check_terminate_hunt', status_code=201)
+async def dayly_check_terminate_hunt(req: Request):
+    headers = req.headers
     if not headers.get('X-Appengine-Cron', False):
         # Only requests from the Cron Service will contain the X-Appengine-Cron header
         return
@@ -91,20 +65,48 @@ def dayly_check_terminate_hunt():
     from historic.bot.ndb_person import Person
     from historic.bot.bot_telegram import send_message
     from historic.bot.bot_telegram_dialogue import teminate_hunt
+    from historic.bot.ndb_utils import client
+
+    with client.context():
+        people_on_hunt = Person.query(Person.current_hunt!=None).fetch()    
+        expiration_date = now_utc_plus_delta_days(-params.TERMINATE_HUNT_AFTER_DAYS)
+        terminated_people_list = []
+        for p in people_on_hunt:
+            if p.last_mod < expiration_date:
+                await send_message(p, p.ui().MSG_AUTO_QUIT)
+                teminate_hunt(p)
+                terminated_people_list.append(p)
+                time.sleep(1)
+        if terminated_people_list:
+            msg_admin = "Caccia auto-terminata per:"
+            for n,p in enumerate(terminated_people_list,1):
+                msg_admin += f'\n {n}. {p.get_first_last_username(escape_markdown=False)}'
+            await report_admins(msg_admin)
+
     
-    people_on_hunt = Person.query(Person.current_hunt!=None).fetch()    
-    expiration_date = now_utc_plus_delta_days(-params.TERMINATE_HUNT_AFTER_DAYS)
-    terminated_people_list = []
-    for p in people_on_hunt:
-        if p.last_mod < expiration_date:
-            send_message(p, p.ui().MSG_AUTO_QUIT)
-            teminate_hunt(p)
-            terminated_people_list.append(p)
-            time.sleep(1)
-    if terminated_people_list:
-        msg_admin = "Caccia auto-terminata per:"
-        for n,p in enumerate(terminated_people_list,1):
-            msg_admin += f'\n {n}. {p.get_first_last_username(escape_markdown=False)}'
-        report_admins(msg_admin)
-    return '', 201
+@app.post(settings.WEBHOOK_TELEGRAM_ROUTING, status_code=201)
+async def telegram_webhook_handler(req: Request):
+    from historic.bot.bot_telegram_dialogue import deal_with_request    
+    from historic.bot.ndb_utils import client
+    import traceback
+    import json
+
+    request_json = await req.json()
+
+    logging.debug("TELEGRAM POST REQUEST: {}".format(json.dumps(request_json)))
+
+    with client.context():        
+        try:
+            await deal_with_request(request_json)
+        except Exception:            
+            report_string = '❗️ Exception {}'.format(traceback.format_exc()) #.splitlines()
+            logging.error(report_string) 
+            try:  
+                await report_admins(report_string)
+            except Exception:
+                report_string = '❗️ Exception {}'.format(traceback.format_exc())
+                logging.error(report_string)    
+
+
+
     
