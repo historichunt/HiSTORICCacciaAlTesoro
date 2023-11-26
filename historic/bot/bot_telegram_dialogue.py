@@ -241,7 +241,7 @@ async def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                     else:
                         await send_message(p, p.ui().MSG_GAME_IS_LOADING, remove_keyboard=True)
                         game.load_game(p, hunt_pw, test_hunt_admin=True)
-                        game.build_missions(p, test_all=True)
+                        await game.build_missions(p, test_all=True)
                         await redirect_to_state(p, state_TEST_HUNT_MISSION_ADMIN)                    
                 elif text_input == p.ui().BUTTON_STATS_ACTIVE:
                     hunt_stats = ndb_person.get_people_on_hunt_stats(hunt_pw)
@@ -818,7 +818,7 @@ async def state_CHECK_INITIAL_POSITION(p, message_obj=None, **kwargs):
 # ================================
 
 async def load_missions(p):        
-    success = game.build_missions(p)    
+    success = await game.build_missions(p)    
     if not success:
         await send_message(p, p.ui().MSG_ERROR_ROUTING)
         await send_typing_action(p, sleep_time=1)
