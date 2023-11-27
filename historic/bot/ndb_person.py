@@ -125,7 +125,7 @@ class Person(ndb.Model):
         self.longitude = lon
         if put: self.put()
 
-    def set_keyboard(self, kb, put=False):
+    def set_keyboard(self, kb, put=True):
         self.set_tmp_variable("keyboard", value=kb, put=put)
 
     def get_keyboard(self):
