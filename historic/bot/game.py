@@ -219,9 +219,8 @@ def load_game(p, hunt_password, test_hunt_admin=False):
     tvar['FINISHED'] = False # seconds
 
 async def build_missions(p, test_all=False):
-    tvar = p.tmp_variables
-    hunt_settings = tvar['SETTINGS']
-    airtable_game_id = tvar['HUNT_INFO']['Airtable_Game_ID']
+    hunt_settings = p.tmp_variables['SETTINGS']
+    airtable_game_id = p.tmp_variables['HUNT_INFO']['Airtable_Game_ID']
     mission_tab_name = f'Missioni_{p.language}'
     if test_all:
         missions_dict = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)    
@@ -242,7 +241,7 @@ async def build_missions(p, test_all=False):
             random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missions,1)])
             await send_message(p, "DEBUG Random missioni:\n{}".format(random_missioni_names))
 
-    tvar['MISSIONI_INFO'] = {'TODO': missions, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(missions)}
+    p.tmp_variables['MISSIONI_INFO'] = {'TODO': missions, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(missions)}
     return True
 
 def get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True):
