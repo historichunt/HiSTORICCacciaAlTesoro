@@ -228,7 +228,7 @@ async def build_missions(p, test_all=False):
     elif hunt_settings.get('MISSIONS_SELECTION', None) == 'ROUTING':
         from historic.bot.bot_telegram import send_message   
         await send_message(p, p.ui().MSG_GAME_IS_LOADING, remove_keyboard=True)
-        missions = get_missioni_routing(p, airtable_game_id, mission_tab_name)
+        missions = await get_missioni_routing(p, airtable_game_id, mission_tab_name)
         if missions is None:            
             return False # problema selezione percorso
     else:

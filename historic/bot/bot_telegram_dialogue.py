@@ -1224,7 +1224,7 @@ async def state_MEDIA_INPUT_MISSION(p, message_obj=None, **kwargs):
         elif game.manual_validation(p):
             send_to_validator(p, game, current_mission, input_type)        
         else:
-            approve_media_input_indovinello(p, approved=True, signature=None)
+            await approve_media_input_indovinello(p, approved=True, signature=None)
         p.put()
 
 async def send_to_validator(p, game, current_mission, input_type):
@@ -1336,7 +1336,7 @@ async def state_CONFIRM_MEDIA_INPUT(p, message_obj=None, **kwargs):
         kb = p.get_keyboard()
         if text_input in flatten(kb):
             if text_input == p.ui().BUTTON_YES:
-                approve_media_input_indovinello(p, approved=True, signature=None)
+                await approve_media_input_indovinello(p, approved=True, signature=None)
             else: 
                 assert text_input == p.ui().BUTTON_NO
                 msg = p.ui().MSG_MEDIA_INPUT_ABORTED
@@ -1511,7 +1511,7 @@ async def deal_with_callback_query(callback_query):
         chat_id = callback_query.from_user.id
         message_id = callback_query.message.message_id
         BOT.delete_message(chat_id, message_id)
-        validation_success = approve_media_input_indovinello(p, approved, signature=approval_signature)
+        validation_success = await approve_media_input_indovinello(p, approved, signature=approval_signature)
     if validation_success:
         if approved:
             answer = "Messaggio di conferma inviato alla squadra {}!".format(squadra_name)

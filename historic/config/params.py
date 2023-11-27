@@ -1,5 +1,7 @@
 import os
 
+TIMEOUT = 5.0 # seconds
+
 # base dir (two levels up)
 # (works both in flask and gunicorn)
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) 

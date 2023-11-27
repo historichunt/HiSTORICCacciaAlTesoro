@@ -8,6 +8,7 @@ from historic.bot.bot_ui import COMMANDS_LANG
 from historic.config import settings
 from historic.bot import game, utility
 from historic.bot.ndb_person import Person
+from historic.config.params import TIMEOUT
 from io import BytesIO
 
 BOT = telegram.Bot(token=settings.TELEGRAM_API_TOKEN)
@@ -60,6 +61,9 @@ async def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
             parse_mode = ParseMode.MARKDOWN if markdown else None,
             reply_markup = reply_markup,
             disable_web_page_preview = True,
+            read_timeout = TIMEOUT,
+            write_timeout = TIMEOUT,
+            connect_timeout = TIMEOUT,
             **kwargs
         )
     except Forbidden:
@@ -75,7 +79,15 @@ async def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
 async def send_location(p, lat, lon):
     chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
     loc = telegram.Location(lon,lat)
-    await BOT.send_location(chat_id, location = loc)
+    try:
+        await BOT.send_location(chat_id, location = loc)
+    except Forbidden:
+        logging.debug('User has blocked Bot: {}'.format(chat_id))
+        return False
+    except TelegramError as e:
+        logging.debug('Exception in reaching user {}: {}'.format(chat_id, e))
+        return False
+    return True
 
 async def send_typing_action(p, sleep_time=None):    
     chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
