@@ -1,4 +1,6 @@
 from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from historic.bot.bot_telegram import report_admins
 from historic.config import settings
 import asyncio
@@ -13,6 +15,18 @@ client.setup_logging(log_level=logging.DEBUG) # INFO
 # called `app` in `main.py`.
 app = FastAPI()
 
+# add url for qr code app
+# app.mount(
+#     "/assets",
+#     StaticFiles(directory="dist/assets"),
+#     name="assets",
+# )
+# app.mount('/easy-qr-scan-bot', StaticFiles(directory='dist', html=True))
+
+# @app.get("/easy-qr-scan-bot")
+# def read_index():
+#     return FileResponse("./dist/index.html")
+
 @app.get('/set_webhook')
 async def set_webhook(): 
     from historic.bot import bot_telegram_admin
@@ -20,11 +34,11 @@ async def set_webhook():
 
 asyncio.gather((set_webhook()))
 
-@app.get('/')
+@app.get('/', status_code=201)
 async def root():
     logging.debug("in root function")
     """Return a friendly HTTP greeting."""
-    return "hiSTORIC!!", 200
+    return "hiSTORIC!!"
 
 @app.post(settings.DEPLOY_NOTIFICATION_WEBHOOK_URL_ROUTING, status_code=201)
 async def new_deploy(req: Request):    

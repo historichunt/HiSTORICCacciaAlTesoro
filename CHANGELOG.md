@@ -2,6 +2,7 @@
 
 ## 0.17
 - ASYNCIO, FastAPI, uvicorn
+- QR code mini app
 
 ## 0.16
 - Introduced 4 levels of param for trento routing

@@ -66,6 +66,6 @@ def print_all():
 if __name__ == "__main__":
     #TODO use settings.LOCAL_ENV_FILES
     # delete_all()
-    # set_all(['fede', 'test', 'production', 'oist'])
-    set_all(['fede'])
+    set_all(['fede', 'test', 'production', 'oist'])
+    # set_all(['fede'])
     # print_all()

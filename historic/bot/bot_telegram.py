@@ -51,9 +51,9 @@ If kb==None keep last keyboard
 '''
 # @retry_on_network_error
 async def send_message(p, text, kb=None, markdown=True, remove_keyboard=False, \
-    inline_keyboard=False, sleep=False, **kwargs):
+    inline_keyboard=False, sleep=False, reply_markup=None, **kwargs):
     chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
-    reply_markup = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)
+    reply_markup = reply_markup if reply_markup is not None else get_reply_markup(p, kb, remove_keyboard, inline_keyboard)
     try:
         await BOT.send_message(
             chat_id = chat_id,
