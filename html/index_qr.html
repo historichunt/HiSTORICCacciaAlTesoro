@@ -1,0 +1,44 @@
+<!-- credit: https://gitlab.com/calixtemayoraz/web-interfacer-bot -->
+<html ng-app="custom-webapp-ui" lang="en" style="background-color: white">
+  <head>
+    <!-- Load the Telegram Library -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!--Load the AngularJS Library-->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script>
+      //initialize the AngularJS stuff...
+      angular.module("custom-webapp-ui", []).controller('CustomUIController', ReadQR);      
+      
+      function ReadQR($scope) {
+        window.Telegram.WebApp.showScanQrPopup(
+          {text:'Scan next code'}, 
+          function(inputText) {
+            $scope.qrtext = inputText;
+            window.Telegram.WebApp.sendData($scope.qrtext);
+            return true;
+          }
+        );
+        //initialize the button
+        // const mainButton = window.Telegram.WebApp.MainButton;
+        // mainButton.text = 'Send code';
+        // mainButton.enable();
+        // mainButton.show();
+        // $scope.currentCustomer = 'Maria';
+        // and make it send the qr text
+        // mainButton.onClick(function(){
+        //   window.Telegram.WebApp.sendData($scope.qrtext);
+        // })
+      }
+    </script>
+  </head>
+  <body>
+    <div ng-controller="CustomUIController">
+      <!-- <label>Name: <input type="text" ng-model="qr.qrtext"/></label> -->
+      <!-- <h1>Scanned QR Code Text: {{qrtext}}</h1> -->
+      <!-- <h1>QR Text:</h1> -->
+      <!-- Display the qrtext in a div -->
+      <!-- <div>{{ qrtext }}</div>
+      <div>{{ currentCustomer }}</div> -->
+    </div>
+  </body>
+</html>

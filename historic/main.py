@@ -23,9 +23,9 @@ app = FastAPI()
 # )
 # app.mount('/easy-qr-scan-bot', StaticFiles(directory='dist', html=True))
 
-# @app.get("/easy-qr-scan-bot")
-# def read_index():
-#     return FileResponse("./dist/index.html")
+@app.get("/qr")
+def read_qr():
+    return FileResponse("html/index_qr.html")
 
 @app.get('/set_webhook')
 async def set_webhook(): 

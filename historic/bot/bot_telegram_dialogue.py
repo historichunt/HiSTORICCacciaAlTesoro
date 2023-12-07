@@ -1639,12 +1639,23 @@ async def deal_with_admin_commands(p, message_obj):
             await send_sticker_data(p, img_bytes)
             return True
         if text_input=='/qr':
+            # this doesn't seem to work:
+            '''
             keyboard = [
                 [telegram.InlineKeyboardButton("Scan QR codes", web_app=telegram.WebAppInfo(url=settings.WEB_APP_QR_URL))],
-            ]
+            ]            
             reply_markup = telegram.InlineKeyboardMarkup(keyboard)
-            # await update.message.reply_text('Press to launch QR scanner', reply_markup=reply_markup)    
-            await send_message(p, 'Press to launch QR scanner', reply_markup=reply_markup)
+            await send_message(p, 'Press button below to launch QR scanner', reply_markup=reply_markup)
+            '''
+            
+            # display web-app
+            kb = [
+                [telegram.KeyboardButton(
+                    "Scan QR Code",
+                    web_app=telegram.WebAppInfo(settings.WEB_APP_QR_URL)
+                )]
+            ]
+            await send_message(p, 'Press button below to launch QR scanner', kb=kb)
             return True 
         if text_input=='/botname':
             await send_message(p, settings.TELEGRAM_BOT_USERNAME)
@@ -1802,16 +1813,23 @@ async def deal_with_request(request_json):
         await send_message(p, p.ui().MSG_NO_FORWARDING_ALLOWED)
         return
 
-    text = message_obj.text
-    if text:
-        text_input = message_obj.text        
-        logging.debug('Message from @{} in state {} with text {}'.format(chat_id, p.state, text_input))
-        if await deal_with_admin_commands(p, message_obj):
-            return
-        if await deal_with_universal_command(p, message_obj):
-            return
-    logging.debug("Sending {} to state {} with input message_obj {}".format(p.get_first_name(), p.state, message_obj))
-    await repeat_state(p, message_obj=message_obj)
+    if message_obj.web_app_data:
+        # got data from webapp
+        # data = json.loads(message_obj.web_app_data.data)        
+        # await send_message(p, f'data:{json.dumps(data, indent=3)}', remove_keyboard=True)
+        await send_message(p, f'data: {message_obj.web_app_data.data}', remove_keyboard=True)
+    else:
+        text = message_obj.text
+        if text:
+            # got a message from use        
+            text_input = message_obj.text        
+            logging.debug('Message from @{} in state {} with text {}'.format(chat_id, p.state, text_input))
+            if await deal_with_admin_commands(p, message_obj):
+                return
+            if await deal_with_universal_command(p, message_obj):
+                return    
+        logging.debug("Sending {} to state {} with input message_obj {}".format(p.get_first_name(), p.state, message_obj))
+        await repeat_state(p, message_obj=message_obj)
 
 possibles = globals().copy()
 possibles.update(locals())
