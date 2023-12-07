@@ -2,11 +2,22 @@
   <head>
     <!-- Load the Telegram Library -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script>      
-      window.Telegram.WebApp.showScanQrPopup(
+    <script>       
+      WA = window.Telegram.WebApp;
+
+      function changeBackground() {
+        document.body.style.background = WA.backgroundColor;
+        headerColor
+      }
+
+      window.addEventListener("load",function() { 
+        changeBackground() 
+      });
+      
+      WA.showScanQrPopup(
         {text:'Scan next code'}, 
         function(inputText) {
-          window.Telegram.WebApp.sendData(inputText);
+          WA.sendData(inputText);
           return true;
         }
       )
