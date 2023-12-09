@@ -1638,7 +1638,7 @@ async def deal_with_admin_commands(p, message_obj):
             img_bytes = utility.create_qr(code, transparent=False)
             await send_sticker_data(p, img_bytes)
             return True
-        if text_input=='/qr':
+        if text_input == '/qr':
             # this doesn't seem to work:
             '''
             keyboard = [
@@ -1656,6 +1656,26 @@ async def deal_with_admin_commands(p, message_obj):
                 )]
             ]
             await send_message(p, 'Press button below to launch QR scanner', kb=kb)
+            return True 
+        if text_input == '/features':
+            # display web-app
+            kb = [
+                [telegram.KeyboardButton(
+                    "MINIAPP FEATURES",
+                    web_app=telegram.WebAppInfo(settings.APP_BASE_URL+'/miniapp_features')
+                )]
+            ]
+            await send_message(p, 'Press button below to launch miniapp with features', kb=kb)
+            return True 
+        if text_input == '/sliders':
+            # display web-app
+            kb = [
+                [telegram.KeyboardButton(
+                    "MINIAPP SLIDERS",
+                    web_app=telegram.WebAppInfo(settings.APP_BASE_URL+'/miniapp_sliders')
+                )]
+            ]
+            await send_message(p, 'Press button below to launch miniapp with slider', kb=kb)
             return True 
         if text_input=='/botname':
             await send_message(p, settings.TELEGRAM_BOT_USERNAME)
