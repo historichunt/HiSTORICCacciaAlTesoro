@@ -847,16 +847,24 @@ async def state_WAIT_FOR_QR(p, message_obj=None, **kwargs):
             check_if_first_mission_and_start_time(p)
         send_msg_mission_number(p)
         msg = p.ui().MSG_SCAN_QR_CODE    
-        kb = [[p.ui().BUTTON_EXIT]]    
+        kb = [
+                [
+                    telegram.KeyboardButton(
+                        "Scan QR Code", # TODO: localize
+                        web_app=telegram.WebAppInfo(settings.WEB_APP_QR_URL)
+                    )                    
+                ],
+                [
+                    p.ui().BUTTON_EXIT
+                ]
+            ]
         await send_message(p, msg, kb=kb)
     else:
-        text_input = message_obj.text if message_obj else None
+        text_input = message_obj.text if message_obj else qr_code if qr_code else None
         photo = message_obj.photo if message_obj else None
         testing = p.get_tmp_variable('TEST_HUNT_MISSION_ADMIN', False)   
         kb = p.get_keyboard()        
-        if qr_code:
-            pass
-        elif text_input:
+        if text_input:
             if text_input in flatten(kb):
                 assert text_input == p.ui().BUTTON_EXIT
                 await redirect_to_state(p, state_EXIT_CONFIRMATION)
@@ -1837,7 +1845,11 @@ async def deal_with_request(request_json):
         # got data from webapp
         # data = json.loads(message_obj.web_app_data.data)        
         # await send_message(p, f'data:{json.dumps(data, indent=3)}', remove_keyboard=True)
-        await send_message(p, f'data: {message_obj.web_app_data.data}', remove_keyboard=True)
+        datastring = message_obj.web_app_data.data
+        if p.state == 'state_WAIT_FOR_QR':
+             await redirect_to_state(p, state_WAIT_FOR_QR, qr_code=datastring)
+        else:
+            await send_message(p, f'data: {datastring}', markdown=False, remove_keyboard=True)
     else:
         text = message_obj.text
         if text:
