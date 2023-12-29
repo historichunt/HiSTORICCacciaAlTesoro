@@ -4,11 +4,12 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>       
       WA = window.Telegram.WebApp;
+      WA.setBackgroundColor(WA.backgroundColor)
 
-      function changeBackground() {
-        document.body.style.background = WA.backgroundColor;
-        headerColor
-      }
+      // function changeBackground() {
+      //   document.body.style.background = WA.backgroundColor;
+      //   headerColor
+      // }
 
       window.addEventListener("load",function() { 
         changeBackground() 
