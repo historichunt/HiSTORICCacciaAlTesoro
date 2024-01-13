@@ -11,4 +11,4 @@ runtime: python38
 # pricing: https://cloud.google.com/appengine/pricing
 # API usage: https://console.cloud.google.com/apis/dashboard?project=historictrentobot
 
-instance_class: F2
+instance_class: F4
