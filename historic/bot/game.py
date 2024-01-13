@@ -109,7 +109,7 @@ RESULTS_GAME_TABLE_HEADERS = [
     'TOTAL TIME GAME', 'TOTAL TIME MISSIONS'
 ]
 
-def save_game_data_in_airtable(p, compute_times):
+async def save_game_data_in_airtable(p, compute_times):
     from historic.bot.bot_telegram import get_photo_url_from_telegram
     import json
     
@@ -131,7 +131,7 @@ def save_game_data_in_airtable(p, compute_times):
         games_row[h] = game_data[h]
     games_row['GAME VARS'] = json.dumps(game_data,ensure_ascii=False)
     games_row['GROUP_MEDIA_FILE_IDS'] = [
-        {'url': get_photo_url_from_telegram(file_id)} 
+        {'url': await get_photo_url_from_telegram(file_id)} 
         for file_id in game_data['GROUP_MEDIA_FILE_IDS']
     ]
     RESULTS_GAME_TABLE.insert(games_row)
@@ -218,7 +218,7 @@ def load_game(p, hunt_password, test_hunt_admin=False):
     tvar['PENALTY TIME'] = 0 # seconds
     tvar['FINISHED'] = False # seconds
 
-def build_missions(p, test_all=False):
+async def build_missions(p, test_all=False):
     hunt_settings = p.tmp_variables['SETTINGS']
     airtable_game_id = p.tmp_variables['HUNT_INFO']['Airtable_Game_ID']
     mission_tab_name = f'Missioni_{p.language}'
@@ -227,8 +227,8 @@ def build_missions(p, test_all=False):
         missions = list(missions_dict.values())
     elif hunt_settings.get('MISSIONS_SELECTION', None) == 'ROUTING':
         from historic.bot.bot_telegram import send_message   
-        send_message(p, p.ui().MSG_GAME_IS_LOADING, remove_keyboard=True)
-        missions = get_missioni_routing(p, airtable_game_id, mission_tab_name)
+        await send_message(p, p.ui().MSG_GAME_IS_LOADING, remove_keyboard=True)
+        missions = await get_missioni_routing(p, airtable_game_id, mission_tab_name)
         if missions is None:            
             return False # problema selezione percorso
     else:
@@ -239,7 +239,7 @@ def build_missions(p, test_all=False):
         if p.is_admin_current_hunt(): 
             from historic.bot.bot_telegram import send_message   
             random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missions,1)])
-            send_message(p, "DEBUG Random missioni:\n{}".format(random_missioni_names))
+            await send_message(p, "DEBUG Random missioni:\n{}".format(random_missioni_names))
 
     p.tmp_variables['MISSIONI_INFO'] = {'TODO': missions, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(missions)}
     return True
@@ -443,7 +443,7 @@ def get_random_missions(airtable_game_id, mission_tab_name, start_lat_long):
 
     return missioni_random
 
-def get_missioni_routing(p, airtable_game_id, mission_tab_name):
+async def get_missioni_routing(p, airtable_game_id, mission_tab_name):
     
     from historic.bot.bot_telegram import report_admins, send_message, send_photo_data
 
@@ -498,12 +498,12 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
         info_msg = \
             f'Ho selezionato per voi {len(stop_names)} tappe e dovreste metterci circa {estimated_duration_min} minuti. '\
             'Ovviamente dipende da quanto sarete veloci e abili a risolvere gli indovinelli! 😉'     
-        send_message(p, info_msg)
+        await send_message(p, info_msg)
 
         if p.is_admin_current_hunt():                 
             info_text = '\n'.join(info)
-            send_message(p, f"🐛 DEBUG:\n\n{info_text}", markdown=False)
-            send_photo_data(p, best_route_img)
+            await send_message(p, f"🐛 DEBUG:\n\n{info_text}", markdown=False)
+            await send_photo_data(p, best_route_img)
             # selected_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missioni_route,1)])
             # send_message(p, "DEBUG Selected missioni:\n{}".format(selected_missioni_names))
         notify_group_id = get_notify_group_id(p)
@@ -511,8 +511,8 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
             squadra_name = get_group_name(p)
             info_text = f'La squadra {squadra_name} ha attenuto il seguente percorso:\n\n'
             info_text += '\n'.join(info)
-            send_message(notify_group_id, info_text, markdown=False)
-            send_photo_data(notify_group_id, best_route_img)
+            await send_message(notify_group_id, info_text, markdown=False)
+            await send_photo_data(notify_group_id, best_route_img)
         return missioni_route
 
     else:
@@ -522,7 +522,7 @@ def get_missioni_routing(p, airtable_game_id, mission_tab_name):
                     f'duration min = {duration_min}\n'\
                     f'profile = {profile}\n'\
                     f'circular route = {circular_route}\n'
-        report_admins(error_msg)
+        await report_admins(error_msg)
         return None
 
 
@@ -585,12 +585,12 @@ def get_notify_group_id(p):
         return None
     return str(id_list[0])
 
-def notify_group(p, msg):
+async def notify_group(p, msg):
     from historic.bot.bot_telegram import send_message
     id_list = p.tmp_variables['Notify_Group ID']
     if id_list is None:
         return False
-    return send_message(id_list, msg)
+    return await send_message(id_list, msg)
 
 
 def manual_validation(p):
@@ -633,7 +633,7 @@ def start_mission(p):
     current_mission['start_time'] = start_time
     p.tmp_variables['MISSION_TIMES'].append([start_time])
 
-def set_mission_end_time(p):
+async def set_mission_end_time(p):
     end_time = dtu.now_utc_iso_format()
     current_mission = get_current_mission(p)
     current_mission['end_time'] = end_time
@@ -646,7 +646,7 @@ def set_mission_end_time(p):
         last_mission_time.append(end_time)
     else:
         from historic.bot.bot_telegram import report_admins
-        report_admins(f'Bug MISSION_TIMES (length={len(last_mission_time)}) for user {p.chat_id}')
+        await report_admins(f'Bug MISSION_TIMES (length={len(last_mission_time)}) for user {p.chat_id}')
     
     mission_ellapsed = dtu.delta_seconds_iso(*last_mission_time)
     return mission_ellapsed

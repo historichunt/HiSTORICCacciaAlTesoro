@@ -8,8 +8,8 @@ def get_ngrok_base():
     return remote_base
 
 
-def set_webhook():
-    s = BOT.setWebhook(settings.WEBHOOK_TELEGRAM_BASE, allowed_updates=['message','callback_query'])
+async def set_webhook():
+    s = await BOT.setWebhook(settings.WEBHOOK_TELEGRAM_BASE, allowed_updates=['message','callback_query'])
     if s:
         print("webhook setup ok: {}".format(settings.WEBHOOK_TELEGRAM_BASE))
     else:

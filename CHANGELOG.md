@@ -1,6 +1,17 @@
 # Change Log
 
+## 0.17
+- ASYNCIO, FastAPI, uvicorn
+- QR code mini app
+
+## 0.16
+- Introduced 4 levels of param for trento routing
+- Trento hunt data update (31+5=36 new stops)
+
 ## 0.15
+- QR mode
+- stickers (webp)
+- bot specific UI
 
 ## 0.14
 - QR code mode

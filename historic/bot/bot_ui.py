@@ -53,8 +53,9 @@ class UI_LANG:
         else:
             result = UI_DICT[self.lang].get(var, None)
             if result is None:
-                from historic.bot.bot_telegram import report_admins
-                report_admins(f'⚠️ Missing UI VAR: {var}')
+                raise Exception(f'⚠️ Missing UI VAR: {var}')
+                # from historic.bot.bot_telegram import report_admins
+                # report_admins(f'⚠️ Missing UI VAR: {var}')
         return result
 
     def __getattr__(self, attr):

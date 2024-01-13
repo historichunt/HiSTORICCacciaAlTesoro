@@ -1,0 +1,29 @@
+<html ng-app="custom-webapp-ui" lang="en" style="background-color: white">
+  <head>
+    <!-- Load the Telegram Library -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>       
+      WA = window.Telegram.WebApp;
+      WA.setBackgroundColor(WA.backgroundColor)
+
+      // function changeBackground() {
+      //   document.body.style.background = WA.backgroundColor;
+      //   headerColor
+      // }
+
+      window.addEventListener("load",function() { 
+        changeBackground() 
+      });
+      
+      WA.showScanQrPopup(
+        {text:'Scan next code'}, 
+        function(inputText) {
+          WA.sendData(inputText);
+          return true;
+        }
+      )
+    </script>
+  </head>
+  <body>
+  </body>
+</html>

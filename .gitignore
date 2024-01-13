@@ -2,3 +2,5 @@
 .env*
 key.py
 data
+node_modules
+dist
