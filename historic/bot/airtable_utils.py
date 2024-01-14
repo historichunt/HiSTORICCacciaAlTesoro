@@ -121,34 +121,78 @@ def process_errori(mission_error_dict):
             output.append(f'   ERRORE = {error}   (con frequenza = {freq})\n')
     return '\n'.join(output)
 
-def get_report(hunt_password, table_name='Results'):
+def get_report(hunt_password, table_name='Results', output_file='data.tsv'):
+    from historic.bot import date_time_util as dtu
     base_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
     RESULTS_TABLE = Airtable(base_id, table_name, api_key=settings.AIRTABLE_API_KEY)
     table_entries = RESULTS_TABLE.get_all()
 
     result = []
+    header = [
+        'User Info',
+        'Group Name', 
+        'Finished',
+        'Group Size', 
+        'Total Missions',
+        'Missions Completed',         
+        'Elapsed Mission Min',
+        'Elapsed Total Min',
+        'Route Duration Min', 
+        'Elapsed Difference Min'
+    ]
+    result.append(header)
 
     for entry in table_entries:
         row = entry['fields']
         finished = row.get('FINISHED', False)
-        if not finished:
-            # print(str(group_name)+'   NANANAN SKIP! NON hanno completato!')
-            continue
+        # if not finished:
+        #     continue
         vars = json.loads(row['GAME VARS'])
+        user_info = []
+        for f in ['NOME', 'COGNOME', 'USERNAME']:
+            if vars[f]:
+                if f=='USERNAME':
+                    user_info.append(f'@{vars[f]}')
+                else:
+                    user_info.append(vars[f])
+        user_info = ' '.join(user_info)        
         group_name = row.get('GROUP_NAME', '')
-        quanto_ci_han_messo_in_secondi = vars['ELAPSED GAME']
+        group_size = vars.get('GROUP_SIZE', '')
+        elapsed_missions_min = vars['ELAPSED MISSIONS'] // 60
+        elapsed_total_sec = vars['ELAPSED GAME']
+        elapsed_total_min = elapsed_total_sec // 60
+        # missions_times_list = [
+        #     dtu.delta_seconds_iso(t[0], t[1]) if len(t)==2 else 0 
+        #     for t in vars['MISSION_TIMES']
+        # ]
+        # missions_times_total_sec = sum(missions_times_list)
+        # missions_times_total_min = missions_times_total_sec // 60
+        completed_missions = vars.get('COMPLETED_MISSIONS','')
+        incompleted_missions = vars.get('INCOMPLETED_MISSIONS','')
+        total_missions = completed_missions + incompleted_missions
+        route_duration_min = ''        
+        route_duration_diff_min = ''
         if 'ROUTE_DURATION_MIN' in vars:
-            quanto_volevano_giocare_in_minuti = vars['ROUTE_DURATION_MIN']
-            quanto_volevano_giocare_in_secondi = quanto_volevano_giocare_in_minuti * 60
-            secondi_in_piu_rispetto_a_quanto_richiesto = quanto_ci_han_messo_in_secondi - quanto_volevano_giocare_in_secondi
-
-            total_time_missions = vars['TOTAL TIME MISSIONS']
-            nr_missions = vars['MISSIONI_INFO']['TOTAL']
-            result.append(f'Group={group_name} / secondi in piu = {secondi_in_piu_rispetto_a_quanto_richiesto}  messo={quanto_ci_han_messo_in_secondi}-quantovolevano={quanto_volevano_giocare_in_secondi} /')
-            result.append(f'Group={group_name} / secondi medi per missione = {total_time_missions/nr_missions}  total time missions={total_time_missions} / missions={nr_missions} /')
-            result.append('')
-
-    return '\n'.join(result)
+            route_duration_min = vars['ROUTE_DURATION_MIN']
+            route_duration_sec = route_duration_min * 60
+            route_duration_extra_sec = elapsed_total_sec - route_duration_sec # secondi_in_piu_rispetto_a_quanto_richiesto            
+            route_duration_diff_min = route_duration_extra_sec // 60
+        row_result = [
+            user_info,
+            group_name, 
+            finished,
+            group_size, 
+            total_missions,
+            completed_missions,             
+            elapsed_missions_min,
+            elapsed_total_min,
+            route_duration_min, 
+            route_duration_diff_min
+        ]
+        result.append(row_result)
+    # return '\n'.join(['\t'.join([str(f) for f in row]) for row in result])
+    with open(output_file, 'w') as f_out:
+        f_out.write('\n'.join(['\t'.join([str(f) for f in row]) for row in result]))
 
 
 if __name__ == "__main__":    
@@ -187,7 +231,7 @@ if __name__ == "__main__":
                 output_file_digested=f'{hunt_name_no_space}_errori_digested.txt'
             )
         elif opt==3:
-            print(get_report(password))
+            get_report(password, output_file='data/stats.tsv')
         elif opt==4:
             mission_table_name = 'Missioni_IT'
             start_lat_long = random.choice(game.get_all_missions_lat_lon(airtable_game_id, mission_table_name))
