@@ -1148,7 +1148,7 @@ async def state_DOMANDA(p, message_obj=None, **kwargs):
                     except regex.error: correct_answers_regex.remove(r)
                 #correct_answers_upper_word_set = set(flatten([x.split() for x in correct_answers_upper]))
                 if text_input.upper() in correct_answers_upper or functools.reduce(lambda a, r: a or regex.match(r, text_input, regex.I), correct_answers_regex, False):
-                    game.set_mission_end_time(p) # set time of ending the mission (after solution)
+                    await game.set_mission_end_time(p) # set time of ending the mission (after solution)
                     if not send_post_message(p, current_mission):
                         await send_message(p, bot_ui.MSG_ANSWER_OK(p.language), remove_keyboard=True)
                         await send_typing_action(p, sleep_time=1)                    

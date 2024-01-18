@@ -463,7 +463,7 @@ async def get_missioni_routing(p, airtable_game_id, mission_tab_name):
     ]
 
     profile = p.get_tmp_variable('ROUTE_TRANSPORT', api_google.PROFILE_FOOT_WALKING)
-    duration_min = p.get_tmp_variable('ROUTE_DURATION_MIN', 60) # 1 h default
+    duration_min = p.get_tmp_variable('ROUTE_DURATION_MIN', 45) # 45 min default
     circular_route = p.get_tmp_variable('ROUTE_CIRCULAR', False)
 
     route_planner = None                
