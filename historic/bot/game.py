@@ -613,8 +613,7 @@ def get_group_name(p, escape_markdown=True):
         name = utility.escape_markdown(name)
     return name
 
-def set_game_start_time(p):
-    
+def set_game_start_time(p):    
     start_time = dtu.now_utc_iso_format()
     p.tmp_variables['START_TIME'] = start_time
 
