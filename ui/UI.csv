@@ -76,17 +76,17 @@ MSG_ANSWER_WRONG_SG,,"🤔 Risposta sbagliata, riprovate!
 ⚠️ Achtung, ihr habt {} falsche Antworten gesammelt, das bedeutet eine Strafe von {} Sekunden.",
 MSG_AUTO_QUIT,,"⚠️ Ho visto che hai iniziato la caccia al tesoro ma non la hai completata.
 La caccia verrà ora terminata, ma hai la possibilità di ricominciarne un'altra quando vorrai. 😉
-💬 Se ti va di darci qualche suggerimento per migliorare il gioco, ti invito a mandare un messaggio a Paolo di hiSTORIC scrivendo in Telegram a @Phauly  o alla mail historic.trento@gmail.com.
+💬 Se ti va di darci qualche suggerimento per migliorare il gioco, ti invito a mandare un messaggio sul [Gruppo Telegram di Supporto](https://t.me/+aY3jb5BM6EE5Mzc8).
 Grazie per aver giocato con noi! 😀","⚠️ I saw you started the treasure hunt but you haven't completed it.
 The hunt will now be terminated, but you have the option to start another one whenever you want. 😉
-💬 If you would like to give us some suggestions to improve the game, I invite you to send a message to Paolo from hiSTORIC by writing in Telegram to @Phauly or to the email historic.trento@gmail.com.
+💬 If you would like to give us some suggestions to improve the game, I invite you to send a message to the [Support group on Telegram](https://t.me/+aY3jb5BM6EE5Mzc8).
 Thanks for playing with us! 😀","⚠️ 私はあなたがトレジャーハントを始めたのを見ましたが、あなたはそれを完了していません。
 狩りは終了しますが、いつでも別のものを開始するオプションがあります。 😉
-💬 ゲームを改善するためのいくつかの提案をお願いしたい場合は、Telegramで@Phaulyに書いているか、historic.trento @gmail.comに電子メールで書くことで、歴史からPaoloにメッセージを送信するように勧めます。
-私たちと遊んでくれてありがとう！ 😀","⚠️ Ich habe bemerkt, dass ihr die Schatzsuche begonnen habt ohne sie zubeenden.
+💬 ゲームを改善するための提案がございましたら、[Telegram のサポート グループ](https://t.me/+aY3jb5BM6EE5Mzc8) にメッセージをお送りください。
+一緒に遊んでくれてありがとう！ 😀」","⚠️ Ich habe bemerkt, dass ihr die Schatzsuche begonnen habt ohne sie zubeenden.
 Deswegen wird die Jagd jetzt geschlossen, aber gibt es jederzeit  die Möglichkeit eine neue zu starten. 😉
-💬 Wenn ihr Verbesserungsvorschläge hättet, gebt Paolo von Historic uber Telegramm an @Phauly oder per E-Mail an historical.trento@gmail.com bescheid.
-Danke! 😀",
+💬 Wenn Sie uns Vorschläge zur Verbesserung des Spiels machen möchten, lade ich Sie ein, eine Nachricht an die [Support-Gruppe auf Telegram] (https://t.me/+aY3jb5BM6EE5Mzc8) zu senden.
+Danke, dass du mit uns spielst! 😀""",
 MSG_CHANGE_LANGUAGE,,🌐 CHANGE LANGUAGE,🌐 CHANGE LANGUAGE,🌐 CHANGE LANGUAGE,🌐 SPRACHE WECHSELN,
 MSG_CHECK_HUNT_OK,,✅ Nessun errore rilevato,✅ No error found,✅ エラーは見つかりません,✅ Kein Fehler gefunden,
 MSG_CONFIRM_PHOTO_INPUT,,👀 Provate a controllare la foto. Siete sicuri di volerla inviare?,👀 Try to check the photo. Are you sure you want to send it to us?,👀 写真を確認してみてください。あなたはそれを私たちに送りたいですか？,👀 Überprüft euer Bild! Wollt ihr es wirklich schicken?,
