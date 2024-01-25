@@ -999,9 +999,10 @@ async def state_MISSION_GPS(p, message_obj=None, **kwargs):
     give_instruction = message_obj is None
     current_mission = game.get_current_mission(p)
     goal_position = utility.get_lat_lon_from_string(current_mission['GPS'])
-    if goal_position == p.get_tmp_variable('HUNT_START_GPS'):
-        await redirect_to_state(p, state_DOMANDA)
-        return
+    # TODO: see if we need the following
+    # if goal_position == p.get_tmp_variable('HUNT_START_GPS'):
+        # await redirect_to_state(p, state_DOMANDA)
+        # return
     if give_instruction:        
         # skip GPS if already there (only for first mission and ROUTING driven hunt)
         testing = p.get_tmp_variable('TEST_HUNT_MISSION_ADMIN', False)
@@ -1364,7 +1365,7 @@ async def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
         if p.get_tmp_variable('TEST_HUNT_MISSION_ADMIN', False):
             await redirect_to_state(p, state_TEST_HUNT_MISSION_ADMIN)
             return
-        game.set_current_mission_as_completed(p)
+        next_mission_num, total_mission = game.set_current_mission_as_completed(p)
         survery_time = (
             game.get_num_remaining_missions(p) == 0 or (
                 params.JUMP_TO_SURVEY_AFTER and
@@ -1378,13 +1379,14 @@ async def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
             await send_message(p, msg, kb)
         else:                    
             msg = p.ui().MSG_PRESS_FOR_NEXT_MISSION
-            kb = [[p.ui().BUTTON_NEXT_MISSION]]            
+            button_next_num = f'{p.ui().BUTTON_NEXT_MISSION} {next_mission_num}/{total_mission}'
+            kb = [[button_next_num]]            
             await send_message(p, msg, kb)            
     else:
         text_input = message_obj.text
         kb = p.get_keyboard()
         if text_input in flatten(kb):
-            if text_input == p.ui().BUTTON_NEXT_MISSION:
+            if text_input.startswith(p.ui().BUTTON_NEXT_MISSION):
                 if p.tmp_variables['SETTINGS'].get('WAIT_QR_MODE', False):
                     await redirect_to_state(p, state_WAIT_FOR_QR)                
                 else:

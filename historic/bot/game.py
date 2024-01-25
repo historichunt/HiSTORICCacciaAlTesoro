@@ -745,6 +745,11 @@ def set_current_mission_as_completed(p):
     current_mission = indovinello_info['CURRENT']
     indovinello_info['COMPLETED'].append(current_mission)
     indovinello_info['CURRENT'] = None
+    completed_missions = len(indovinello_info['COMPLETED'])
+    next_mission_num = completed_missions + 1
+    todo_missions = len(indovinello_info['TODO'])
+    total_mission = completed_missions + todo_missions
+    return next_mission_num, total_mission
 
 def increase_wrong_answers_current_indovinello(p, answer, give_penalty, put=True):
     indovinello_info = p.tmp_variables['MISSIONI_INFO']
