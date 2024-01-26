@@ -11,7 +11,7 @@ MAX_GRID_OVERALAPPING_ATTEMPTS = [20,30,40,60]
 
 NUM_PLANNER_ATTEMPTS = len(DURATION_TOLERANCE_MIN_ATTEMPTS)
 
-def get_trento_route_planner(game_dm, profile, start_idx, duration_min, skip_points_idx, circular_route, attempt):
+def get_trento_route_planner(game_dm, profile, start_idx, duration_min, skip_points_idx, circular_route, attempt, random_seed=None):
 
     assert attempt < NUM_PLANNER_ATTEMPTS # 0, 1, 2
     
@@ -40,7 +40,7 @@ def get_trento_route_planner(game_dm, profile, start_idx, duration_min, skip_poi
         max_overalapping = max_grid_overalapping, # in grids, None to ignore this constraint
         stop_duration = 300, # da cambiare in 300 per 5 min
         num_attempts = 10000, # set to None for exaustive search
-        random_seed = None, # only relevan if num_attempts is not None (non exhaustive serach)
+        random_seed = random_seed, # only relevan if num_attempts is not None (non exhaustive serach)
         exclude_neighbor_dst = exclude_neighbor_dst, # exclude neighbour stop within 1 min    
         circular_route = circular_route,
         num_best = 1,

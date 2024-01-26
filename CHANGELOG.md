@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.18
+- fixed bug in repeated mission in routing hunt
+- added seed for replicability
+
 ## 0.17
 - ASYNCIO, FastAPI, uvicorn
 - QR code mini app

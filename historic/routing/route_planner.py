@@ -326,8 +326,9 @@ class RoutePlanner:
             for n_idx in self.p_idx_neighbor_idx[prev_idx]:
                 if n_idx in remaining_idx:
                     remaining_idx.remove(n_idx)
-        else:
-            remaining_idx.remove(prev_idx)
+        
+        # remove previous index
+        remaining_idx.remove(prev_idx)
 
         if len(remaining_idx)==0:                     
             self.total_attempts += 1  

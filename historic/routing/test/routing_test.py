@@ -36,7 +36,7 @@ from historic.routing.datasets.trento_hunt_params import get_trento_route_planne
 #         show_progress_bar = show_progress_bar
 #     )
 
-def test_single_route():
+def test_single_route(random_seed):
 
     planner_attempt = 2
 
@@ -70,15 +70,27 @@ def test_single_route():
 
     route_planner = get_trento_route_planner(
         trento_dm, profile, start_idx, duration_min, skip_points_idx, circular_route,
-        planner_attempt
+        planner_attempt,
+        random_seed=random_seed
     )
 
     route_planner.build_routes()
 
-    route_planner.get_routes(
-        show_map=True,
+    best_route_idx, best_stop_names, info, best_route_img, duration_min = route_planner.get_routes(
+        show_map=False,
         log=True
     )
+    
+    if best_route_idx:
+        print(f'{best_route_idx}: {len(best_route_idx)}')
+        print(f'{set(best_route_idx)}: {len(set(best_route_idx))}')
+        if(len(best_route_idx)!=len(set(best_route_idx))):
+            return False    
+    else:
+        print('No solutions?')
+        return True
+    
+    return True
 
 
 def test_multi_routes():
@@ -138,7 +150,10 @@ def test_multi_routes():
 
 
 if __name__ == "__main__":
-    # test_single_route()
-    test_multi_routes()
+    seed_no_solution = 3
+    seed_duplicate_mission = 15
+    
+    print(test_single_route(seed_no_solution))
+    # test_multi_routes()
     
     
