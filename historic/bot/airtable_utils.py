@@ -121,7 +121,7 @@ def process_errori(mission_error_dict):
             output.append(f'   ERRORE = {error}   (con frequenza = {freq})\n')
     return '\n'.join(output)
 
-def get_report(hunt_password, table_name='Results', output_file='data.tsv'):
+def get_report(hunt_password, table_name='Results'):
     from historic.bot import date_time_util as dtu
     base_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
     RESULTS_TABLE = Airtable(base_id, table_name, api_key=settings.AIRTABLE_API_KEY)
@@ -190,9 +190,10 @@ def get_report(hunt_password, table_name='Results', output_file='data.tsv'):
             route_duration_diff_min
         ]
         result.append(row_result)
-    # return '\n'.join(['\t'.join([str(f) for f in row]) for row in result])
-    with open(output_file, 'w') as f_out:
-        f_out.write('\n'.join(['\t'.join([str(f) for f in row]) for row in result]))
+    return '\n'.join(['\t'.join([str(f) for f in row]) for row in result])
+    
+    # with open(output_file, 'w') as f_out:
+    #     f_out.write('\n'.join(['\t'.join([str(f) for f in row]) for row in result]))
 
 
 if __name__ == "__main__":    
@@ -231,7 +232,9 @@ if __name__ == "__main__":
                 output_file_digested=f'{hunt_name_no_space}_errori_digested.txt'
             )
         elif opt==3:
-            get_report(password, output_file='data/stats.tsv')
+            report_text = get_report(password)
+            with open('data/stats.tsv', 'w') as f_out:
+                f_out.write('\n'.join(['\t'.join([str(f) for f in row]) for row in report_text]))
         elif opt==4:
             mission_table_name = 'Missioni_IT'
             start_lat_long = random.choice(game.get_all_missions_lat_lon(airtable_game_id, mission_table_name))
