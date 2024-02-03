@@ -76,13 +76,14 @@ async def new_deploy(req: Request):
 # ================================
 
 @app.get('/dayly_check_terminate_hunt', status_code=201)
-async def dayly_check_terminate_hunt(req: Request):
+async def dayly_check_terminate_hunt_req(req: Request):
     headers = req.headers
     if not headers.get('X-Appengine-Cron', False):
         # Only requests from the Cron Service will contain the X-Appengine-Cron header
         return
-        
-    import time
+    await dayly_check_terminate_hunt()
+
+async def dayly_check_terminate_hunt():
     from historic.bot.date_time_util import now_utc_plus_delta_days
     from historic.config import params
     from historic.bot.ndb_person import Person
@@ -96,16 +97,16 @@ async def dayly_check_terminate_hunt(req: Request):
         terminated_people_list = []
         for p in people_on_hunt:
             if p.last_mod < expiration_date:
-                await send_message(p, p.ui().MSG_AUTO_QUIT)
-                teminate_hunt(p)
-                terminated_people_list.append(p)
+                active = await send_message(p, p.ui().MSG_AUTO_QUIT)
+                await teminate_hunt(p)
+                terminated_people_list.append((p, active))
                 await asyncio.sleep(1)
         if terminated_people_list:
             msg_admin = "Caccia auto-terminata per:"
-            for n,p in enumerate(terminated_people_list,1):
-                msg_admin += f'\n {n}. {p.get_first_last_username(escape_markdown=False)}'
+            for n,(p,active) in enumerate(terminated_people_list,1):
+                first_last_username = p.get_first_last_username(escape_markdown=False)
+                msg_admin += f'\n {n}. {first_last_username} {active}'
             await report_admins(msg_admin)
-
     
 @app.post(settings.WEBHOOK_TELEGRAM_ROUTING, status_code=201)
 async def telegram_webhook_handler(req: Request):
