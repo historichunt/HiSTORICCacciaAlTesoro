@@ -229,6 +229,7 @@ async def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
                     await redirect_to_state(p, state_ADMIN)
                 elif text_input == p.ui().BUTTON_UPDATE_MEDIA_BUCKET:
                     from historic.bot.airtable_utils import update_media_bucket
+                    await send_message(p, 'Be patient, this can take a while...')
                     await update_media_bucket(hunt_name, hunt_pw)
                     await send_message(p, p.ui().MSG_BUCKET_UPDATED)
                 elif text_input == p.ui().BUTTON_CHECK_BUGS_HUNT:
