@@ -254,19 +254,12 @@ async def build_missions(p, test_all=False):
 async def upload_missions_media_to_bucket(hunt_name, missions):    
     import requests
     from google.cloud import storage
+    from historic.config.params import GOOGLE_BUCKET_NAME, MEDIA_FIELDS_MISSIONS
     storage_client = storage.Client()
-    bucket_name = "historictrento"
-    bucket = storage_client.bucket(bucket_name)    
+    bucket = storage_client.bucket(GOOGLE_BUCKET_NAME)    
 
-    media_fields = [
-        'INTRO_MEDIA', 
-        'DOMANDA_MEDIA', 
-        'POST_LOC_MEDIA', 
-        'POST_INPUT_MEDIA', 
-        'POST_MEDIA'
-    ]
     for m in missions:
-        for field in media_fields:
+        for field in MEDIA_FIELDS_MISSIONS:
             # print(field)
             if field in m:
                 media_field = m[field][0]

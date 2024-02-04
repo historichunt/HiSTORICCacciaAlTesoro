@@ -11,6 +11,39 @@ import zipfile
 from historic.bot.utility import append_num_to_filename, is_int_between
 import random
 
+async def update_media_bucket(hunt_name, hunt_pw):
+    from historic.bot.game import get_hunt_languages    
+    from historic.bot.game import HUNTS_PW
+    from historic.bot import airtable_utils
+    from historic.config.params import GOOGLE_BUCKET_NAME, MEDIA_FIELDS_MISSIONS
+    import requests
+    from google.cloud import storage
+    
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(GOOGLE_BUCKET_NAME)    
+    hunt_config_dict = HUNTS_PW[hunt_pw]   
+    game_id = hunt_config_dict['Airtable_Game_ID'] 
+    hunt_languages = get_hunt_languages(hunt_pw)
+    
+    for l in hunt_languages:
+        table_name = f'Missioni_{l}'
+        hunt_missioni_table = Airtable(game_id, table_name, api_key=settings.AIRTABLE_API_KEY)
+        missioni_row_dict_list = airtable_utils.get_rows(hunt_missioni_table)
+        for mission in missioni_row_dict_list:
+            for field in MEDIA_FIELDS_MISSIONS:
+                # print(field)
+                if field in mission:
+                    media_field = mission[field][0]
+                    url = media_field['url']
+                    filename = media_field['filename']                
+                    blob = bucket.blob(f'{hunt_name}/{filename}')           
+                    request_response = requests.get(url, stream=True)
+                    content_type = request_response.headers['content-type']
+                    media_content = request_response.content
+                    blob.upload_from_string(media_content, content_type=content_type) 
+                    media_field['url'] = blob.public_url
+
+
 def download_media_zip(hunt_password, table_name='Results', log=False, check_size=True):    
     from historic.config.params import MAX_SIZE_FILE_BYTES    
     base_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
@@ -195,8 +228,7 @@ def get_report(hunt_password, table_name='Results'):
     # with open(output_file, 'w') as f_out:
     #     f_out.write('\n'.join(['\t'.join([str(f) for f in row]) for row in result]))
 
-
-if __name__ == "__main__":    
+async def main():
     from historic.bot.utils_cli import get_hunt_from_password
 
     hunt_name, password, airtable_game_id = get_hunt_from_password()    
@@ -206,6 +238,7 @@ if __name__ == "__main__":
         '2. Scaricare errori',
         '3. Stampa statistiche squadre',
         '4. Testa missioni (random)',
+        '5. Update media bucket'
         'q  Exit'
     ]
     
@@ -223,21 +256,32 @@ if __name__ == "__main__":
 
         hunt_name_no_space = hunt_name.replace(' ', '_')[:20]
         if opt==1:
+            # Scaricare media
             output_file = os.path.join('data', hunt_name_no_space + '.zip')
             download_media(password, output_file)
         elif opt==2:
+            # Scaricare errori
             get_wrong_answers(
                 password, 
                 output_file=f'{hunt_name_no_space}_errori.txt', 
                 output_file_digested=f'{hunt_name_no_space}_errori_digested.txt'
             )
         elif opt==3:
+            # Stampa statistiche squadre
             report_text = get_report(password)
             with open('data/stats.tsv', 'w') as f_out:
                 f_out.write('\n'.join(['\t'.join([str(f) for f in row]) for row in report_text]))
         elif opt==4:
+            # Testa missioni (random)
             mission_table_name = 'Missioni_IT'
             start_lat_long = random.choice(game.get_all_missions_lat_lon(airtable_game_id, mission_table_name))
             missions = game.get_random_missions(airtable_game_id, mission_table_name, start_lat_long)
             random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missions,1)])
             print(random_missioni_names)
+        elif opt==5:            
+            # update_media_bucket
+            await update_media_bucket(hunt_name, password)
+
+if __name__ == "__main__":  
+    import asyncio  
+    asyncio.run(main())

@@ -7,6 +7,7 @@ BUTTON_90_MIN,,⏲️ 90 MIN,⏲️ 90 MIN,⏲️ 90分,⏲️ 90 MIN,
 BUTTON_ADMIN,,🔑 Admin,🔑 Admin,🔑 管理者,🔑 Admin,
 BUTTON_ANNULLA,,❌ ANNULLA,❌ CANCEL,❌ キャンセル,❌ ABBRECHEN,
 BUTTON_BACK,,🔙 INDIETRO,🔙 BACK,🔙 バック,🔙 ZURÜCK,
+BUTTON_UPDATE_MEDIA_BUCKET,,🪣 AGGIORNA BUCKET,🪣 UPDATE BUCKET,🪣 バケットを更新,🪣 UPDATE BUCKET,
 BUTTON_CHECK_BUGS_HUNT,,🐛 CHECK BUG,🐛 CHECK BUG,🐛 バグを確認します,🐛 FEHLER ÜBERPRÜFEN,
 BUTTON_CONTATTACI,,📩 CONTATTACI,📩 CONTACT US,📩 お問い合わせください,📩 KONTAKTIERT UNS,
 BUTTON_CONTINUE,,⏭️ CONTINUA,⏭️ CONTINUE,⏭️ 続行します,⏭️ WEITER,
@@ -87,6 +88,7 @@ Thanks for playing with us! 😀","⚠️ 私はあなたがトレジャーハ�
 Deswegen wird die Jagd jetzt geschlossen, aber gibt es jederzeit  die Möglichkeit eine neue zu starten. 😉
 💬 Wenn Sie uns Vorschläge zur Verbesserung des Spiels machen möchten, lade ich Sie ein, eine Nachricht an die [Support-Gruppe auf Telegram] (https://t.me/+aY3jb5BM6EE5Mzc8) zu senden.
 Danke, dass du mit uns spielst! 😀""",
+MSG_BUCKET_UPDATED,,🪣 Bucket aggiornato!,🪣 Bucket updated,🪣 バケットが更新されました,🪣 Bucket aktualisiert,
 MSG_CHANGE_LANGUAGE,,🌐 CHANGE LANGUAGE,🌐 CHANGE LANGUAGE,🌐 CHANGE LANGUAGE,🌐 SPRACHE WECHSELN,
 MSG_CHECK_HUNT_OK,,✅ Nessun errore rilevato,✅ No error found,✅ エラーは見つかりません,✅ Kein Fehler gefunden,
 MSG_CONFIRM_PHOTO_INPUT,,👀 Provate a controllare la foto. Siete sicuri di volerla inviare?,👀 Try to check the photo. Are you sure you want to send it to us?,👀 写真を確認してみてください。あなたはそれを私たちに送りたいですか？,👀 Überprüft euer Bild! Wollt ihr es wirklich schicken?,

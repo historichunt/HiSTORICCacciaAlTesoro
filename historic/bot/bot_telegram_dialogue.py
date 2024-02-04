@@ -212,6 +212,7 @@ async def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
     if message_obj is None:
         kb = [            
             [p.ui().BUTTON_BACK],
+            [p.ui().BUTTON_UPDATE_MEDIA_BUCKET],
             [p.ui().BUTTON_CHECK_BUGS_HUNT, p.ui().BUTTON_TEST_MISSION],
             [p.ui().BUTTON_STATS_ACTIVE, p.ui().BUTTON_TERMINATE],
             [p.ui().BUTTON_DOWNLOAD_MEDIA, p.ui().BUTTON_DOWNLOAD_ERRORS, p.ui().BUTTON_DOWNLOAD_REPORT],
@@ -226,6 +227,10 @@ async def state_HUNT_ADMIN(p, message_obj=None, **kwargs):
             if text_input in flatten(kb):
                 if text_input == p.ui().BUTTON_BACK:
                     await redirect_to_state(p, state_ADMIN)
+                elif text_input == p.ui().BUTTON_UPDATE_MEDIA_BUCKET:
+                    from historic.bot.airtable_utils import update_media_bucket
+                    await update_media_bucket(hunt_name, hunt_pw)
+                    await send_message(p, p.ui().MSG_BUCKET_UPDATED)
                 elif text_input == p.ui().BUTTON_CHECK_BUGS_HUNT:
                     from historic.bot.airtable_check import check_hunt
                     error = check_hunt(hunt_pw)
