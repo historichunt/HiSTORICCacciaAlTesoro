@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.19
+- storage of media via google bucket (copied from airtable)
+
 ## 0.18
 - fixed bug in repeated mission in routing hunt
 - added seed for replicability

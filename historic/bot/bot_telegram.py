@@ -134,6 +134,7 @@ async def send_media_url(p, url_attachment, type='image/png', kb=None, caption=N
         try:
             await BOT.send_photo(chat_id, photo=url_attachment, caption=caption, reply_markup=rm, parse_mode=parse_mode)
         except telegram.error.BadRequest:
+            # This URL has expired.
             await report_admins(f'Error on sending photo: {url_attachment}')
     elif attach_type in ['webp']:
         try:

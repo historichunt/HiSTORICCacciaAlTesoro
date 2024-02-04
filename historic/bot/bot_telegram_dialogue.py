@@ -594,7 +594,7 @@ async def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
     current_step = steps[completed]
     input_type = current_step.get('Input_Type',[]) # list of buttons, special types (e.g., EMAIL)
     input_buttons = [x for x in input_type if x.startswith('BUTTON_')]
-    first_input_button = input_buttons[0] if input_buttons else None
+    # first_input_button = input_buttons[0] if input_buttons else None
     all_inputs_are_buttons = len(input_buttons) == len(input_type)
     if give_instruction:                
         msg = current_step.get('Text','')
@@ -639,6 +639,9 @@ async def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
             # BUTTON_ROUTE_CIRCULAR_YES, BUTTON_ROUTE_CIRCULAR_NO
             # BUTTON_X_MIN
             kb = p.get_keyboard()
+            if text_input == 'skip_instructions' and p.is_admin_current_hunt():
+                await redirect_to_state(p, state_CHECK_INITIAL_POSITION)
+                return
             if text_input in flatten(kb):
                 if text_input == p.ui().BUTTON_EXIT:
                     game.exit_game(p, save_data=False, reset_current_hunt=True)

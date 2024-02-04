@@ -220,7 +220,8 @@ def load_game(p, hunt_password, test_hunt_admin=False):
 
 async def build_missions(p, test_all=False):
     hunt_settings = p.tmp_variables['SETTINGS']
-    airtable_game_id = p.tmp_variables['HUNT_INFO']['Airtable_Game_ID']
+    tvar = p.tmp_variables
+    airtable_game_id = tvar['HUNT_INFO']['Airtable_Game_ID']
     mission_tab_name = f'Missioni_{p.language}'
     if test_all:
         missions_dict = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)    
@@ -242,7 +243,47 @@ async def build_missions(p, test_all=False):
             await send_message(p, "DEBUG Random missioni:\n{}".format(random_missioni_names))
 
     p.tmp_variables['MISSIONI_INFO'] = {'TODO': missions, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(missions)}
+    
+    # upload media files to bucket
+    await upload_missions_media_to_bucket(
+        hunt_name=tvar['HUNT_NAME'], 
+        missions=missions
+    ) 
     return True
+
+async def upload_missions_media_to_bucket(hunt_name, missions):    
+    import requests
+    from google.cloud import storage
+    storage_client = storage.Client()
+    bucket_name = "historictrento"
+    bucket = storage_client.bucket(bucket_name)    
+
+    media_fields = [
+        'INTRO_MEDIA', 
+        'DOMANDA_MEDIA', 
+        'POST_LOC_MEDIA', 
+        'POST_INPUT_MEDIA', 
+        'POST_MEDIA'
+    ]
+    for m in missions:
+        for field in media_fields:
+            # print(field)
+            if field in m:
+                media_field = m[field][0]
+                url = media_field['url']
+                filename = media_field['filename']                
+                blob = bucket.blob(f'{hunt_name}/{filename}')
+                if blob.exists():
+                    continue                
+                request_response = requests.get(url, stream=True)
+                content_type = request_response.headers['content-type']
+                media_content = request_response.content
+                blob.upload_from_string(media_content, content_type=content_type) 
+                media_field['url'] = blob.public_url
+    return True
+
+                
+                
 
 def get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True):
     # name -> fields dict (table row)
