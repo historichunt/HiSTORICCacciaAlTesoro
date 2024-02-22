@@ -23,7 +23,7 @@ cryptography==41.0.4
 cycler==0.10.0
 decorator==5.0.9
 exceptiongroup==1.1.1
-fastapi==0.104.1
+fastapi==0.109.1
 geographiclib==1.52
 geopy==2.2.0
 google-api-core==2.16.2
