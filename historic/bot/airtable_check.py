@@ -22,7 +22,7 @@ def check_backtick(s):
 
 def check_ui():
     print('Checking UI')
-    ui_table = Airtable(settings.AIRTABLE_CONFIG_ID, 'UI', api_key=settings.AIRTABLE_API_KEY)
+    ui_table = Airtable(settings.AIRTABLE_CONFIG_ID, 'UI', api_key=settings.AIRTABLE_ACCESS_TOKEN)
     row_dict_list = airtable_utils.get_rows(ui_table)
     for row_dict in row_dict_list:
         for k,v in row_dict.items():
@@ -45,7 +45,7 @@ def check_hunt(hunt_pw):
     hunt_languages = get_hunt_languages(hunt_pw)
     for l in hunt_languages:
         table_name = f'Missioni_{l}'
-        hunt_missioni_table = Airtable(game_id, table_name, api_key=settings.AIRTABLE_API_KEY)
+        hunt_missioni_table = Airtable(game_id, table_name, api_key=settings.AIRTABLE_ACCESS_TOKEN)
         missioni_row_dict_list = airtable_utils.get_rows(hunt_missioni_table)
         for row_dict in missioni_row_dict_list:
             for col,v in row_dict.items():

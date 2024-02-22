@@ -27,7 +27,7 @@ async def update_media_bucket(hunt_name, hunt_pw):
     
     for l in hunt_languages:
         table_name = f'Missioni_{l}'
-        hunt_missioni_table = Airtable(game_id, table_name, api_key=settings.AIRTABLE_API_KEY)
+        hunt_missioni_table = Airtable(game_id, table_name, api_key=settings.AIRTABLE_ACCESS_TOKEN)
         missioni_row_dict_list = airtable_utils.get_rows(hunt_missioni_table)
         for mission in missioni_row_dict_list:
             for field in MEDIA_FIELDS_MISSIONS:
@@ -47,7 +47,7 @@ async def update_media_bucket(hunt_name, hunt_pw):
 def download_media_zip(hunt_password, table_name='Results', log=False, check_size=True):    
     from historic.config.params import MAX_SIZE_FILE_BYTES    
     base_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
-    RESULTS_TABLE = Airtable(base_id, table_name, api_key=settings.AIRTABLE_API_KEY)
+    RESULTS_TABLE = Airtable(base_id, table_name, api_key=settings.AIRTABLE_ACCESS_TOKEN)
     table_entries = RESULTS_TABLE.get_all()
     zip_buffer = io.BytesIO()
     zf = zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED)
@@ -104,7 +104,7 @@ def get_rows(table, view=None, filter=None, sort_key=None):
 def get_wrong_answers(hunt_password, table_name='Results', output_file=None, output_file_digested=None):
     from collections import defaultdict    
     base_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
-    RESULTS_TABLE = Airtable(base_id, table_name, api_key=settings.AIRTABLE_API_KEY)
+    RESULTS_TABLE = Airtable(base_id, table_name, api_key=settings.AIRTABLE_ACCESS_TOKEN)
     table_entries = RESULTS_TABLE.get_all()
     mission_error_dict = defaultdict(list)
     for entry in table_entries:
@@ -157,7 +157,7 @@ def process_errori(mission_error_dict):
 def get_report(hunt_password, table_name='Results'):
     from historic.bot import date_time_util as dtu
     base_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
-    RESULTS_TABLE = Airtable(base_id, table_name, api_key=settings.AIRTABLE_API_KEY)
+    RESULTS_TABLE = Airtable(base_id, table_name, api_key=settings.AIRTABLE_ACCESS_TOKEN)
     table_entries = RESULTS_TABLE.get_all()
 
     result = []

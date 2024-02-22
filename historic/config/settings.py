@@ -3,7 +3,7 @@ from airtable import Airtable
 from historic.config.params import ROOT_DIR
 
 APP_NAME = 'historictrentobot'
-APP_VERSION = '0.19.2'
+APP_VERSION = '0.19.3'
 # CLOUD_ENVS = ['test', 'production', 'oist']
 GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
 
@@ -50,7 +50,7 @@ else:
 WEB_APP_QR_URL = APP_BASE_URL + '/miniapp_qr' # ENV_VARS.get("WEB_APP_QR_URL") 
 TELEGRAM_BOT_USERNAME = ENV_VARS.get("TELEGRAM_BOT_USERNAME")
 TELEGRAM_API_TOKEN = ENV_VARS.get("TELEGRAM_API_TOKEN")
-AIRTABLE_API_KEY = ENV_VARS.get("AIRTABLE_API_KEY")
+# AIRTABLE_API_KEY = ENV_VARS.get("AIRTABLE_API_KEY") # deprecated
 AIRTABLE_ACCESS_TOKEN = ENV_VARS.get("AIRTABLE_ACCESS_TOKEN")
 AIRTABLE_CONFIG_ID = ENV_VARS.get("AIRTABLE_CONFIG_ID")
 DEPLOY_NOTIFICATION_WEBHOOK_URL_ROUTING = ENV_VARS.get("DEPLOY_NOTIFICATION_WEBHOOK_URL_ROUTING")
@@ -65,7 +65,7 @@ TELEGRAM_BASE_URL_FILE = f'https://api.telegram.org/file/bot{TELEGRAM_API_TOKEN}
 PEOPLE_TABLE = Airtable(
     AIRTABLE_CONFIG_ID, 
     'People', 
-    api_key=AIRTABLE_API_KEY
+    api_key=AIRTABLE_ACCESS_TOKEN
 )
 
 GLOBAL_ADMIN_IDS = [
@@ -91,7 +91,7 @@ HUNT_ADMIN_IDS = set([
 BOT_UI_TABLE_NAME = Airtable(
     AIRTABLE_CONFIG_ID, 
     'Bots', 
-    api_key=AIRTABLE_API_KEY
+    api_key=AIRTABLE_ACCESS_TOKEN
 )
 
 BOT_UI_BASE_ID, BOT_UI_TABLE_NAME = next(

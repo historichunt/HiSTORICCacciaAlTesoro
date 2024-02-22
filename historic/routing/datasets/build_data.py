@@ -23,7 +23,7 @@ def read_data_from_spreadsheet(spreadsheet_key, spreadsheet_gid, max_points=None
     return name_coordinates
 
 def read_data_from_airtable(base_key, table_name, max_points=None):
-    table = Airtable(base_key, table_name, api_key=settings.AIRTABLE_API_KEY)
+    table = Airtable(base_key, table_name, api_key=settings.AIRTABLE_ACCESS_TOKEN)
     data = airtable_utils.get_rows(table)
     if max_points is not None:
         data = data[:max_points]

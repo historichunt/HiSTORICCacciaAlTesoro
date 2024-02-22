@@ -16,7 +16,7 @@ import numpy as np
 HUNTS_CONFIG_TABLE = Airtable(
     settings.AIRTABLE_CONFIG_ID, 
     'Hunts', 
-    api_key=settings.AIRTABLE_API_KEY
+    api_key=settings.AIRTABLE_ACCESS_TOKEN
 )
 
 HUNTS_PW = None # pw -> hunt_details (all)
@@ -70,7 +70,7 @@ INPUT_INSTRUCTIONS, INPUT_TYPE, INPUT_CONFIRMATION, POST_INPUT_MESSAGE
 '''
 
 def get_hunt_settings(airtable_game_id):
-    SETTINGS_TABLE = Airtable(airtable_game_id, 'Settings', api_key=settings.AIRTABLE_API_KEY)
+    SETTINGS_TABLE = Airtable(airtable_game_id, 'Settings', api_key=settings.AIRTABLE_ACCESS_TOKEN)
     SETTINGS = {
         row['fields']['Name']:row['fields']['Value'] 
         for row in SETTINGS_TABLE.get_all() 
@@ -79,7 +79,7 @@ def get_hunt_settings(airtable_game_id):
     return SETTINGS
 
 def get_hunt_ui(airtable_game_id, hunt_languages):    
-    UI_TABLE = Airtable(airtable_game_id, 'UI', api_key=settings.AIRTABLE_API_KEY)
+    UI_TABLE = Airtable(airtable_game_id, 'UI', api_key=settings.AIRTABLE_ACCESS_TOKEN)
     table_rows = [
         row['fields'] 
         for row in UI_TABLE.get_all() 
@@ -123,7 +123,7 @@ async def save_game_data_in_airtable(p, compute_times):
     RESULTS_GAME_TABLE = Airtable(
         airtable_game_id, 
         'Results', 
-        api_key=settings.AIRTABLE_API_KEY
+        api_key=settings.AIRTABLE_ACCESS_TOKEN
     )    
 
     games_row = {'LANGUAGE': p.language}
@@ -139,7 +139,7 @@ async def save_game_data_in_airtable(p, compute_times):
 def save_survey_data_in_airtable(p):
     game_data = p.tmp_variables
     airtable_game_id = game_data['HUNT_INFO']['Airtable_Game_ID']
-    results_survey_table = Airtable(airtable_game_id, 'Survey Answers', api_key=settings.AIRTABLE_API_KEY)
+    results_survey_table = Airtable(airtable_game_id, 'Survey Answers', api_key=settings.AIRTABLE_ACCESS_TOKEN)
     survey_row = {'LANGUAGE': p.language}
     survey_data = game_data['SURVEY_INFO']['COMPLETED']
     for row in survey_data:
@@ -174,8 +174,8 @@ def load_game(p, hunt_password, test_hunt_admin=False):
     hunt_settings = get_hunt_settings(airtable_game_id)
     hunt_languages =  get_hunt_languages(hunt_password)
     hunt_ui = get_hunt_ui(airtable_game_id, hunt_languages)
-    instructions_table = Airtable(airtable_game_id, f'Instructions_{p.language}', api_key=settings.AIRTABLE_API_KEY)    
-    survey_table = Airtable(airtable_game_id, f'Survey_{p.language}', api_key=settings.AIRTABLE_API_KEY)                
+    instructions_table = Airtable(airtable_game_id, f'Instructions_{p.language}', api_key=settings.AIRTABLE_ACCESS_TOKEN)    
+    survey_table = Airtable(airtable_game_id, f'Survey_{p.language}', api_key=settings.AIRTABLE_ACCESS_TOKEN)                
     instructions_steps = airtable_utils.get_rows(
         instructions_table, view='Grid view',
         filter=lambda r: not r.get('Skip',False), 
@@ -280,7 +280,7 @@ async def upload_missions_media_to_bucket(hunt_name, missions):
 
 def get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True):
     # name -> fields dict (table row)
-    table = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_API_KEY)
+    table = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_ACCESS_TOKEN)
     missions_name_fields_dict = {
         row['fields']['NOME']: row['fields'] 
         for row in table.get_all() 

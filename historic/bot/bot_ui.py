@@ -27,7 +27,7 @@ def build_ui_dict():
         bot_ui_table_rows = Airtable(
             settings.BOT_UI_BASE_ID, 
             settings.BOT_UI_TABLE_NAME, 
-            api_key=settings.AIRTABLE_API_KEY
+            api_key=settings.AIRTABLE_ACCESS_TOKEN
         ).get_all()
 
         for row in bot_ui_table_rows:
