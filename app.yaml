@@ -1,6 +1,6 @@
 # gcloud config set project historictrentobot
+# gcloud app deploy -q -v production
 
-# entrypoint: gunicorn -b :$PORT main:app --chdir historic
 entrypoint: uvicorn --port $PORT --host 0.0.0.0 historic.main:app --workers 10
 runtime: python38
 
