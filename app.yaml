@@ -1,7 +1,7 @@
 # gcloud config set project historictrentobot
 # gcloud app deploy -q -v production
 
-entrypoint: uvicorn --port $PORT --host 0.0.0.0 historic.main:app --workers 10
+entrypoint: uvicorn --port $PORT --host 0.0.0.0 historic.main:app
 runtime: python38
 
 # change instance class
