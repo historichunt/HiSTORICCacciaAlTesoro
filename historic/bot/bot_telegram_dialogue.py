@@ -415,7 +415,7 @@ async def teminate_hunt(p):
     active = await send_message(p, p.ui().get_var(terminate_message_key), remove_keyboard=True, sleep=True)
     # await send_typing_action(p, sleep_time=1)
     if not p.tmp_variables.get('FINISHED', False):                   
-        game.exit_game(p, save_data=True, reset_current_hunt=True)
+        await game.exit_game(p, save_data=True, reset_current_hunt=True)
         if active:
             await restart(p)
     else:
@@ -650,7 +650,7 @@ async def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                 return
             if text_input in flatten(kb):
                 if text_input == p.ui().BUTTON_EXIT:
-                    game.exit_game(p, save_data=False, reset_current_hunt=True)
+                    await game.exit_game(p, save_data=False, reset_current_hunt=True)
                     await send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
                     await restart(p)
                 elif text_input in [p.ui().BUTTON_ROUTE_KIDS]:
@@ -754,7 +754,7 @@ async def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
                         f'Caccia {game.get_hunt_name(p)}:',
                         f'Selfie iniziale {game.get_group_name(p)}'
                     ])
-                    BOT.send_photo(notify_group_id, photo=photo_file_id, caption=msg)
+                    await BOT.send_photo(notify_group_id, photo=photo_file_id, caption=msg)
                 await send_typing_action(p, sleep_time=1)
                 await repeat_state(p, next_step=True)
             else:
@@ -892,7 +892,7 @@ async def state_WAIT_FOR_QR(p, message_obj=None, **kwargs):
         if current_mission:
             game.set_next_mission(p, current_mission, remove_from_todo=True)
             await send_message(p, p.ui().MSG_QR_OK, remove_keyboard=True)                
-            if not send_post_message(p, current_mission, after_loc=True):
+            if not await send_post_message(p, current_mission, after_loc=True):
                 await send_typing_action(p, sleep_time=1)                    
             await redirect_to_state(p, state_DOMANDA)
         else:
@@ -918,7 +918,7 @@ async def state_EXIT_CONFIRMATION(p, message_obj=None,  **kwargs):
         kb = p.get_keyboard()
         if text_input in flatten(kb):
             if text_input == p.ui().BUTTON_YES:
-                game.exit_game(p, save_data=True, reset_current_hunt=True)
+                await game.exit_game(p, save_data=True, reset_current_hunt=True)
                 await send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
                 await restart(p)
             else: 
@@ -1040,7 +1040,7 @@ async def state_MISSION_GPS(p, message_obj=None, **kwargs):
             GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
             if distance <= GPS_TOLERANCE_METERS:
                 await send_message(p, p.ui().MSG_GPS_OK, remove_keyboard=True)
-                if not send_post_message(p, current_mission, after_loc=True):
+                if not await send_post_message(p, current_mission, after_loc=True):
                     await send_typing_action(p, sleep_time=1)                    
                 await redirect_to_state(p, state_DOMANDA)
             else:
@@ -1074,7 +1074,7 @@ async def state_MISSION_QR(p, message_obj=None, **kwargs):
             qr_code = utility.read_qr_from_url(qr_url)
             if utility.qr_matches(goal_qr_code, qr_code):
                 await send_message(p, p.ui().MSG_QR_OK, remove_keyboard=True)
-                if not send_post_message(p, current_mission, after_loc=True):
+                if not await send_post_message(p, current_mission, after_loc=True):
                     await send_typing_action(p, sleep_time=1)                    
                 await redirect_to_state(p, state_DOMANDA)
             else:
@@ -1160,7 +1160,7 @@ async def state_DOMANDA(p, message_obj=None, **kwargs):
                 #correct_answers_upper_word_set = set(flatten([x.split() for x in correct_answers_upper]))
                 if text_input.upper() in correct_answers_upper or functools.reduce(lambda a, r: a or regex.match(r, text_input, regex.I), correct_answers_regex, False):
                     await game.set_mission_end_time(p) # set time of ending the mission (after solution)
-                    if not send_post_message(p, current_mission):
+                    if not await send_post_message(p, current_mission):
                         await send_message(p, bot_ui.MSG_ANSWER_OK(p.language), remove_keyboard=True)
                         await send_typing_action(p, sleep_time=1)                    
                     if 'INPUT_INSTRUCTIONS' in current_mission:
@@ -1289,11 +1289,11 @@ async def send_to_validator(p, game, current_mission, input_type):
     caption = replies_dict[input_type]['caption']
     logging.debug('Sending group input ({}) to validator'.format(input_type))
     if input_type == 'PHOTO':
-        BOT.send_photo(game.get_validator_chat_id(p), photo=file_id, caption=caption, reply_markup=kb_markup)
+        await BOT.send_photo(game.get_validator_chat_id(p), photo=file_id, caption=caption, reply_markup=kb_markup)
     elif input_type == 'VOICE':
-        BOT.send_voice(game.get_validator_chat_id(p), voice=file_id, caption=caption, reply_markup=kb_markup)
+        await BOT.send_voice(game.get_validator_chat_id(p), voice=file_id, caption=caption, reply_markup=kb_markup)
     else: # input_type == 'VIDEO':
-        BOT.send_video(game.get_validator_chat_id(p), video=file_id, caption=caption, reply_markup=kb_markup)
+        await BOT.send_video(game.get_validator_chat_id(p), video=file_id, caption=caption, reply_markup=kb_markup)
 
 async def approve_media_input_indovinello(p, approved, signature):
     # need to double check if team is still waiting for approval
@@ -1307,7 +1307,7 @@ async def approve_media_input_indovinello(p, approved, signature):
         # if 'sign' is not in current_mission it means we are in INPUT_CONFIRMATION mode 
         return False
     if approved:        
-        if not send_post_message(p, current_mission, after_input=True):
+        if not await send_post_message(p, current_mission, after_input=True):
             await send_message(p, bot_ui.MSG_MEDIA_INPUT_MISSIONE_OK(p.language))        
             await send_typing_action(p, sleep_time=1)
         notify_group_id = game.get_notify_group_id(p)
@@ -1321,11 +1321,11 @@ async def approve_media_input_indovinello(p, approved, signature):
                 f'{msg_type_str[input_type]} indovinello {mission_number} ({indovinello_name}) squadra {squadra_name}'
             ])
             if input_type=='PHOTO':                
-                BOT.send_photo(notify_group_id, photo=file_id, caption=msg)
+                await BOT.send_photo(notify_group_id, photo=file_id, caption=msg)
             elif input_type=='VOICE':
-                BOT.send_voice(notify_group_id, voice=file_id, caption=msg)
+                await BOT.send_voice(notify_group_id, voice=file_id, caption=msg)
             else: # input_type=='VIDEO':
-                BOT.send_video(notify_group_id, video=file_id, caption=msg)
+                await BOT.send_video(notify_group_id, video=file_id, caption=msg)
         game.append_group_media_input_file_id(p, file_id)        
         await redirect_to_state(p, state_COMPLETE_MISSION)
     else:
@@ -1501,7 +1501,7 @@ async def state_END(p, message_obj=None, **kwargs):
             await send_message(notify_group_id, msg_group)                        
         final_message_key = 'MSG_FINAL_RESET_ON' if reset_hunt_after_completion else 'MSG_FINAL_RESET_OFF'
         await send_message(p, p.ui().get_var(final_message_key))     
-        game.exit_game(p, save_data=True, reset_current_hunt=reset_hunt_after_completion)   
+        await game.exit_game(p, save_data=True, reset_current_hunt=reset_hunt_after_completion)   
         if reset_hunt_after_completion:
             await restart(p)        
     else:
@@ -1627,7 +1627,7 @@ async def deal_with_admin_commands(p, message_obj):
             u = Person.get_by_id(u_id)
             if u:
                 if game.user_in_game(u):
-                    game.exit_game(u, save_data=True, reset_current_hunt=True)
+                    await game.exit_game(u, save_data=True, reset_current_hunt=True)
                     await send_message(u, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
                 await restart(u)
                 msg_admin = 'User restarted: {}'.format(p.get_first_last_username())
@@ -1789,7 +1789,7 @@ async def deal_with_universal_command(p, message_obj):
         return True
     # if text_input == '/exit_for_real':
     #     if game.user_in_game(p):
-    #         game.exit_game(p, save_data=False, reset_current_hunt=True)
+    #         await game.exit_game(p, save_data=False, reset_current_hunt=True)
     #         await send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
     #         await restart(p)
     #     else:

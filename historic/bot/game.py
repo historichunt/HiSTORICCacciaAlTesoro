@@ -568,14 +568,14 @@ def is_mission_selection_routing_based(p):
 def user_in_game(p):
     return p.current_hunt is not None
 
-def exit_game(p, save_data=True, reset_current_hunt=True, put=True):
+async def exit_game(p, save_data=True, reset_current_hunt=True, put=True):
     if p.current_hunt is None:
         return False
     if save_data:
         finished = p.tmp_variables.get('FINISHED', False)
         if not finished:
             set_game_end_time(p, finished=False)
-            save_game_data_in_airtable(p, compute_times=True)
+            await save_game_data_in_airtable(p, compute_times=True)
     if reset_current_hunt:
         p.current_hunt = None
     if put:

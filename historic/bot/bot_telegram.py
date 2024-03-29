@@ -307,7 +307,7 @@ async def reset_all_users(qry = None, message=None):
             if p.enabled:
                 total += 1
                 if game.user_in_game(p):
-                    game.exit_game(p, save_data=False, reset_current_hunt=True)
+                    await game.exit_game(p, save_data=False, reset_current_hunt=True)
                     # await send_message(p, p.ui().MSG_EXITED_FROM_GAME, remove_keyboard=True)
                 if message:
                     await send_message(p, message, remove_keyboard=True)
