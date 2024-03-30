@@ -855,7 +855,7 @@ async def state_WAIT_FOR_QR(p, message_obj=None, **kwargs):
     if give_instruction:
         if first_call:
             await check_if_first_mission_and_start_time(p)
-        send_msg_mission_number(p)
+        await send_msg_mission_number(p)
         msg = p.ui().MSG_SCAN_QR_CODE    
         kb = [
                 [
@@ -941,7 +941,7 @@ async def state_MISSION_INTRO(p, message_obj=None, **kwargs):
         current_mission = game.get_current_mission(p) if testing else game.set_next_mission(p)        
         if not testing:
             await check_if_first_mission_and_start_time(p)            
-            send_msg_mission_number(p)            
+            await send_msg_mission_number(p)            
         if 'INTRODUZIONE_LOCATION' not in current_mission:
             await redirect_to_state(p, state_MISSION_GPS)
             return
