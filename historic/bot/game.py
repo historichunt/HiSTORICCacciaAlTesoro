@@ -14,8 +14,8 @@ import numpy as np
 #################
 
 HUNTS_CONFIG_TABLE = Airtable(
-    settings.AIRTABLE_CONFIG_ID, 
-    'Hunts', 
+    settings.AIRTABLE_CONFIG_ID,
+    'Hunts',
     api_key=settings.AIRTABLE_ACCESS_TOKEN
 )
 
@@ -25,8 +25,8 @@ HUNTS_NAME = None # name -> hunt_details (all)
 def reload_config_hunt():
     global HUNTS_PW, HUNTS_NAME
     hunts = [
-        row['fields'] 
-        for row in HUNTS_CONFIG_TABLE.get_all() 
+        row['fields']
+        for row in HUNTS_CONFIG_TABLE.get_all()
         if 'Password' in row['fields']
     ]
     for d in hunts:
@@ -41,7 +41,7 @@ def reload_config_hunt():
         for d in hunts
         if settings.TELEGRAM_BOT_USERNAME in d['Bots Username']
     }
-    
+
 
 def is_person_hunt_admin(p, hunt_pw):
     if hunt_pw not in HUNTS_PW:
@@ -59,11 +59,11 @@ reload_config_hunt()
 # MISSIONI TABLE
 #################
 '''
-NOME, ACTIVE, FINALE, NEXT, 
-INTRO_MEDIA, INTRO_MEDIA_CAPTION, 
-INTRODUZIONE_LOCATION, GPS, 
+NOME, ACTIVE, FINALE, NEXT,
+INTRO_MEDIA, INTRO_MEDIA_CAPTION,
+INTRODUZIONE_LOCATION, GPS,
 DOMANDA_MEDIA, DOMANDA_MEDIA_CAPTION, DOMANDA,
-SOLUZIONI, INDIZIO_1, INDIZIO_2, 
+SOLUZIONI, INDIZIO_1, INDIZIO_2,
 PENALTY,
 POST_MEDIA, POST_MEDIA_CAPTION, POST_MESSAGE,
 INPUT_INSTRUCTIONS, INPUT_TYPE, INPUT_CONFIRMATION, POST_INPUT_MESSAGE
@@ -72,23 +72,23 @@ INPUT_INSTRUCTIONS, INPUT_TYPE, INPUT_CONFIRMATION, POST_INPUT_MESSAGE
 def get_hunt_settings(airtable_game_id):
     SETTINGS_TABLE = Airtable(airtable_game_id, 'Settings', api_key=settings.AIRTABLE_ACCESS_TOKEN)
     SETTINGS = {
-        row['fields']['Name']:row['fields']['Value'] 
-        for row in SETTINGS_TABLE.get_all() 
+        row['fields']['Name']:row['fields']['Value']
+        for row in SETTINGS_TABLE.get_all()
         if row['fields'].get('Name', False)
     }
     return SETTINGS
 
-def get_hunt_ui(airtable_game_id, hunt_languages):    
+def get_hunt_ui(airtable_game_id, hunt_languages):
     UI_TABLE = Airtable(airtable_game_id, 'UI', api_key=settings.AIRTABLE_ACCESS_TOKEN)
     table_rows = [
-        row['fields'] 
-        for row in UI_TABLE.get_all() 
+        row['fields']
+        for row in UI_TABLE.get_all()
     ]
     UI = {
         lang: {
             r['VAR']: r[lang].strip()
             for r in table_rows
-        }        
+        }
         for lang in hunt_languages
     }
     return UI
@@ -104,7 +104,7 @@ RESULTS_GAME_TABLE_HEADERS = [
     'ID', 'GROUP_NAME', 'NOME', 'COGNOME', 'USERNAME', 'EMAIL',
     'START_TIME', 'END_TIME', 'ELAPSED GAME', 'ELAPSED MISSIONS',
     'COMPLETED_MISSIONS', 'INCOMPLETED_MISSIONS',
-    'PENALTIES', 'PENALTY TIME', 
+    'PENALTIES', 'PENALTY TIME',
     'FINISHED',
     'TOTAL TIME GAME', 'TOTAL TIME MISSIONS'
 ]
@@ -112,30 +112,30 @@ RESULTS_GAME_TABLE_HEADERS = [
 async def save_game_data_in_airtable(p, compute_times):
     from historic.bot.bot_telegram import get_photo_url_from_telegram
     import json
-    
+
     if compute_times:
         set_elapsed_and_penalty_and_compute_total(p)
-    
+
     game_data = p.tmp_variables
-    
+
     airtable_game_id = game_data['HUNT_INFO']['Airtable_Game_ID']
 
     RESULTS_GAME_TABLE = Airtable(
-        airtable_game_id, 
-        'Results', 
+        airtable_game_id,
+        'Results',
         api_key=settings.AIRTABLE_ACCESS_TOKEN
-    )    
+    )
 
     games_row = {'LANGUAGE': p.language}
     for h in RESULTS_GAME_TABLE_HEADERS:
         games_row[h] = game_data[h]
     games_row['GAME VARS'] = json.dumps(game_data,ensure_ascii=False)
     games_row['GROUP_MEDIA_FILE_IDS'] = [
-        {'url': await get_photo_url_from_telegram(file_id)} 
+        {'url': await get_photo_url_from_telegram(file_id)}
         for file_id in game_data['GROUP_MEDIA_FILE_IDS']
     ]
     RESULTS_GAME_TABLE.insert(games_row)
-    
+
 def save_survey_data_in_airtable(p):
     game_data = p.tmp_variables
     airtable_game_id = game_data['HUNT_INFO']['Airtable_Game_ID']
@@ -162,36 +162,36 @@ def get_hunt_languages(hunt_password):
     ]
     return hunt_languages
 
-def load_game(p, hunt_password, test_hunt_admin=False):    
+def load_game(p, hunt_password, test_hunt_admin=False):
     '''
     Save current game info user tmp_variable
-    '''    
+    '''
 
-    if not test_hunt_admin:        
+    if not test_hunt_admin:
         p.current_hunt = hunt_password  # avoid when testing
     hunt_info = HUNTS_PW[hunt_password]
     airtable_game_id = hunt_info['Airtable_Game_ID']
     hunt_settings = get_hunt_settings(airtable_game_id)
     hunt_languages =  get_hunt_languages(hunt_password)
     hunt_ui = get_hunt_ui(airtable_game_id, hunt_languages)
-    instructions_table = Airtable(airtable_game_id, f'Instructions_{p.language}', api_key=settings.AIRTABLE_ACCESS_TOKEN)    
-    survey_table = Airtable(airtable_game_id, f'Survey_{p.language}', api_key=settings.AIRTABLE_ACCESS_TOKEN)                
+    instructions_table = Airtable(airtable_game_id, f'Instructions_{p.language}', api_key=settings.AIRTABLE_ACCESS_TOKEN)
+    survey_table = Airtable(airtable_game_id, f'Survey_{p.language}', api_key=settings.AIRTABLE_ACCESS_TOKEN)
     instructions_steps = airtable_utils.get_rows(
         instructions_table, view='Grid view',
-        filter=lambda r: not r.get('Skip',False), 
+        filter=lambda r: not r.get('Skip',False),
     )
     mission_tab_name = f'Missioni_{p.language}'
     survey = airtable_utils.get_rows(survey_table, view='Grid view')
     if not test_hunt_admin:
-        p.tmp_variables = {} # resetting vars 
+        p.tmp_variables = {} # resetting vars
         # but we don't want to reset ADMIN_HUNT_NAME and ADMIN_HUNT_PW for admins (mission test)
     tvar = p.tmp_variables
     tvar['HUNT_NAME'] = hunt_info['Name']
     tvar['HUNT_LANGUAGES'] = hunt_languages
     tvar['TEST_HUNT_MISSION_ADMIN'] = test_hunt_admin
     tvar['HUNT_START_GPS'] = get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name)
-    tvar['SETTINGS'] = hunt_settings    
-    tvar['HUNT_UI'] = hunt_ui    
+    tvar['SETTINGS'] = hunt_settings
+    tvar['HUNT_UI'] = hunt_ui
     tvar['HUNT_INFO'] = hunt_info
     tvar['Notify_Group ID'] = hunt_info.get('Notify_Group ID', None)
     tvar['Validators IDs'] = hunt_info.get('Validators IDs', None)
@@ -201,7 +201,7 @@ def load_game(p, hunt_password, test_hunt_admin=False):
     tvar['USERNAME'] = p.get_username(escape_markdown=False)
     tvar['EMAIL'] = ''
     tvar['MISSION_TIMES'] = []
-    tvar['INSTRUCTIONS'] = {'STEPS': instructions_steps, 'COMPLETED': 0}    
+    tvar['INSTRUCTIONS'] = {'STEPS': instructions_steps, 'COMPLETED': 0}
     tvar['SURVEY_INFO'] = {'TODO': survey, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(survey)}
     tvar['GROUP_NAME'] = ''
     tvar['GROUP_MEDIA_FILE_IDS'] = []
@@ -214,7 +214,7 @@ def load_game(p, hunt_password, test_hunt_admin=False):
     tvar['TOTAL TIME MISSIONS'] = -1
     tvar['COMPLETED_MISSIONS'] = -1
     tvar['INCOMPLETED_MISSIONS'] = -1
-    tvar['PENALTIES'] = 0    
+    tvar['PENALTIES'] = 0
     tvar['PENALTY TIME'] = 0 # seconds
     tvar['FINISHED'] = False # seconds
 
@@ -224,39 +224,39 @@ async def build_missions(p, test_all=False):
     airtable_game_id = tvar['HUNT_INFO']['Airtable_Game_ID']
     mission_tab_name = f'Missioni_{p.language}'
     if test_all:
-        missions_dict = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)    
+        missions_dict = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)
         missions = list(missions_dict.values())
     elif hunt_settings.get('MISSIONS_SELECTION', None) == 'ROUTING':
-        from historic.bot.bot_telegram import send_message   
+        from historic.bot.bot_telegram import send_message
         await send_message(p, p.ui().MSG_GAME_IS_LOADING, remove_keyboard=True)
         missions = await get_missioni_routing(p, airtable_game_id, mission_tab_name)
-        if missions is None:            
+        if missions is None:
             return False # problema selezione percorso
     else:
         # RANDOM - default
         start_lat_long = p.get_tmp_variable('HUNT_START_GPS')
         missions = get_random_missions(airtable_game_id, mission_tab_name, start_lat_long)
 
-        if p.is_admin_current_hunt(): 
-            from historic.bot.bot_telegram import send_message   
+        if p.is_admin_current_hunt():
+            from historic.bot.bot_telegram import send_message
             random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missions,1)])
             await send_message(p, "DEBUG Random missioni:\n{}".format(random_missioni_names))
 
     p.tmp_variables['MISSIONI_INFO'] = {'TODO': missions, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(missions)}
-    
+
     # upload media files to bucket
     await upload_missions_media_to_bucket(
-        hunt_name=tvar['HUNT_NAME'], 
+        hunt_name=tvar['HUNT_NAME'],
         missions=missions
-    ) 
+    )
     return True
 
-async def upload_missions_media_to_bucket(hunt_name, missions):    
+async def upload_missions_media_to_bucket(hunt_name, missions):
     import requests
     from google.cloud import storage
     from historic.config.params import GOOGLE_BUCKET_NAME, MEDIA_FIELDS_MISSIONS
     storage_client = storage.Client()
-    bucket = storage_client.bucket(GOOGLE_BUCKET_NAME)    
+    bucket = storage_client.bucket(GOOGLE_BUCKET_NAME)
 
     for m in missions:
         for field in MEDIA_FIELDS_MISSIONS:
@@ -264,27 +264,28 @@ async def upload_missions_media_to_bucket(hunt_name, missions):
             if field in m:
                 media_field = m[field][0]
                 url = media_field['url']
-                filename = media_field['filename']                
+                filename = media_field['filename']
                 blob = bucket.blob(f'{hunt_name}/{filename}')
                 if blob.exists():
-                    continue                
+                    continue
                 request_response = requests.get(url, stream=True)
                 content_type = request_response.headers['content-type']
                 media_content = request_response.content
-                blob.upload_from_string(media_content, content_type=content_type) 
+                blob.upload_from_string(media_content, content_type=content_type)
                 media_field['url'] = blob.public_url
     return True
 
-                
-                
-
-def get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True):
+def get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True, only_kids=False):
     # name -> fields dict (table row)
     table = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_ACCESS_TOKEN)
     missions_name_fields_dict = {
-        row['fields']['NOME']: row['fields'] 
-        for row in table.get_all() 
-        if row['fields'].get('ACTIVE',False)==active    
+        row['fields']['NOME']: row['fields']
+        for row in table.get_all()
+        if (
+            row['fields'].get('ACTIVE',False)==active
+            and
+            (not only_kids or row['fields'].get('ONLY_KIDS',False)==True)
+        )
     }
     return missions_name_fields_dict
 
@@ -292,7 +293,7 @@ def update_airtable_urls_missions(p):
     tvar = p.tmp_variables
     airtable_game_id = tvar['HUNT_INFO']['Airtable_Game_ID']
     mission_tab_name = f'Missioni_{p.language}'
-    missions_dict = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)    
+    missions_dict = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)
     missions = list(missions_dict.values())
     todo_missions = tvar['MISSIONI_INFO']['TODO']
     current_mission_list = [tvar['MISSIONI_INFO']['CURRENT']]
@@ -306,12 +307,12 @@ def update_airtable_urls_missions(p):
             for old_mission in mission_type:
                 if old_mission is None:
                     continue
-                if old_mission['NOME'] == name:                                        
+                if old_mission['NOME'] == name:
                     updated = False
                     for k,v in new_mission.items():
                         if type(v)==list and len(v)>0 and 'url' in v[0]:
                             old_mission[k] = v
-                            updated_urls += 1                        
+                            updated_urls += 1
                             updated = True
                     if updated:
                         updated_missions += 1
@@ -323,7 +324,7 @@ def update_airtable_urls_missions(p):
 def get_final_missions_dict_names(missions_name_fields_dict):
     final_missions_names = [
         m_name
-        for m_name,fields in missions_name_fields_dict.items() 
+        for m_name,fields in missions_name_fields_dict.items()
         if fields.get('FINALE', False)
     ]
 
@@ -332,11 +333,11 @@ def get_final_missions_dict_names(missions_name_fields_dict):
     final_missions_and_linked_names = {}
     for final_mission in final_missions_names:
         linked_missions = [final_mission]
-        final_missions_and_linked_names[final_mission] = linked_missions        
+        final_missions_and_linked_names[final_mission] = linked_missions
         while True:
             new_connections = [
                 m_name
-                for m_name,fields in missions_name_fields_dict.items() 
+                for m_name,fields in missions_name_fields_dict.items()
                 if (
                     m_name not in linked_missions and
                     fields.get('NEXT', '') in linked_missions
@@ -355,7 +356,7 @@ def get_final_missions_dict_names(missions_name_fields_dict):
         if  m_name not in all_final_missions_or_linked
     ]
 
-    assert len(remaining_missions_names)>0 
+    assert len(remaining_missions_names)>0
     # this could happen if all misions are linked
     # TODO: fix this
 
@@ -364,19 +365,19 @@ def get_final_missions_dict_names(missions_name_fields_dict):
 def get_all_missions_lat_lon(airtable_game_id, mission_tab_name, exclude_finals_and_linked=True, exclude_in_next=True):
 
     MISSIONI_ACTIVE = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)
-    
+
     _, no_final_or_linked_names = get_final_missions_dict_names(MISSIONI_ACTIVE)
 
     # missions names in NEXT columns
     missions_names_in_next = [
         fields['NEXT'] for fields in MISSIONI_ACTIVE.values()
         if fields.get('NEXT',None)
-    ]    
-        
+    ]
+
     # exlude to chose mission among those in the final group (and linked)
     all_gps = np.asarray(
         [
-            utility.get_lat_lon_from_string(fields['GPS']) 
+            utility.get_lat_lon_from_string(fields['GPS'])
             for m_name, fields in MISSIONI_ACTIVE.items()
             if (
                 (not exclude_finals_and_linked or m_name in no_final_or_linked_names) and     # check if in the chain of final missions
@@ -389,7 +390,7 @@ def get_all_missions_lat_lon(airtable_game_id, mission_tab_name, exclude_finals_
     return all_gps
 
 
-def get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name):    
+def get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name):
 
     all_gps = get_all_missions_lat_lon(airtable_game_id, mission_tab_name)
 
@@ -427,7 +428,7 @@ def get_random_missions(airtable_game_id, mission_tab_name, start_lat_long):
         fields['NEXT'] for fields in MISSIONI_ACTIVE.values()
         if fields.get('NEXT',None)
     ]
-    
+
     remaining_missions_names_no_next = [
         m_name for m_name in MISSIONI_ACTIVE
         if (
@@ -439,8 +440,8 @@ def get_random_missions(airtable_game_id, mission_tab_name, start_lat_long):
     chosen_final_mission_name = \
         choice(list(final_missions_and_linked_names.keys())) \
         if final_missions_and_linked_names \
-        else None    
-    
+        else None
+
     if chosen_final_mission_name:
         # adding non chosen final missions and linked to remaining_missions_names_no_next
         # (only those with no NEXT)
@@ -451,13 +452,13 @@ def get_random_missions(airtable_game_id, mission_tab_name, start_lat_long):
                 if m not in missions_names_in_next:
                     remaining_missions_names_no_next.append(m)
             remaining_missions_names_no_next.append(f) # this shouldn't have none by default
-        
+
     shuffle(remaining_missions_names_no_next)
 
     remaining_missions_names_no_next.insert(0, start_mission_name)
 
     missioni_random_names = []
-    
+
     for m in remaining_missions_names_no_next:
         missioni_random_names.append(m)
         next = MISSIONI_ACTIVE[m].get('NEXT', None)
@@ -473,21 +474,27 @@ def get_random_missions(airtable_game_id, mission_tab_name, start_lat_long):
 
     assert len(missioni_random_names) == len(MISSIONI_ACTIVE)
 
-    missioni_random = [MISSIONI_ACTIVE[m] for m in missioni_random_names]    
+    missioni_random = [MISSIONI_ACTIVE[m] for m in missioni_random_names]
 
     return missioni_random
 
 async def get_missioni_routing(p, airtable_game_id, mission_tab_name):
-    
+
     from historic.bot.bot_telegram import report_admins, send_message, send_photo_data
 
-    MISSIONI_ACTIVE = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)
-    MISSIONI_SKIP = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=False)
+    only_kids = p.get_tmp_variable('ROUTE_AGE_GROUP') == 'KIDS'
+
+    MISSIONI_ACTIVE = get_missions_name_fields_dict(
+        airtable_game_id, mission_tab_name, active=True, only_kids=only_kids,
+    )
+    MISSIONI_SKIP = get_missions_name_fields_dict(
+        airtable_game_id, mission_tab_name, active=False,
+    )
 
     game_dm = DataMatrices(
         dataset_name = airtable_game_id,
         api = api_google
-    )      
+    )
 
     lat, long = p.get_tmp_variable('HUNT_START_GPS')
     start_idx = game_dm.get_coordinate_index(lat=lat, long=long)
@@ -500,10 +507,10 @@ async def get_missioni_routing(p, airtable_game_id, mission_tab_name):
     duration_min = p.get_tmp_variable('ROUTE_DURATION_MIN', 45) # 45 min default
     circular_route = p.get_tmp_variable('ROUTE_CIRCULAR', False)
 
-    route_planner = None                
-    found_solution = False                    
-    
-    for planner_attempt in range(NUM_PLANNER_ATTEMPTS): # attempts        
+    route_planner = None
+    found_solution = False
+
+    for planner_attempt in range(NUM_PLANNER_ATTEMPTS): # attempts
 
         route_planner = get_trento_route_planner(
             game_dm, profile, start_idx, duration_min, skip_points_idx, circular_route,
@@ -515,14 +522,14 @@ async def get_missioni_routing(p, airtable_game_id, mission_tab_name):
         if len(route_planner.solutions) > 0:
             found_solution = True
             break
-        
+
     if found_solution:
 
         _, stop_names, info, best_route_img, estimated_duration_min = \
             route_planner.get_routes(
                 show_map=False,
                 log=False
-            )      
+            )
 
         missioni_route = [
             MISSIONI_ACTIVE[mission_name]
@@ -531,10 +538,10 @@ async def get_missioni_routing(p, airtable_game_id, mission_tab_name):
 
         info_msg = \
             f'Ho selezionato per voi {len(stop_names)} tappe e dovreste metterci circa {estimated_duration_min} minuti. '\
-            'Ovviamente dipende da quanto sarete veloci e abili a risolvere gli indovinelli! 😉'     
+            'Ovviamente dipende da quanto sarete veloci e abili a risolvere gli indovinelli! 😉'
         await send_message(p, info_msg)
 
-        if p.is_admin_current_hunt():                 
+        if p.is_admin_current_hunt():
             info_text = '\n'.join(info)
             await send_message(p, f"🐛 DEBUG:\n\n{info_text}", markdown=False)
             await send_photo_data(p, best_route_img)
@@ -595,14 +602,14 @@ def get_game_stats(p):
         stats.append(email)
     if group_name:
         stats.append(f'gruppo: {group_name}')
-    if mission_info:        
+    if mission_info:
         completed = len(vars['MISSIONI_INFO']['COMPLETED'])
         total = vars['MISSIONI_INFO']['TOTAL']
-        finished = vars['FINISHED']                        
+        finished = vars['FINISHED']
         stats.append(f'Missioni: {completed}/{total}')
         if finished:
             stats.append('COMPLETATA')
-        else:                         
+        else:
             stats.append(last_access_str)
     else:
         stats.extend(['NON INIZIATA', last_access_str])
@@ -647,7 +654,7 @@ def get_group_name(p, escape_markdown=True):
         name = utility.escape_markdown(name)
     return name
 
-def set_game_start_time(p):    
+def set_game_start_time(p):
     start_time = dtu.now_utc_iso_format()
     p.tmp_variables['START_TIME'] = start_time
 
@@ -660,7 +667,7 @@ def set_game_end_time(p, finished):
     p.tmp_variables['FINISHED'] = finished
 
 def start_mission(p):
-    start_time = dtu.now_utc_iso_format()    
+    start_time = dtu.now_utc_iso_format()
     current_mission = get_current_mission(p)
     current_mission['wrong_answers'] = []
     current_mission['start_time'] = start_time
@@ -671,47 +678,47 @@ async def set_mission_end_time(p):
     current_mission = get_current_mission(p)
     current_mission['end_time'] = end_time
     last_mission_time = p.tmp_variables['MISSION_TIMES'][-1]
-    
-    # bug on 2022/12/15 
+
+    # bug on 2022/12/15
     # last_mission_time is supposed to have only 1 element
     # in a specific case last_mission_time was already with 2 elements
-    if len(last_mission_time)==1:        
+    if len(last_mission_time)==1:
         last_mission_time.append(end_time)
     else:
         from historic.bot.bot_telegram import report_admins
         await report_admins(f'Bug MISSION_TIMES (length={len(last_mission_time)}) for user {p.chat_id}')
-    
+
     mission_ellapsed = dtu.delta_seconds_iso(*last_mission_time)
     return mission_ellapsed
 
 def set_elapsed_and_penalty_and_compute_total(p):
-    tvar = p.tmp_variables    
+    tvar = p.tmp_variables
     end_time = get_end_time(p)
     start_time = get_game_start_time(p)
-    
+
     if start_time == 0:
         # this is when /exit is used during instructions before hunt starts
         start_time = end_time
-    
+
     elapsed_sec_game = dtu.delta_seconds_iso(start_time, end_time)
     elapsed_sec_missions = sum(
         dtu.delta_seconds_iso(times[0], times[1]) if len(times)==2 else 0
-        for times in tvar['MISSION_TIMES']        
-    )            
+        for times in tvar['MISSION_TIMES']
+    )
 
-    _, penalty_sec = get_total_penalty(p)    
-    
+    _, penalty_sec = get_total_penalty(p)
+
     total_sec_game = elapsed_sec_game + penalty_sec
     total_sec_game_missions = elapsed_sec_missions + penalty_sec
-    
+
     # variables to print to users
     tvar['penalty_sec'] = penalty_sec
     tvar['penalty_hms'] = utility.sec_to_hms(penalty_sec)
-    tvar['total_hms_game'] = utility.sec_to_hms(total_sec_game)    
-    tvar['ellapsed_hms_game'] = utility.sec_to_hms(elapsed_sec_game)    
-    tvar['total_hms_missions'] = utility.sec_to_hms(total_sec_game_missions)    
-    tvar['ellapsed_hms_missions'] = utility.sec_to_hms(elapsed_sec_missions)    
-    
+    tvar['total_hms_game'] = utility.sec_to_hms(total_sec_game)
+    tvar['ellapsed_hms_game'] = utility.sec_to_hms(elapsed_sec_game)
+    tvar['total_hms_missions'] = utility.sec_to_hms(total_sec_game_missions)
+    tvar['ellapsed_hms_missions'] = utility.sec_to_hms(elapsed_sec_missions)
+
     # variables to save in airtable
     tvar['ELAPSED GAME'] = elapsed_sec_game
     tvar['ELAPSED MISSIONS'] = elapsed_sec_missions
@@ -720,11 +727,11 @@ def set_elapsed_and_penalty_and_compute_total(p):
     tvar['TOTAL TIME MISSIONS'] = elapsed_sec_missions + penalty_sec
     tvar['COMPLETED_MISSIONS'] = len(tvar.get('MISSIONI_INFO',{}).get('COMPLETED', []))
     tvar['INCOMPLETED_MISSIONS'] = len(tvar.get('MISSIONI_INFO',{}).get('TODO', []))
-    
+
     p.put()
 
 def get_elapsed_and_penalty_and_total_hms(p):
-    tvar = p.tmp_variables 
+    tvar = p.tmp_variables
     return \
         tvar['penalty_hms'], \
         tvar['total_hms_game'], \
@@ -747,14 +754,14 @@ def get_num_compleded_missions(p):
     return len(indovinello_info['COMPLETED'])
 
 def set_next_mission(p, current_mission=None, remove_from_todo=False):
-    indovinello_info = p.tmp_variables['MISSIONI_INFO']    
+    indovinello_info = p.tmp_variables['MISSIONI_INFO']
     todo_missioni = indovinello_info['TODO']
-    if current_mission is None:        
+    if current_mission is None:
         current_mission = todo_missioni.pop(0)
     elif remove_from_todo:
         todo_missioni.remove(current_mission)
     indovinello_info['CURRENT'] = current_mission
-    current_mission['wrong_answers'] = []    
+    current_mission['wrong_answers'] = []
     return current_mission
 
 def get_current_mission(p):
@@ -762,7 +769,7 @@ def get_current_mission(p):
     return indovinello_info['CURRENT']
 
 def get_mission_matching_qr(p, qr_code):
-    indovinello_info = p.tmp_variables['MISSIONI_INFO']    
+    indovinello_info = p.tmp_variables['MISSIONI_INFO']
     todo_missioni = indovinello_info['TODO']
     for mission in todo_missioni:
         goal_qr = mission.get('QR', False)
@@ -770,7 +777,7 @@ def get_mission_matching_qr(p, qr_code):
             if utility.qr_matches(goal_qr, qr_code):
                 return mission
     return None
-    
+
 def append_group_media_input_file_id(p, file_id):
     p.tmp_variables['GROUP_MEDIA_FILE_IDS'].append(file_id)
 
@@ -792,9 +799,9 @@ def increase_wrong_answers_current_indovinello(p, answer, give_penalty, put=True
     if give_penalty:
         p.tmp_variables['PENALTIES'] += 1
     if put:
-        p.put()                
+        p.put()
 
-def get_total_penalty(p):    
+def get_total_penalty(p):
     PENALTIES = p.tmp_variables['PENALTIES']
     SEC_PENALITY_WRONG_ANSWER = int(p.tmp_variables['SETTINGS']['SEC_PENALITY_WRONG_ANSWER'])
     penalty_time_sec = PENALTIES * SEC_PENALITY_WRONG_ANSWER

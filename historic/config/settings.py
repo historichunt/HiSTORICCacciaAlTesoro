@@ -3,7 +3,7 @@ from airtable import Airtable
 from historic.config.params import ROOT_DIR
 
 APP_NAME = 'historictrentobot'
-APP_VERSION = '0.19.8'
+APP_VERSION = '0.20.0'
 # CLOUD_ENVS = ['test', 'production', 'oist']
 GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
 
@@ -11,16 +11,16 @@ if GAE_SERVER:
     from historic.bot import ndb_envvar
     # cloud version
     ENV_VERSION = os.environ.get('GAE_VERSION') # test or production
-    APP_BASE_URL = 'https://{}-dot-{}.appspot.com'.format(ENV_VERSION, APP_NAME)    
+    APP_BASE_URL = 'https://{}-dot-{}.appspot.com'.format(ENV_VERSION, APP_NAME)
     ENV_VARS = ndb_envvar.get_all(ENV_VERSION)
     LOCAL_ENV_FILES = None
 else:
     # local version
-    from historic.bot import ngrok 
-    APP_BASE_URL = ngrok.start_pyngrok()    
+    from historic.bot import ngrok
+    APP_BASE_URL = ngrok.start_pyngrok()
     print(f'Running local version: {APP_BASE_URL}')
 
-    # check local environments    
+    # check local environments
     LOCAL_ENV_FILES = [
         f for f in sorted(os.listdir(ROOT_DIR))
         if (
@@ -32,7 +32,7 @@ else:
         # use settings in .env_
         from dotenv import dotenv_values
         LOCAL_ENV = os.path.join(ROOT_DIR, LOCAL_ENV_FILES[0])
-        ENV_VERSION = LOCAL_ENV.split('.env_')[1] # what follows '.env_'        
+        ENV_VERSION = LOCAL_ENV.split('.env_')[1] # what follows '.env_'
         ENV_VARS = dotenv_values(LOCAL_ENV)
         # need to load the current project in gcloud settings
         os.environ["GCLOUD_PROJECT"] = ENV_VARS["GCLOUD_PROJECT"]
@@ -40,14 +40,14 @@ else:
         from historic.bot import ndb_envvar
         ENV_VERSION = 'test'
         print(f'Using test bot')
-        ENV_VARS = ndb_envvar.get_all(ENV_VERSION)        
+        ENV_VARS = ndb_envvar.get_all(ENV_VERSION)
     print(f'Using settings: {ENV_VERSION}')
 
 
 
 
 # ENVIRONMENT VARIABLES (SECRETS IN DB/.env_ file)
-WEB_APP_QR_URL = APP_BASE_URL + '/miniapp_qr' # ENV_VARS.get("WEB_APP_QR_URL") 
+WEB_APP_QR_URL = APP_BASE_URL + '/miniapp_qr' # ENV_VARS.get("WEB_APP_QR_URL")
 TELEGRAM_BOT_USERNAME = ENV_VARS.get("TELEGRAM_BOT_USERNAME")
 TELEGRAM_API_TOKEN = ENV_VARS.get("TELEGRAM_API_TOKEN")
 # AIRTABLE_API_KEY = ENV_VARS.get("AIRTABLE_API_KEY") # deprecated
@@ -63,8 +63,8 @@ TELEGRAM_API_URL = f'https://api.telegram.org/bot{TELEGRAM_API_TOKEN}/'
 TELEGRAM_BASE_URL_FILE = f'https://api.telegram.org/file/bot{TELEGRAM_API_TOKEN}/'
 
 PEOPLE_TABLE = Airtable(
-    AIRTABLE_CONFIG_ID, 
-    'People', 
+    AIRTABLE_CONFIG_ID,
+    'People',
     api_key=AIRTABLE_ACCESS_TOKEN
 )
 
@@ -89,8 +89,8 @@ HUNT_ADMIN_IDS = set([
 ])
 
 BOT_UI_TABLE_NAME = Airtable(
-    AIRTABLE_CONFIG_ID, 
-    'Bots', 
+    AIRTABLE_CONFIG_ID,
+    'Bots',
     api_key=AIRTABLE_ACCESS_TOKEN
 )
 
@@ -105,13 +105,13 @@ BOT_UI_BASE_ID, BOT_UI_TABLE_NAME = next(
 
 if LOCAL_ENV_FILES:
     ERROR_REPORTERS_IDS = [ENV_VARS['ERROR_REPORTERS_ID']]
-else:    
+else:
     ERROR_REPORTERS_IDS = [
         row['fields']['ID']
         for row in PEOPLE_TABLE.get_all()
         if (
-            row['fields'].get('Report Errors', False) 
-            and 
+            row['fields'].get('Report Errors', False)
+            and
             not row['fields'].get('Disabled', False)
         )
     ]

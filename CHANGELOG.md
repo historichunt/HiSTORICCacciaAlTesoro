@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.20
+- kids/adult option in hunts `Missioni_LANG`
+
 ## 0.19
 - storage of media via google bucket (copied from airtable)
 
@@ -22,7 +25,7 @@
 
 ## 0.14
 - QR code mode
-- fixed/refactoring post-message 
+- fixed/refactoring post-message
 - improving exit hunt
 - py38
 - _env_template
@@ -81,13 +84,13 @@ Inserita richiesta di conferma dopo aver premuto il pulsante TERMINATE
 
 ## 0.3
 Nella tabella UX di ogni caccia si può fare override delle stringhe definite nei file json del codice.
-Rinominato messaggi (vedi RESET_HUNT_AFTER_COMPLETION): 
+Rinominato messaggi (vedi RESET_HUNT_AFTER_COMPLETION):
 FINAL_MESSAGE -> MSG_FINAL_RESET_OFF/MSG_FINAL_RESET_ON
 TERMINATE_MESSAGE -> MSG_HUNT_TERMINATED_RESET_OFF/MSG_HUNT_TERMINATED_RESET_ON"
 
 ## 0.2
-Spostato UX (stringhe) in file json nel codice (https://github.com/kercos/HiSTORICCacciaAlTesoro/tree/master/ux). 
-Le stringhe specifiche per ogni caccia (FINAL_MESSAGE, TERMINATE_MESSAGE) vanno specificate nella base della caccia all'interno della tabella UX. 
+Spostato UX (stringhe) in file json nel codice (https://github.com/kercos/HiSTORICCacciaAlTesoro/tree/master/ux).
+Le stringhe specifiche per ogni caccia (FINAL_MESSAGE, TERMINATE_MESSAGE) vanno specificate nella base della caccia all'interno della tabella UX.
 Eliminare le due righe corrispondenti (FINAL_MESSAGE, TERMINATE_MESSAGE) nella tabella SETTINGS della caccia."
 
 ## 0.1
