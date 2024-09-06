@@ -1,1230 +1,887 @@
-[{
-        "name": "Settings",
-        "fields": [{
-                "type": "singleLineText",
-                "name": "Name"
-            },
-            {
-                "type": "singleLineText",
-                "name": "Value"
-            }
-        ]
-    },
-    {
-        "name": "UI",
-        "fields": [{
-                "type": "singleLineText",
-                "name": "VAR"
-            },
-            {
-                "type": "multilineText",
-                "name": "IT"
-            },
-            {
-                "type": "multilineText",
-                "name": "EN"
-            },
-            {
-                "type": "multilineText",
-                "name": "DE"
-            }
-        ]
-    },
-    {
-        "name": "Instructions_IT",
-        "fields": [{
-                "type": "multilineText",
-                "name": "Text"
-            },
-            {
-                "type": "checkbox",
-                "options": {
-                    "icon": "check",
-                    "color": "greenBright"
-                },
-                "name": "Skip"
-            },
-            {
-                "type": "multipleAttachments",
-                "options": {
-                    "isReversed": false
-                },
-                "name": "Media"
-            },
-            {
-                "type": "multipleSelects",
-                "options": {
-                    "choices": [{
-                            "id": "sel2Fn3MxM6XzFkPE",
-                            "name": "TEAM_NAME",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "sel0Oukjhg0AsbCy3",
-                            "name": "TEST_POSITION",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "sel6BvUOXnb1dwXaf",
-                            "name": "TEST_PHOTO",
-                            "color": "cyanLight2"
-                        },
-                        {
-                            "id": "selL13K0g8slpTQRJ",
-                            "name": "TEST_VOICE",
-                            "color": "tealLight2"
-                        },
-                        {
-                            "id": "sel8HRrr2eTf1Sx2W",
-                            "name": "TEST_VIDEO",
-                            "color": "greenLight2"
-                        },
-                        {
-                            "id": "selzb8drEGvkruHyc",
-                            "name": "EMAIL",
-                            "color": "yellowLight2"
-                        },
-                        {
-                            "id": "sel2xGUQrrV0Kl0EL",
-                            "name": "BUTTON_UNDERSTOOD",
-                            "color": "orangeLight2"
-                        },
-                        {
-                            "id": "selbaSzljIHbtCbzU",
-                            "name": "BUTTON_START_GAME",
-                            "color": "pinkLight2"
-                        },
-                        {
-                            "id": "selzAIOUCGWVLHac8",
-                            "name": "BUTTON_ROUTE_FOOT",
-                            "color": "greenLight2"
-                        },
-                        {
-                            "id": "selHOnb3pTHYdMGEc",
-                            "name": "BUTTON_ROUTE_BICYCLE",
-                            "color": "tealLight2"
-                        },
-                        {
-                            "id": "sel8KajCfPgMudtZG",
-                            "name": "BUTTON_ROUTE_CIRCULAR_YES",
-                            "color": "purpleLight2"
-                        },
-                        {
-                            "id": "selkYdsxZ3vrOOav6",
-                            "name": "BUTTON_ROUTE_CIRCULAR_NO",
-                            "color": "tealLight2"
-                        },
-                        {
-                            "id": "selPQTNw97R14qDrG",
-                            "name": "GROUP_SIZE",
-                            "color": "purpleLight2"
-                        },
-                        {
-                            "id": "selONLixo0HISoBgX",
-                            "name": "CONTACT_PERSON_NAME",
-                            "color": "yellowLight2"
-                        },
-                        {
-                            "id": "selSTxNXtmcj39z6B",
-                            "name": "CONTACT_PERSON_PHONE",
-                            "color": "orangeLight2"
-                        },
-                        {
-                            "id": "sel70l8WuyeO16SB2",
-                            "name": "BUTTON_45_MIN",
-                            "color": "cyanLight2"
-                        },
-                        {
-                            "id": "selxHAiZSrxYPU1K4",
-                            "name": "BUTTON_60_MIN",
-                            "color": "redLight2"
-                        },
-                        {
-                            "id": "sel5HugDOCAi7yvTk",
-                            "name": "BUTTON_90_MIN",
-                            "color": "yellowLight2"
-                        },
-                        {
-                            "id": "selDVgEuE85YNnptm",
-                            "name": "BUTTON_120_MIN",
-                            "color": "tealLight2"
-                        },
-                        {
-                            "id": "selr4DdN0ffkRkAN7",
-                            "name": "BUTTON_CONTINUE",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "selh9XAtTJP0Q0tSV",
-                            "name": "BUTTON_EXIT",
-                            "color": "cyanLight2"
-                        }
-                    ]
-                },
-                "name": "Input_Type"
-            }
-        ]
-    },
-    {
-        "name": "Instructions_EN",
-        "fields": [{
-                "type": "multilineText",
-                "name": "Text"
-            },
-            {
-                "type": "checkbox",
-                "options": {
-                    "icon": "check",
-                    "color": "greenBright"
-                },
-                "name": "Skip"
-            },
-            {
-                "type": "multipleAttachments",
-                "options": {
-                    "isReversed": false
-                },
-                "name": "Media"
-            },
-            {
-                "type": "multipleSelects",
-                "options": {
-                    "choices": [{
-                            "id": "sel2Fn3MxM6XzFkPE",
-                            "name": "TEAM_NAME",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "sel0Oukjhg0AsbCy3",
-                            "name": "TEST_POSITION",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "sel6BvUOXnb1dwXaf",
-                            "name": "TEST_PHOTO",
-                            "color": "cyanLight2"
-                        },
-                        {
-                            "id": "selL13K0g8slpTQRJ",
-                            "name": "TEST_VOICE",
-                            "color": "tealLight2"
-                        },
-                        {
-                            "id": "sel8HRrr2eTf1Sx2W",
-                            "name": "TEST_VIDEO",
-                            "color": "greenLight2"
-                        },
-                        {
-                            "id": "selzb8drEGvkruHyc",
-                            "name": "EMAIL",
-                            "color": "yellowLight2"
-                        },
-                        {
-                            "id": "sel2xGUQrrV0Kl0EL",
-                            "name": "BUTTON_UNDERSTOOD",
-                            "color": "orangeLight2"
-                        },
-                        {
-                            "id": "selbaSzljIHbtCbzU",
-                            "name": "BUTTON_START_GAME",
-                            "color": "pinkLight2"
-                        },
-                        {
-                            "id": "selzAIOUCGWVLHac8",
-                            "name": "BUTTON_ROUTE_FOOT",
-                            "color": "greenLight2"
-                        },
-                        {
-                            "id": "selHOnb3pTHYdMGEc",
-                            "name": "BUTTON_ROUTE_BICYCLE",
-                            "color": "tealLight2"
-                        },
-                        {
-                            "id": "sel8KajCfPgMudtZG",
-                            "name": "BUTTON_ROUTE_CIRCULAR_YES",
-                            "color": "purpleLight2"
-                        },
-                        {
-                            "id": "selkYdsxZ3vrOOav6",
-                            "name": "BUTTON_ROUTE_CIRCULAR_NO",
-                            "color": "tealLight2"
-                        },
-                        {
-                            "id": "selPQTNw97R14qDrG",
-                            "name": "GROUP_SIZE",
-                            "color": "purpleLight2"
-                        },
-                        {
-                            "id": "selONLixo0HISoBgX",
-                            "name": "CONTACT_PERSON_NAME",
-                            "color": "yellowLight2"
-                        },
-                        {
-                            "id": "selSTxNXtmcj39z6B",
-                            "name": "CONTACT_PERSON_PHONE",
-                            "color": "orangeLight2"
-                        },
-                        {
-                            "id": "selfQk2liOzlEBDfs",
-                            "name": "Cominciamo con il vostro indirizzo email.",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "sel70l8WuyeO16SB2",
-                            "name": "BUTTON_45_MIN",
-                            "color": "cyanLight2"
-                        },
-                        {
-                            "id": "selxHAiZSrxYPU1K4",
-                            "name": "BUTTON_60_MIN",
-                            "color": "redLight2"
-                        },
-                        {
-                            "id": "sel5HugDOCAi7yvTk",
-                            "name": "BUTTON_90_MIN",
-                            "color": "yellowLight2"
-                        },
-                        {
-                            "id": "selDVgEuE85YNnptm",
-                            "name": "BUTTON_120_MIN",
-                            "color": "tealLight2"
-                        },
-                        {
-                            "id": "sele1ybE87AgWoMNd",
-                            "name": "BUTTON_CONTINUE",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "selAVLWRbGe3Gyv2s",
-                            "name": "BUTTON_EXIT",
-                            "color": "cyanLight2"
-                        }
-                    ]
-                },
-                "name": "Input_Type"
-            }
-        ]
-    },
-    {
-        "name": "Instructions_DE",
-        "fields": [{
-                "type": "multilineText",
-                "name": "Text"
-            },
-            {
-                "type": "checkbox",
-                "options": {
-                    "icon": "check",
-                    "color": "greenBright"
-                },
-                "name": "Skip"
-            },
-            {
-                "type": "multipleAttachments",
-                "options": {
-                    "isReversed": false
-                },
-                "name": "Media"
-            },
-            {
-                "type": "multipleSelects",
-                "options": {
-                    "choices": [{
-                            "id": "sel2Fn3MxM6XzFkPE",
-                            "name": "TEAM_NAME",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "sel0Oukjhg0AsbCy3",
-                            "name": "TEST_POSITION",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "sel6BvUOXnb1dwXaf",
-                            "name": "TEST_PHOTO",
-                            "color": "cyanLight2"
-                        },
-                        {
-                            "id": "selL13K0g8slpTQRJ",
-                            "name": "TEST_VOICE",
-                            "color": "tealLight2"
-                        },
-                        {
-                            "id": "sel8HRrr2eTf1Sx2W",
-                            "name": "TEST_VIDEO",
-                            "color": "greenLight2"
-                        },
-                        {
-                            "id": "selzb8drEGvkruHyc",
-                            "name": "EMAIL",
-                            "color": "yellowLight2"
-                        },
-                        {
-                            "id": "sel2xGUQrrV0Kl0EL",
-                            "name": "BUTTON_UNDERSTOOD",
-                            "color": "orangeLight2"
-                        },
-                        {
-                            "id": "selbaSzljIHbtCbzU",
-                            "name": "BUTTON_START_GAME",
-                            "color": "pinkLight2"
-                        },
-                        {
-                            "id": "selzAIOUCGWVLHac8",
-                            "name": "BUTTON_ROUTE_FOOT",
-                            "color": "greenLight2"
-                        },
-                        {
-                            "id": "selHOnb3pTHYdMGEc",
-                            "name": "BUTTON_ROUTE_BICYCLE",
-                            "color": "tealLight2"
-                        },
-                        {
-                            "id": "sel8KajCfPgMudtZG",
-                            "name": "BUTTON_ROUTE_CIRCULAR_YES",
-                            "color": "purpleLight2"
-                        },
-                        {
-                            "id": "selkYdsxZ3vrOOav6",
-                            "name": "BUTTON_ROUTE_CIRCULAR_NO",
-                            "color": "tealLight2"
-                        },
-                        {
-                            "id": "selPQTNw97R14qDrG",
-                            "name": "GROUP_SIZE",
-                            "color": "purpleLight2"
-                        },
-                        {
-                            "id": "selONLixo0HISoBgX",
-                            "name": "CONTACT_PERSON_NAME",
-                            "color": "yellowLight2"
-                        },
-                        {
-                            "id": "selSTxNXtmcj39z6B",
-                            "name": "CONTACT_PERSON_PHONE",
-                            "color": "orangeLight2"
-                        },
-                        {
-                            "id": "selfQk2liOzlEBDfs",
-                            "name": "Cominciamo con il vostro indirizzo email.",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "sel70l8WuyeO16SB2",
-                            "name": "BUTTON_45_MIN",
-                            "color": "cyanLight2"
-                        },
-                        {
-                            "id": "selxHAiZSrxYPU1K4",
-                            "name": "BUTTON_60_MIN",
-                            "color": "redLight2"
-                        },
-                        {
-                            "id": "sel5HugDOCAi7yvTk",
-                            "name": "BUTTON_90_MIN",
-                            "color": "yellowLight2"
-                        },
-                        {
-                            "id": "selDVgEuE85YNnptm",
-                            "name": "BUTTON_120_MIN",
-                            "color": "tealLight2"
-                        },
-                        {
-                            "id": "selzWM48dVegEXKLp",
-                            "name": "BUTTON_CONTINUE",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "seltFmuhNyRJRs8X8",
-                            "name": "BUTTON_EXIT",
-                            "color": "cyanLight2"
-                        }
-                    ]
-                },
-                "name": "Input_Type"
-            }
-        ]
-    },
-    {
-        "name": "Missioni_IT",
-        "fields": [{
-                "type": "singleLineText",
-                "name": "NOME"
-            },
-            {
-                "type": "checkbox",
-                "options": {
-                    "icon": "check",
-                    "color": "greenBright"
-                },
-                "name": "ACTIVE"
-            },
-            {
-                "type": "checkbox",
-                "options": {
-                    "icon": "check",
-                    "color": "greenBright"
-                },
-                "name": "FINALE"
-            },
-            {
-                "type": "singleSelect",
-                "options": {
-                    "choices": [{
-                            "id": "selF9duur1WyvWuh7",
-                            "name": "Todo",
-                            "color": "redLight2"
-                        },
-                        {
-                            "id": "selYepEOSbvjRxSiT",
-                            "name": "In progress",
-                            "color": "yellowLight2"
-                        },
-                        {
-                            "id": "selucdRPxHmPxiIED",
-                            "name": "Done",
-                            "color": "greenLight2"
-                        },
-                        {
-                            "id": "selJbOiGs0Hfq97iA",
-                            "name": "Albere on Ice",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "seluOEKRT2jZSXlKk",
-                            "name": "Affreschi piazza Pasi",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "sel81xEjlT1zoWlYf",
-                            "name": "Gioco Zelten",
-                            "color": "blueLight2"
-                        }
-                    ]
-                },
-                "name": "NEXT"
-            },
-            {
-                "type": "multipleAttachments",
-                "options": {
-                    "isReversed": true
-                },
-                "name": "INTRO_MEDIA"
-            },
-            {
-                "type": "multilineText",
-                "name": "INTRO_MEDIA_CAPTION"
-            },
-            {
-                "type": "multilineText",
-                "name": "INTRODUZIONE_LOCATION"
-            },
-            {
-                "type": "singleLineText",
-                "name": "GPS"
-            },
-            {
-                "type": "multipleAttachments",
-                "options": {
-                    "isReversed": true
-                },
-                "name": "DOMANDA_MEDIA"
-            },
-            {
-                "type": "multilineText",
-                "name": "DOMANDA_MEDIA_CAPTION"
-            },
-            {
-                "type": "multilineText",
-                "name": "DOMANDA"
-            },
-            {
-                "type": "singleLineText",
-                "name": "SOLUZIONI"
-            },
-            {
-                "type": "multilineText",
-                "name": "INDIZIO_1"
-            },
-            {
-                "type": "multilineText",
-                "name": "INDIZIO_2"
-            },
-            {
-                "type": "checkbox",
-                "options": {
-                    "icon": "check",
-                    "color": "greenBright"
-                },
-                "name": "PENALTY"
-            },
-            {
-                "type": "multipleAttachments",
-                "options": {
-                    "isReversed": true
-                },
-                "name": "POST_MEDIA"
-            },
-            {
-                "type": "multilineText",
-                "name": "POST_MEDIA_CAPTION"
-            },
-            {
-                "type": "multilineText",
-                "name": "POST_MESSAGE"
-            },
-            {
-                "type": "multilineText",
-                "name": "INPUT_INSTRUCTIONS"
-            },
-            {
-                "type": "singleSelect",
-                "options": {
-                    "choices": [{
-                            "id": "selm74BiCRi8wyhMM",
-                            "name": "PHOTO",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "selqz0dSM6Zo81irc",
-                            "name": "VOICE",
-                            "color": "cyanLight2"
-                        },
-                        {
-                            "id": "selnhCVJ6niLLI5se",
-                            "name": "VIDEO",
-                            "color": "tealLight2"
-                        }
-                    ]
-                },
-                "name": "INPUT_TYPE"
-            },
-            {
-                "type": "checkbox",
-                "options": {
-                    "icon": "check",
-                    "color": "greenBright"
-                },
-                "name": "INPUT_CONFIRMATION"
-            },
-            {
-                "type": "multilineText",
-                "name": "POST_INPUT_MESSAGE"
-            },
-            {
-                "type": "multilineText",
-                "name": "NOTE OPZIONALI"
-            }
-        ]
-    },
-    {
-        "name": "Missioni_EN",
-        "fields": [{
-                "type": "singleLineText",
-                "name": "NOME"
-            },
-            {
-                "type": "checkbox",
-                "options": {
-                    "icon": "check",
-                    "color": "greenBright"
-                },
-                "name": "ACTIVE"
-            },
-            {
-                "type": "checkbox",
-                "options": {
-                    "icon": "check",
-                    "color": "greenBright"
-                },
-                "name": "FINALE"
-            },
-            {
-                "type": "singleSelect",
-                "options": {
-                    "choices": [{
-                            "id": "selF9duur1WyvWuh7",
-                            "name": "Todo",
-                            "color": "redLight2"
-                        },
-                        {
-                            "id": "selYepEOSbvjRxSiT",
-                            "name": "In progress",
-                            "color": "yellowLight2"
-                        },
-                        {
-                            "id": "selucdRPxHmPxiIED",
-                            "name": "Done",
-                            "color": "greenLight2"
-                        },
-                        {
-                            "id": "selGqCePH7BAcC3MW",
-                            "name": "Affreschi piazza Pasi",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "selhF6tguiWxmJFWL",
-                            "name": "Gioco Zelten",
-                            "color": "cyanLight2"
-                        },
-                        {
-                            "id": "sel7g4VC2RGEGMTVA",
-                            "name": "Albere on Ice",
-                            "color": "tealLight2"
-                        }
-                    ]
-                },
-                "name": "NEXT"
-            },
-            {
-                "type": "multipleAttachments",
-                "options": {
-                    "isReversed": true
-                },
-                "name": "INTRO_MEDIA"
-            },
-            {
-                "type": "multilineText",
-                "name": "INTRO_MEDIA_CAPTION"
-            },
-            {
-                "type": "multilineText",
-                "name": "INTRODUZIONE_LOCATION"
-            },
-            {
-                "type": "singleLineText",
-                "name": "GPS"
-            },
-            {
-                "type": "multipleAttachments",
-                "options": {
-                    "isReversed": true
-                },
-                "name": "DOMANDA_MEDIA"
-            },
-            {
-                "type": "multilineText",
-                "name": "DOMANDA_MEDIA_CAPTION"
-            },
-            {
-                "type": "multilineText",
-                "name": "DOMANDA"
-            },
-            {
-                "type": "singleLineText",
-                "name": "SOLUZIONI"
-            },
-            {
-                "type": "multilineText",
-                "name": "INDIZIO_1"
-            },
-            {
-                "type": "multilineText",
-                "name": "INDIZIO_2"
-            },
-            {
-                "type": "checkbox",
-                "options": {
-                    "icon": "check",
-                    "color": "greenBright"
-                },
-                "name": "PENALTY"
-            },
-            {
-                "type": "multipleAttachments",
-                "options": {
-                    "isReversed": true
-                },
-                "name": "POST_MEDIA"
-            },
-            {
-                "type": "multilineText",
-                "name": "POST_MEDIA_CAPTION"
-            },
-            {
-                "type": "multilineText",
-                "name": "POST_MESSAGE"
-            },
-            {
-                "type": "multilineText",
-                "name": "INPUT_INSTRUCTIONS"
-            },
-            {
-                "type": "singleSelect",
-                "options": {
-                    "choices": [{
-                            "id": "selm74BiCRi8wyhMM",
-                            "name": "PHOTO",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "selqz0dSM6Zo81irc",
-                            "name": "VOICE",
-                            "color": "cyanLight2"
-                        },
-                        {
-                            "id": "selnhCVJ6niLLI5se",
-                            "name": "VIDEO",
-                            "color": "tealLight2"
-                        }
-                    ]
-                },
-                "name": "INPUT_TYPE"
-            },
-            {
-                "type": "checkbox",
-                "options": {
-                    "icon": "check",
-                    "color": "greenBright"
-                },
-                "name": "INPUT_CONFIRMATION"
-            },
-            {
-                "type": "multilineText",
-                "name": "POST_INPUT_MESSAGE"
-            },
-            {
-                "type": "multilineText",
-                "name": "NOTE OPZIONALI"
-            }
-        ]
-    },
-    {
-        "name": "Missioni_DE",
-        "fields": [{
-                "type": "singleLineText",
-                "name": "NOME"
-            },
-            {
-                "type": "checkbox",
-                "options": {
-                    "icon": "check",
-                    "color": "greenBright"
-                },
-                "name": "ACTIVE"
-            },
-            {
-                "type": "checkbox",
-                "options": {
-                    "icon": "check",
-                    "color": "greenBright"
-                },
-                "name": "FINALE"
-            },
-            {
-                "type": "singleSelect",
-                "options": {
-                    "choices": [{
-                            "id": "selF9duur1WyvWuh7",
-                            "name": "Todo",
-                            "color": "redLight2"
-                        },
-                        {
-                            "id": "selYepEOSbvjRxSiT",
-                            "name": "In progress",
-                            "color": "yellowLight2"
-                        },
-                        {
-                            "id": "selucdRPxHmPxiIED",
-                            "name": "Done",
-                            "color": "greenLight2"
-                        },
-                        {
-                            "id": "selUzRWWI7qbTknk1",
-                            "name": "Affreschi piazza Pasi",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "selFTgUmXHPgJN1wz",
-                            "name": "Gioco Zelten",
-                            "color": "cyanLight2"
-                        },
-                        {
-                            "id": "selNVY0ZAESMfjtNY",
-                            "name": "Albere on Ice",
-                            "color": "tealLight2"
-                        }
-                    ]
-                },
-                "name": "NEXT"
-            },
-            {
-                "type": "multipleAttachments",
-                "options": {
-                    "isReversed": true
-                },
-                "name": "INTRO_MEDIA"
-            },
-            {
-                "type": "multilineText",
-                "name": "INTRO_MEDIA_CAPTION"
-            },
-            {
-                "type": "multilineText",
-                "name": "INTRODUZIONE_LOCATION"
-            },
-            {
-                "type": "singleLineText",
-                "name": "GPS"
-            },
-            {
-                "type": "multipleAttachments",
-                "options": {
-                    "isReversed": true
-                },
-                "name": "DOMANDA_MEDIA"
-            },
-            {
-                "type": "multilineText",
-                "name": "DOMANDA_MEDIA_CAPTION"
-            },
-            {
-                "type": "multilineText",
-                "name": "DOMANDA"
-            },
-            {
-                "type": "singleLineText",
-                "name": "SOLUZIONI"
-            },
-            {
-                "type": "multilineText",
-                "name": "INDIZIO_1"
-            },
-            {
-                "type": "multilineText",
-                "name": "INDIZIO_2"
-            },
-            {
-                "type": "checkbox",
-                "options": {
-                    "icon": "check",
-                    "color": "greenBright"
-                },
-                "name": "PENALTY"
-            },
-            {
-                "type": "multipleAttachments",
-                "options": {
-                    "isReversed": true
-                },
-                "name": "POST_MEDIA"
-            },
-            {
-                "type": "multilineText",
-                "name": "POST_MEDIA_CAPTION"
-            },
-            {
-                "type": "multilineText",
-                "name": "POST_MESSAGE"
-            },
-            {
-                "type": "multilineText",
-                "name": "INPUT_INSTRUCTIONS"
-            },
-            {
-                "type": "singleSelect",
-                "options": {
-                    "choices": [{
-                            "id": "selm74BiCRi8wyhMM",
-                            "name": "PHOTO",
-                            "color": "blueLight2"
-                        },
-                        {
-                            "id": "selqz0dSM6Zo81irc",
-                            "name": "VOICE",
-                            "color": "cyanLight2"
-                        },
-                        {
-                            "id": "selnhCVJ6niLLI5se",
-                            "name": "VIDEO",
-                            "color": "tealLight2"
-                        }
-                    ]
-                },
-                "name": "INPUT_TYPE"
-            },
-            {
-                "type": "checkbox",
-                "options": {
-                    "icon": "check",
-                    "color": "greenBright"
-                },
-                "name": "INPUT_CONFIRMATION"
-            },
-            {
-                "type": "multilineText",
-                "name": "POST_INPUT_MESSAGE"
-            },
-            {
-                "type": "multilineText",
-                "name": "NOTE OPZIONALI"
-            }
-        ]
-    },
-    {
-        "name": "Survey_IT",
-        "fields": [{
-                "type": "singleLineText",
-                "name": "QN"
-            },
-            {
-                "type": "multilineText",
-                "name": "DOMANDA"
-            },
-            {
-                "type": "singleLineText",
-                "name": "RISPOSTE"
-            },
-            {
-                "type": "singleSelect",
-                "options": {
-                    "choices": [{
-                            "id": "selOiKQP0wOWXLsPG",
-                            "name": "Open",
-                            "color": "yellowLight2"
-                        },
-                        {
-                            "id": "selHiU551vn2HCNFM",
-                            "name": "Closed",
-                            "color": "blueLight2"
-                        }
-                    ]
-                },
-                "name": "TYPE"
-            }
-        ]
-    },
-    {
-        "name": "Survey_EN",
-        "fields": [{
-                "type": "singleLineText",
-                "name": "QN"
-            },
-            {
-                "type": "multilineText",
-                "name": "DOMANDA"
-            },
-            {
-                "type": "singleLineText",
-                "name": "RISPOSTE"
-            },
-            {
-                "type": "singleSelect",
-                "options": {
-                    "choices": [{
-                            "id": "selOiKQP0wOWXLsPG",
-                            "name": "Open",
-                            "color": "yellowLight2"
-                        },
-                        {
-                            "id": "selHiU551vn2HCNFM",
-                            "name": "Closed",
-                            "color": "blueLight2"
-                        }
-                    ]
-                },
-                "name": "TYPE"
-            }
-        ]
-    },
-    {
-        "name": "Survey_DE",
-        "fields": [{
-                "type": "singleLineText",
-                "name": "QN"
-            },
-            {
-                "type": "multilineText",
-                "name": "DOMANDA"
-            },
-            {
-                "type": "singleLineText",
-                "name": "RISPOSTE"
-            },
-            {
-                "type": "singleSelect",
-                "options": {
-                    "choices": [{
-                            "id": "selOiKQP0wOWXLsPG",
-                            "name": "Open",
-                            "color": "yellowLight2"
-                        },
-                        {
-                            "id": "selHiU551vn2HCNFM",
-                            "name": "Closed",
-                            "color": "blueLight2"
-                        }
-                    ]
-                },
-                "name": "TYPE"
-            }
-        ]
-    },
-    {
-        "name": "Survey Answers",
-        "fields": [{
-                "type": "autoNumber",
-                "name": "N"
-            },
-            {
-                "type": "singleLineText",
-                "name": "LANGUAGE"
-            },
-            {
-                "type": "multilineText",
-                "name": "Q1"
-            },
-            {
-                "type": "multilineText",
-                "name": "Q2"
-            },
-            {
-                "type": "multilineText",
-                "name": "Q3"
-            },
-            {
-                "type": "multilineText",
-                "name": "Q4"
-            },
-            {
-                "type": "multilineText",
-                "name": "Q5"
-            },
-            {
-                "type": "multilineText",
-                "name": "Q6"
-            },
-            {
-                "type": "multilineText",
-                "name": "Q7"
-            },
-            {
-                "type": "multilineText",
-                "name": "Q8"
-            }
-        ]
-    },
-    {
-        "name": "Results",
-        "fields": [{
-                "type": "singleLineText",
-                "name": "ID"
-            },
-            {
-                "type": "singleLineText",
-                "name": "LANGUAGE"
-            },
-            {
-                "type": "singleLineText",
-                "name": "GROUP_NAME"
-            },
-            {
-                "type": "singleLineText",
-                "name": "NOME"
-            },
-            {
-                "type": "singleLineText",
-                "name": "COGNOME"
-            },
-            {
-                "type": "singleLineText",
-                "name": "USERNAME"
-            },
-            {
-                "type": "singleLineText",
-                "name": "EMAIL"
-            },
-            {
-                "type": "multipleAttachments",
-                "options": {
-                    "isReversed": false
-                },
-                "name": "GROUP_MEDIA_FILE_IDS"
-            },
-            {
-                "type": "dateTime",
-                "options": {
-                    "dateFormat": {
-                        "name": "european",
-                        "format": "D/M/YYYY"
-                    },
-                    "timeFormat": {
-                        "name": "24hour",
-                        "format": "HH:mm"
-                    },
-                    "timeZone": "client"
-                },
-                "name": "START_TIME"
-            },
-            {
-                "type": "dateTime",
-                "options": {
-                    "dateFormat": {
-                        "name": "european",
-                        "format": "D/M/YYYY"
-                    },
-                    "timeFormat": {
-                        "name": "24hour",
-                        "format": "HH:mm"
-                    },
-                    "timeZone": "client"
-                },
-                "name": "END_TIME"
-            },
-            {
-                "type": "duration",
-                "options": {
-                    "durationFormat": "h:mm:ss"
-                },
-                "name": "ELAPSED GAME"
-            },
-            {
-                "type": "duration",
-                "options": {
-                    "durationFormat": "h:mm:ss"
-                },
-                "name": "ELAPSED MISSIONS"
-            },
-            {
-                "type": "number",
-                "options": {
-                    "precision": 0
-                },
-                "name": "PENALTIES"
-            },
-            {
-                "type": "duration",
-                "options": {
-                    "durationFormat": "h:mm:ss"
-                },
-                "name": "PENALTY TIME"
-            },
-            {
-                "type": "duration",
-                "options": {
-                    "durationFormat": "h:mm:ss"
-                },
-                "name": "TOTAL TIME GAME"
-            },
-            {
-                "type": "checkbox",
-                "options": {
-                    "icon": "check",
-                    "color": "greenBright"
-                },
-                "name": "FINISHED"
-            },
-            {
-                "type": "duration",
-                "options": {
-                    "durationFormat": "h:mm:ss"
-                },
-                "name": "TOTAL TIME MISSIONS"
-            },
-            {
-                "type": "multilineText",
-                "name": "GAME VARS"
-            }
-        ]
-    }
+[
+   {
+      "name": "Settings",
+      "fields": [
+         {
+            "type": "singleLineText",
+            "name": "Name"
+         },
+         {
+            "type": "singleLineText",
+            "name": "Value"
+         }
+      ]
+   },
+   {
+      "name": "UI",
+      "fields": [
+         {
+            "type": "singleLineText",
+            "name": "VAR"
+         },
+         {
+            "type": "multilineText",
+            "name": "EN"
+         },
+         {
+            "type": "multilineText",
+            "name": "IT"
+         }
+      ]
+   },
+   {
+      "name": "Instructions_EN",
+      "fields": [
+         {
+            "type": "multilineText",
+            "name": "Text"
+         },
+         {
+            "type": "checkbox",
+            "options": {
+               "icon": "check",
+               "color": "greenBright"
+            },
+            "name": "Skip"
+         },
+         {
+            "type": "multipleAttachments",
+            "options": {
+               "isReversed": false
+            },
+            "name": "Media"
+         },
+         {
+            "type": "multipleSelects",
+            "options": {
+               "choices": [
+                  {
+                     "id": "sel2Fn3MxM6XzFkPE",
+                     "name": "TEAM_NAME",
+                     "color": "blueLight2"
+                  },
+                  {
+                     "id": "sel0Oukjhg0AsbCy3",
+                     "name": "TEST_POSITION",
+                     "color": "tealLight2"
+                  },
+                  {
+                     "id": "sel6BvUOXnb1dwXaf",
+                     "name": "TEST_PHOTO",
+                     "color": "tealLight2"
+                  },
+                  {
+                     "id": "selL13K0g8slpTQRJ",
+                     "name": "TEST_VOICE",
+                     "color": "tealLight2"
+                  },
+                  {
+                     "id": "sel8HRrr2eTf1Sx2W",
+                     "name": "TEST_VIDEO",
+                     "color": "tealLight2"
+                  },
+                  {
+                     "id": "selzb8drEGvkruHyc",
+                     "name": "EMAIL",
+                     "color": "yellowLight2"
+                  },
+                  {
+                     "id": "sel2xGUQrrV0Kl0EL",
+                     "name": "BUTTON_UNDERSTOOD",
+                     "color": "orangeLight2"
+                  },
+                  {
+                     "id": "selbaSzljIHbtCbzU",
+                     "name": "BUTTON_START_GAME",
+                     "color": "pinkLight2"
+                  },
+                  {
+                     "id": "selAcEPOe5lQdBvhd",
+                     "name": "BUTTON_ROUTE_FOOT",
+                     "color": "greenLight2"
+                  },
+                  {
+                     "id": "sel4GkzBO5FUxM0FJ",
+                     "name": "BUTTON_ROUTE_BICYCLE",
+                     "color": "greenLight2"
+                  },
+                  {
+                     "id": "sel9D2s9jvmEn60XC",
+                     "name": "BUTTON_ROUTE_CIRCULAR_YES",
+                     "color": "greenLight2"
+                  },
+                  {
+                     "id": "sellP8fDgRgT2FasE",
+                     "name": "BUTTON_ROUTE_CIRCULAR_NO",
+                     "color": "greenLight2"
+                  },
+                  {
+                     "id": "selPMHDPUiVoD2H4u",
+                     "name": "GROUP_SIZE",
+                     "color": "purpleLight2"
+                  },
+                  {
+                     "id": "sel0Li04eTQElOy5Z",
+                     "name": "CONTACT_PERSON_NAME",
+                     "color": "yellowLight2"
+                  },
+                  {
+                     "id": "selOEebQZw742rcct",
+                     "name": "CONTACT_PERSON_PHONE",
+                     "color": "yellowLight2"
+                  },
+                  {
+                     "id": "sel6adojDOdBMsk3i",
+                     "name": "BUTTON_45_MIN",
+                     "color": "grayLight2"
+                  },
+                  {
+                     "id": "selSM9Oi41W13Tjxi",
+                     "name": "BUTTON_60_MIN",
+                     "color": "grayLight2"
+                  },
+                  {
+                     "id": "selMT3aojcCPAstGg",
+                     "name": "BUTTON_90_MIN",
+                     "color": "grayLight2"
+                  },
+                  {
+                     "id": "sellCdbLE1x7SSdOo",
+                     "name": "BUTTON_120_MIN",
+                     "color": "grayLight2"
+                  },
+                  {
+                     "id": "sel92rr5tvT7z4oHu",
+                     "name": "BUTTON_CONTINUE",
+                     "color": "blueLight2"
+                  },
+                  {
+                     "id": "selpF0oGraeP3mQK2",
+                     "name": "BUTTON_EXIT",
+                     "color": "grayLight2"
+                  }
+               ]
+            },
+            "name": "Input_Type"
+         }
+      ]
+   },
+   {
+      "name": "Instructions_IT",
+      "fields": [
+         {
+            "type": "multilineText",
+            "name": "Text"
+         },
+         {
+            "type": "checkbox",
+            "options": {
+               "icon": "check",
+               "color": "greenBright"
+            },
+            "name": "Skip"
+         },
+         {
+            "type": "multipleAttachments",
+            "options": {
+               "isReversed": false
+            },
+            "name": "Media"
+         },
+         {
+            "type": "multipleSelects",
+            "options": {
+               "choices": [
+                  {
+                     "id": "sel2Fn3MxM6XzFkPE",
+                     "name": "TEAM_NAME",
+                     "color": "blueLight2"
+                  },
+                  {
+                     "id": "sel0Oukjhg0AsbCy3",
+                     "name": "TEST_POSITION",
+                     "color": "tealLight2"
+                  },
+                  {
+                     "id": "sel6BvUOXnb1dwXaf",
+                     "name": "TEST_PHOTO",
+                     "color": "tealLight2"
+                  },
+                  {
+                     "id": "selL13K0g8slpTQRJ",
+                     "name": "TEST_VOICE",
+                     "color": "tealLight2"
+                  },
+                  {
+                     "id": "sel8HRrr2eTf1Sx2W",
+                     "name": "TEST_VIDEO",
+                     "color": "tealLight2"
+                  },
+                  {
+                     "id": "selzb8drEGvkruHyc",
+                     "name": "EMAIL",
+                     "color": "yellowLight2"
+                  },
+                  {
+                     "id": "sel2xGUQrrV0Kl0EL",
+                     "name": "BUTTON_UNDERSTOOD",
+                     "color": "orangeLight2"
+                  },
+                  {
+                     "id": "selbaSzljIHbtCbzU",
+                     "name": "BUTTON_START_GAME",
+                     "color": "pinkLight2"
+                  },
+                  {
+                     "id": "selAcEPOe5lQdBvhd",
+                     "name": "BUTTON_ROUTE_FOOT",
+                     "color": "greenLight2"
+                  },
+                  {
+                     "id": "sel4GkzBO5FUxM0FJ",
+                     "name": "BUTTON_ROUTE_BICYCLE",
+                     "color": "greenLight2"
+                  },
+                  {
+                     "id": "sel9D2s9jvmEn60XC",
+                     "name": "BUTTON_ROUTE_CIRCULAR_YES",
+                     "color": "greenLight2"
+                  },
+                  {
+                     "id": "sellP8fDgRgT2FasE",
+                     "name": "BUTTON_ROUTE_CIRCULAR_NO",
+                     "color": "greenLight2"
+                  },
+                  {
+                     "id": "selPMHDPUiVoD2H4u",
+                     "name": "GROUP_SIZE",
+                     "color": "purpleLight2"
+                  },
+                  {
+                     "id": "sel0Li04eTQElOy5Z",
+                     "name": "CONTACT_PERSON_NAME",
+                     "color": "yellowLight2"
+                  },
+                  {
+                     "id": "selOEebQZw742rcct",
+                     "name": "CONTACT_PERSON_PHONE",
+                     "color": "yellowLight2"
+                  },
+                  {
+                     "id": "sel6adojDOdBMsk3i",
+                     "name": "BUTTON_45_MIN",
+                     "color": "grayLight2"
+                  },
+                  {
+                     "id": "selSM9Oi41W13Tjxi",
+                     "name": "BUTTON_60_MIN",
+                     "color": "grayLight2"
+                  },
+                  {
+                     "id": "selMT3aojcCPAstGg",
+                     "name": "BUTTON_90_MIN",
+                     "color": "grayLight2"
+                  },
+                  {
+                     "id": "sellCdbLE1x7SSdOo",
+                     "name": "BUTTON_120_MIN",
+                     "color": "grayLight2"
+                  },
+                  {
+                     "id": "selawREvmZQOwHBxf",
+                     "name": "BUTTON_CONTINUE",
+                     "color": "blueLight2"
+                  },
+                  {
+                     "id": "sel8tsykOt72VB754",
+                     "name": "BUTTON_EXIT",
+                     "color": "grayLight2"
+                  }
+               ]
+            },
+            "name": "Input_Type"
+         }
+      ]
+   },
+   {
+      "name": "Missioni_EN",
+      "fields": [
+         {
+            "type": "singleLineText",
+            "name": "NOME"
+         },
+         {
+            "type": "checkbox",
+            "options": {
+               "icon": "check",
+               "color": "greenBright"
+            },
+            "name": "ACTIVE"
+         },
+         {
+            "type": "checkbox",
+            "options": {
+               "icon": "check",
+               "color": "greenBright"
+            },
+            "name": "FINALE"
+         },
+         {
+            "type": "singleLineText",
+            "name": "NEXT"
+         },
+         {
+            "type": "checkbox",
+            "options": {
+               "icon": "check",
+               "color": "greenBright"
+            },
+            "name": "ONLY_KIDS"
+         },
+         {
+            "type": "multipleAttachments",
+            "options": {
+               "isReversed": true
+            },
+            "name": "INTRO_MEDIA"
+         },
+         {
+            "type": "multilineText",
+            "name": "INTRO_MEDIA_CAPTION"
+         },
+         {
+            "type": "multilineText",
+            "name": "INTRODUZIONE_LOCATION"
+         },
+         {
+            "type": "singleLineText",
+            "name": "GPS"
+         },
+         {
+            "type": "multipleAttachments",
+            "options": {
+               "isReversed": true
+            },
+            "name": "DOMANDA_MEDIA"
+         },
+         {
+            "type": "multilineText",
+            "name": "DOMANDA_MEDIA_CAPTION"
+         },
+         {
+            "type": "multilineText",
+            "name": "DOMANDA"
+         },
+         {
+            "type": "singleLineText",
+            "name": "SOLUZIONI"
+         },
+         {
+            "type": "multilineText",
+            "name": "INDIZIO_1"
+         },
+         {
+            "type": "multilineText",
+            "name": "INDIZIO_2"
+         },
+         {
+            "type": "checkbox",
+            "options": {
+               "icon": "check",
+               "color": "greenBright"
+            },
+            "name": "PENALTY"
+         },
+         {
+            "type": "multipleAttachments",
+            "options": {
+               "isReversed": true
+            },
+            "name": "POST_MEDIA"
+         },
+         {
+            "type": "multilineText",
+            "name": "POST_MEDIA_CAPTION"
+         },
+         {
+            "type": "multilineText",
+            "name": "POST_MESSAGE"
+         },
+         {
+            "type": "multilineText",
+            "name": "INPUT_INSTRUCTIONS"
+         },
+         {
+            "type": "singleSelect",
+            "options": {
+               "choices": [
+                  {
+                     "id": "selm74BiCRi8wyhMM",
+                     "name": "PHOTO",
+                     "color": "blueLight2"
+                  },
+                  {
+                     "id": "selqz0dSM6Zo81irc",
+                     "name": "VOICE",
+                     "color": "cyanLight2"
+                  },
+                  {
+                     "id": "selnhCVJ6niLLI5se",
+                     "name": "VIDEO",
+                     "color": "tealLight2"
+                  }
+               ]
+            },
+            "name": "INPUT_TYPE"
+         },
+         {
+            "type": "checkbox",
+            "options": {
+               "icon": "check",
+               "color": "greenBright"
+            },
+            "name": "INPUT_CONFIRMATION"
+         },
+         {
+            "type": "multipleAttachments",
+            "options": {
+               "isReversed": true
+            },
+            "name": "POST_INPUT_MEDIA"
+         },
+         {
+            "type": "multilineText",
+            "name": "POST_INPUT_MEDIA_CAPTION"
+         },
+         {
+            "type": "multilineText",
+            "name": "POST_INPUT_MESSAGE"
+         },
+         {
+            "type": "checkbox",
+            "options": {
+               "icon": "check",
+               "color": "greenBright"
+            },
+            "name": "NOTE OPZIONALI"
+         }
+      ]
+   },
+   {
+      "name": "Missioni_IT",
+      "fields": [
+         {
+            "type": "singleLineText",
+            "name": "NOME"
+         },
+         {
+            "type": "checkbox",
+            "options": {
+               "icon": "check",
+               "color": "greenBright"
+            },
+            "name": "ACTIVE"
+         },
+         {
+            "type": "checkbox",
+            "options": {
+               "icon": "check",
+               "color": "greenBright"
+            },
+            "name": "FINALE"
+         },
+         {
+            "type": "singleLineText",
+            "name": "NEXT"
+         },
+         {
+            "type": "checkbox",
+            "options": {
+               "icon": "check",
+               "color": "greenBright"
+            },
+            "name": "ONLY_KIDS"
+         },
+         {
+            "type": "multipleAttachments",
+            "options": {
+               "isReversed": true
+            },
+            "name": "INTRO_MEDIA"
+         },
+         {
+            "type": "multilineText",
+            "name": "INTRO_MEDIA_CAPTION"
+         },
+         {
+            "type": "multilineText",
+            "name": "INTRODUZIONE_LOCATION"
+         },
+         {
+            "type": "singleLineText",
+            "name": "GPS"
+         },
+         {
+            "type": "multipleAttachments",
+            "options": {
+               "isReversed": true
+            },
+            "name": "DOMANDA_MEDIA"
+         },
+         {
+            "type": "multilineText",
+            "name": "DOMANDA_MEDIA_CAPTION"
+         },
+         {
+            "type": "multilineText",
+            "name": "DOMANDA"
+         },
+         {
+            "type": "singleLineText",
+            "name": "SOLUZIONI"
+         },
+         {
+            "type": "multilineText",
+            "name": "INDIZIO_1"
+         },
+         {
+            "type": "multilineText",
+            "name": "INDIZIO_2"
+         },
+         {
+            "type": "checkbox",
+            "options": {
+               "icon": "check",
+               "color": "greenBright"
+            },
+            "name": "PENALTY"
+         },
+         {
+            "type": "multipleAttachments",
+            "options": {
+               "isReversed": true
+            },
+            "name": "POST_MEDIA"
+         },
+         {
+            "type": "multilineText",
+            "name": "POST_MEDIA_CAPTION"
+         },
+         {
+            "type": "multilineText",
+            "name": "POST_MESSAGE"
+         },
+         {
+            "type": "multilineText",
+            "name": "INPUT_INSTRUCTIONS"
+         },
+         {
+            "type": "singleSelect",
+            "options": {
+               "choices": [
+                  {
+                     "id": "selm74BiCRi8wyhMM",
+                     "name": "PHOTO",
+                     "color": "blueLight2"
+                  },
+                  {
+                     "id": "selqz0dSM6Zo81irc",
+                     "name": "VOICE",
+                     "color": "cyanLight2"
+                  },
+                  {
+                     "id": "selnhCVJ6niLLI5se",
+                     "name": "VIDEO",
+                     "color": "tealLight2"
+                  }
+               ]
+            },
+            "name": "INPUT_TYPE"
+         },
+         {
+            "type": "checkbox",
+            "options": {
+               "icon": "check",
+               "color": "greenBright"
+            },
+            "name": "INPUT_CONFIRMATION"
+         },
+         {
+            "type": "multipleAttachments",
+            "options": {
+               "isReversed": true
+            },
+            "name": "POST_INUT_MEDIA"
+         },
+         {
+            "type": "multilineText",
+            "name": "POST_INPUT_MEDIA_CAPTION"
+         },
+         {
+            "type": "multilineText",
+            "name": "POST_INPUT_MESSAGE"
+         },
+         {
+            "type": "checkbox",
+            "options": {
+               "icon": "check",
+               "color": "greenBright"
+            },
+            "name": "NOTE OPZIONALI"
+         }
+      ]
+   },
+   {
+      "name": "Survey_EN",
+      "fields": [
+         {
+            "type": "singleLineText",
+            "name": "QN"
+         },
+         {
+            "type": "multilineText",
+            "name": "DOMANDA"
+         },
+         {
+            "type": "singleLineText",
+            "name": "RISPOSTE"
+         },
+         {
+            "type": "singleSelect",
+            "options": {
+               "choices": [
+                  {
+                     "id": "selOiKQP0wOWXLsPG",
+                     "name": "Open",
+                     "color": "yellowLight2"
+                  },
+                  {
+                     "id": "selHiU551vn2HCNFM",
+                     "name": "Closed",
+                     "color": "blueLight2"
+                  }
+               ]
+            },
+            "name": "TYPE"
+         }
+      ]
+   },
+   {
+      "name": "Survey_IT",
+      "fields": [
+         {
+            "type": "singleLineText",
+            "name": "QN"
+         },
+         {
+            "type": "multilineText",
+            "name": "DOMANDA"
+         },
+         {
+            "type": "singleLineText",
+            "name": "RISPOSTE"
+         },
+         {
+            "type": "singleSelect",
+            "options": {
+               "choices": [
+                  {
+                     "id": "selOiKQP0wOWXLsPG",
+                     "name": "Open",
+                     "color": "yellowLight2"
+                  },
+                  {
+                     "id": "selHiU551vn2HCNFM",
+                     "name": "Closed",
+                     "color": "blueLight2"
+                  }
+               ]
+            },
+            "name": "TYPE"
+         }
+      ]
+   },
+   {
+      "name": "Survey Answers",
+      "fields": [
+         {
+            "type": "autoNumber",
+            "name": "N"
+         },
+         {
+            "type": "singleLineText",
+            "name": "LANGUAGE"
+         },
+         {
+            "type": "multilineText",
+            "name": "Q1"
+         },
+         {
+            "type": "multilineText",
+            "name": "Q2"
+         },
+         {
+            "type": "multilineText",
+            "name": "Q3"
+         },
+         {
+            "type": "multilineText",
+            "name": "Q4"
+         },
+         {
+            "type": "multilineText",
+            "name": "Q5"
+         },
+         {
+            "type": "multilineText",
+            "name": "Q6"
+         },
+         {
+            "type": "multilineText",
+            "name": "Q7"
+         },
+         {
+            "type": "multilineText",
+            "name": "Q8"
+         }
+      ]
+   },
+   {
+      "name": "Results",
+      "fields": [
+         {
+            "type": "singleLineText",
+            "name": "ID"
+         },
+         {
+            "type": "singleLineText",
+            "name": "LANGUAGE"
+         },
+         {
+            "type": "singleLineText",
+            "name": "GROUP_NAME"
+         },
+         {
+            "type": "singleLineText",
+            "name": "NOME"
+         },
+         {
+            "type": "singleLineText",
+            "name": "COGNOME"
+         },
+         {
+            "type": "singleLineText",
+            "name": "USERNAME"
+         },
+         {
+            "type": "singleLineText",
+            "name": "EMAIL"
+         },
+         {
+            "type": "multipleAttachments",
+            "options": {
+               "isReversed": false
+            },
+            "name": "GROUP_MEDIA_FILE_IDS"
+         },
+         {
+            "type": "dateTime",
+            "options": {
+               "dateFormat": {
+                  "name": "european",
+                  "format": "D/M/YYYY"
+               },
+               "timeFormat": {
+                  "name": "24hour",
+                  "format": "HH:mm"
+               },
+               "timeZone": "client"
+            },
+            "name": "START_TIME"
+         },
+         {
+            "type": "dateTime",
+            "options": {
+               "dateFormat": {
+                  "name": "european",
+                  "format": "D/M/YYYY"
+               },
+               "timeFormat": {
+                  "name": "24hour",
+                  "format": "HH:mm"
+               },
+               "timeZone": "client"
+            },
+            "name": "END_TIME"
+         },
+         {
+            "type": "duration",
+            "options": {
+               "durationFormat": "h:mm:ss"
+            },
+            "name": "ELAPSED GAME"
+         },
+         {
+            "type": "duration",
+            "options": {
+               "durationFormat": "h:mm:ss"
+            },
+            "name": "ELAPSED MISSIONS"
+         },
+         {
+            "type": "number",
+            "options": {
+               "precision": 1
+            },
+            "name": "COMPLETED_MISSIONS"
+         },
+         {
+            "type": "number",
+            "options": {
+               "precision": 1
+            },
+            "name": "INCOMPLETED_MISSIONS"
+         },
+         {
+            "type": "number",
+            "options": {
+               "precision": 0
+            },
+            "name": "PENALTIES"
+         },
+         {
+            "type": "duration",
+            "options": {
+               "durationFormat": "h:mm:ss"
+            },
+            "name": "PENALTY TIME"
+         },
+         {
+            "type": "duration",
+            "options": {
+               "durationFormat": "h:mm:ss"
+            },
+            "name": "TOTAL TIME GAME"
+         },
+         {
+            "type": "checkbox",
+            "options": {
+               "icon": "check",
+               "color": "greenBright"
+            },
+            "name": "FINISHED"
+         },
+         {
+            "type": "duration",
+            "options": {
+               "durationFormat": "h:mm:ss"
+            },
+            "name": "TOTAL TIME MISSIONS"
+         },
+         {
+            "type": "multilineText",
+            "name": "GAME VARS"
+         }
+      ]
+   }
 ]
