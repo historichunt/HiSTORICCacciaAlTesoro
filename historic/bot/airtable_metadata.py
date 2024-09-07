@@ -134,10 +134,16 @@ def download_gold_hunt_schema(
 
 
 def check_hunt_schema(airtable_game_id):
+
     with open(SCHEMA_JSON_FULL) as fin:
         schema_gold = json.load(fin)
+
     hunt_schema = get_hunt_schema(airtable_game_id)
+
     for table_name, hunt_fields in hunt_schema.items():
+        if table_name == 'UI':
+            continue # TODO fix me: here there are languages that may different for different hunts
+
         table_name = matched_table(table_name)
         if not table_name:
             return dedent(f'''
@@ -150,9 +156,9 @@ def check_hunt_schema(airtable_game_id):
         gold_field_names = [f['name'] for f in gold_fields]
         if hunt_fields_names != gold_field_names:
             return dedent(f'''
-                Table `{table_name}` does not have the correct fields.
-                Found: `{hunt_fields_names}`
-                Correct: `{gold_field_names}`
+                Table `{table_name}` does not have the correct fields.\n
+                Found: `{hunt_fields_names}`\n
+                Correct: `{gold_field_names}`\n
                 Please check simplified schema: {URL_SCHEMA_SIMPLIFIED}
             ''')
 
