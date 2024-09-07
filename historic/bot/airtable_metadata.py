@@ -6,6 +6,9 @@ import re
 SCHEMA_JSON_FULL = 'hunt_schema/schema.json'
 SCHEMA_JSON_SIMPLIFIED = 'hunt_schema/schema_simplified.json'
 
+URL_SCHEMA_FULL = 'https://github.com/historichunt/HiSTORICCacciaAlTesoro/blob/master/hunt_schema/schema.json'
+URL_SCHEMA_SIMPLIFIED = 'https://github.com/historichunt/HiSTORICCacciaAlTesoro/blob/master/hunt_schema/schema_simplified.json'
+
 TABLE_NAMES_RE = [
     r'Settings',
     r'UI',
@@ -112,12 +115,13 @@ def download_hunt_schema(
 
 
 def check_hunt_schema(airtable_game_id):
-    schema_gold = json.load(SCHEMA_JSON_FULL)
+    with open(SCHEMA_JSON_FULL) as fin:
+        schema_gold = json.load(fin)
     hunt_schema = get_hunt_schema(airtable_game_id)
     for d in hunt_schema:
         table_name = d['name']
         if not matched_table(table_name):
-            return f'Table `{table_name}` is not a correct table name. Please check simplified schema: https://github.com/historichunt/HiSTORICCacciaAlTesoro/blob/master/hunt_schema/schema_simplified.json'
+            return f'Table `{table_name}` is not a correct table name. Please check simplified schema: {URL_SCHEMA_SIMPLIFIED}'
 
 
 if __name__ == "__main__":
