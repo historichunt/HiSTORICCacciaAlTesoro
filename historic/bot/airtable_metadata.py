@@ -1,9 +1,7 @@
-from pyairtable import Table
-from pyairtable.metadata import get_base_schema
-from pyairtable.api import Base
 from historic.config import settings
 import json
 import requests
+import re
 
 tables_name_language = [
     'Instructions_IT',
@@ -55,7 +53,7 @@ def get_hunt_schema(airtable_game_id, clean=True):
     opt_k_to_remove = opt_k_set.difference(opt_k_to_keep)
     for table_dict in json_data:
         ks = set(table_dict.keys())
-        assert set(ks)== k_set        
+        assert set(ks)== k_set
         if clean:
             for k in k_to_remove:
                 table_dict.pop(k, None)
@@ -76,22 +74,53 @@ def get_hunt_schema(airtable_game_id, clean=True):
 
     return json_data
 
-def download_hunt_schema(airtable_game_id, filepath, clean=True):
+def download_hunt_schema(airtable_game_id, filepath_full, filepath_simplified, clean=True):
 
+    # full schema (list of dict)
+    # - {'name': 'Settings', 'fields': [{'type': '...', 'name': 'Name' }, ...]
+    # - {'name': 'UI',
+    # - ...
     json_data = get_hunt_schema(airtable_game_id, clean)
-    
-    with open(filepath, 'w') as fout:
+
+    with open(filepath_full, 'w') as fout:
         json.dump(json_data, fout, ensure_ascii=False, indent=3)
 
-    
+    TABLE_NAMES_RE = [
+        r'Settings',
+        r'UI',
+        r'Instructions_..',
+        r'Missioni_..',
+        r'Survey_..',
+        r'Survey Answers',
+        r'Results',
+    ]
+
+    def matched_table(name):
+        for pattern in TABLE_NAMES_RE:
+            if re.match(pattern, name):
+                return pattern
+
+    json_data_simplified = [
+        {
+            'name': matched_table(d['name']),
+            'fileds': [f['name'] for f in d['fields']]
+        }
+        for d in json_data
+        if matched_table(d['name'])
+    ]
+
+    with open(filepath_simplified, 'w') as fout:
+        json.dump(json_data_simplified, fout, ensure_ascii=False, indent=3)
+
 
 if __name__ == "__main__":
     from historic.bot.utils_cli import get_hunt_from_password
 
-    hunt_name, password, airtable_game_id = get_hunt_from_password()    
-    
+    hunt_name, password, airtable_game_id = get_hunt_from_password()
+
     download_hunt_schema(
         airtable_game_id,
-        filepath = 'hunt_schema/schema.json',
+        filepath_full = 'hunt_schema/schema.json',
+        filepath_simplified = 'hunt_schema/schema_simplified.json',
         clean = True
     )
