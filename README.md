@@ -9,8 +9,10 @@ gcloud app deploy -q -v test/production
 ```
 
 ## run locally, use one of the following:
-1. `flask run`
-2. `gunicorn -b localhost:5000 main:app --chdir bot`
+`uvicorn historic.main:app --port 5000 --reload`
+
+## update metadata schema from `template`
+python -m historic.bot.airtable_metadata
 
 ## Activating a game with url start
 `https://t.me/hiSTORICtrentobot?start=secret_password`
