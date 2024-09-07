@@ -38,9 +38,17 @@ def check_ui():
 
 def check_hunt(hunt_pw):
     from historic.bot.game import HUNTS_PW
-    hunt_config_dict = HUNTS_PW[hunt_pw]    
-    # hunt_name = hunt_config_dict['Name']            
+    from historic.bot.airtable_metadata import check_hunt_schema
+    hunt_config_dict = HUNTS_PW[hunt_pw]
+    # hunt_name = hunt_config_dict['Name']
     game_id = hunt_config_dict['Airtable_Game_ID']
+    schema_error = check_hunt_schema(game_id)
+
+    # check errors schema
+    if schema_error:
+        return schema_error
+
+    # check errors missions
     skip_columns = ['NOTE OPZIONALI']
     hunt_languages = get_hunt_languages(hunt_pw)
     for l in hunt_languages:
@@ -66,7 +74,7 @@ def check_hunt(hunt_pw):
 
 # def check_consistencies():
 #     check_ui()
-#     check_hunt() 
+#     check_hunt()
 #     print('Success!!')
 
 if __name__ == "__main__":

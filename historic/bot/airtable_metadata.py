@@ -3,11 +3,23 @@ import json
 import requests
 import re
 
-tables_name_language = [
-    'Instructions_IT',
-    'Missioni_IT',
-    'Survey_IT'
+SCHEMA_JSON_FULL = 'hunt_schema/schema.json'
+SCHEMA_JSON_SIMPLIFIED = 'hunt_schema/schema_simplified.json'
+
+TABLE_NAMES_RE = [
+    r'Settings',
+    r'UI',
+    r'Instructions_..',
+    r'Missioni_..',
+    r'Survey_..',
+    r'Survey Answers',
+    r'Results',
 ]
+
+def matched_table(name):
+    for pattern in TABLE_NAMES_RE:
+        if re.match(pattern, name):
+            return pattern
 
 def get_hunt_schema(airtable_game_id, clean=True):
     '''
@@ -74,7 +86,8 @@ def get_hunt_schema(airtable_game_id, clean=True):
 
     return json_data
 
-def download_hunt_schema(airtable_game_id, filepath_full, filepath_simplified, clean=True):
+def download_hunt_schema(
+        airtable_game_id, filepath_full, filepath_simplified, clean=True):
 
     # full schema (list of dict)
     # - {'name': 'Settings', 'fields': [{'type': '...', 'name': 'Name' }, ...]
@@ -84,21 +97,6 @@ def download_hunt_schema(airtable_game_id, filepath_full, filepath_simplified, c
 
     with open(filepath_full, 'w') as fout:
         json.dump(json_data, fout, ensure_ascii=False, indent=3)
-
-    TABLE_NAMES_RE = [
-        r'Settings',
-        r'UI',
-        r'Instructions_..',
-        r'Missioni_..',
-        r'Survey_..',
-        r'Survey Answers',
-        r'Results',
-    ]
-
-    def matched_table(name):
-        for pattern in TABLE_NAMES_RE:
-            if re.match(pattern, name):
-                return pattern
 
     json_data_simplified = [
         {
@@ -113,6 +111,15 @@ def download_hunt_schema(airtable_game_id, filepath_full, filepath_simplified, c
         json.dump(json_data_simplified, fout, ensure_ascii=False, indent=3)
 
 
+def check_hunt_schema(airtable_game_id):
+    schema_gold = json.load(SCHEMA_JSON_FULL)
+    hunt_schema = get_hunt_schema(airtable_game_id)
+    for d in hunt_schema:
+        table_name = d['name']
+        if not matched_table(table_name):
+            return f'Table `{table_name}` is not a correct table name. Please check simplified schema: https://github.com/historichunt/HiSTORICCacciaAlTesoro/blob/master/hunt_schema/schema_simplified.json'
+
+
 if __name__ == "__main__":
     from historic.bot.utils_cli import get_hunt_from_password
 
@@ -120,7 +127,7 @@ if __name__ == "__main__":
 
     download_hunt_schema(
         airtable_game_id,
-        filepath_full = 'hunt_schema/schema.json',
-        filepath_simplified = 'hunt_schema/schema_simplified.json',
+        filepath_full = SCHEMA_JSON_FULL,
+        filepath_simplified = SCHEMA_JSON_SIMPLIFIED,
         clean = True
     )
