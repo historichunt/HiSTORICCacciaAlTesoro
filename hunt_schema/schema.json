@@ -358,6 +358,25 @@
             "name": "GPS"
          },
          {
+            "type": "singleLineText",
+            "name": "QR"
+         },
+         {
+            "type": "multipleAttachments",
+            "options": {
+               "isReversed": true
+            },
+            "name": "POST_LOC_MEDIA"
+         },
+         {
+            "type": "multilineText",
+            "name": "POST_LOC_MEDIA_CAPTION"
+         },
+         {
+            "type": "multilineText",
+            "name": "POST_LOC_MESSAGE"
+         },
+         {
             "type": "multipleAttachments",
             "options": {
                "isReversed": true
@@ -520,6 +539,25 @@
          {
             "type": "singleLineText",
             "name": "GPS"
+         },
+         {
+            "type": "singleLineText",
+            "name": "QR"
+         },
+         {
+            "type": "multipleAttachments",
+            "options": {
+               "isReversed": true
+            },
+            "name": "POST_LOC_MEDIA"
+         },
+         {
+            "type": "multilineText",
+            "name": "POST_LOC_MEDIA_CAPTION"
+         },
+         {
+            "type": "multilineText",
+            "name": "POST_LOC_MESSAGE"
          },
          {
             "type": "multipleAttachments",
