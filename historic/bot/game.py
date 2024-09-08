@@ -7,11 +7,25 @@ import historic.bot.date_time_util as dtu
 from historic.routing.api import api_google
 from historic.routing.data_matrices import DataMatrices
 from historic.routing.datasets.trento_hunt_params import get_trento_route_planner, NUM_PLANNER_ATTEMPTS
+from historic.bot.bucket_utils import upload_instructions_media_to_bucket, upload_missions_media_to_bucket
 import numpy as np
 
 #################
 # GAMES CONFIG
 #################
+
+#######################
+# HUNT_INFO FIELDS (from HUNT CONFIG TABLE)
+# - Name
+# - Password
+# - Airtable_Game_ID
+# - Bots
+# - Admins
+# - Active
+# - GPS
+# - Notify_Group
+# - Validator
+#######################
 
 HUNTS_CONFIG_TABLE = Airtable(
     settings.AIRTABLE_CONFIG_ID,
@@ -19,8 +33,8 @@ HUNTS_CONFIG_TABLE = Airtable(
     api_key=settings.AIRTABLE_ACCESS_TOKEN
 )
 
-HUNTS_PW = None # pw -> hunt_details (all)
-HUNTS_NAME = None # name -> hunt_details (all)
+HUNTS_PW = None # pw -> HUNT_INFO
+HUNTS_NAME = None # name -> HUNT_INFO
 
 def reload_config_hunt():
     global HUNTS_PW, HUNTS_NAME
@@ -54,7 +68,6 @@ def get_hunts_that_person_admins(p):
 
 reload_config_hunt()
 
-
 #################
 # MISSIONI TABLE
 #################
@@ -69,8 +82,8 @@ POST_MEDIA, POST_MEDIA_CAPTION, POST_MESSAGE,
 INPUT_INSTRUCTIONS, INPUT_TYPE, INPUT_CONFIRMATION, POST_INPUT_MESSAGE
 '''
 
-def get_hunt_settings(airtable_game_id):
-    SETTINGS_TABLE = Airtable(airtable_game_id, 'Settings', api_key=settings.AIRTABLE_ACCESS_TOKEN)
+def get_hunt_settings(game_id):
+    SETTINGS_TABLE = Airtable(game_id, 'Settings', api_key=settings.AIRTABLE_ACCESS_TOKEN)
     SETTINGS = {
         row['fields']['Name']:row['fields']['Value']
         for row in SETTINGS_TABLE.get_all()
@@ -78,8 +91,8 @@ def get_hunt_settings(airtable_game_id):
     }
     return SETTINGS
 
-def get_hunt_ui(airtable_game_id, hunt_languages):
-    UI_TABLE = Airtable(airtable_game_id, 'UI', api_key=settings.AIRTABLE_ACCESS_TOKEN)
+def get_hunt_ui(game_id, hunt_languages):
+    UI_TABLE = Airtable(game_id, 'UI', api_key=settings.AIRTABLE_ACCESS_TOKEN)
     table_rows = [
         row['fields']
         for row in UI_TABLE.get_all()
@@ -118,10 +131,10 @@ async def save_game_data_in_airtable(p, compute_times):
 
     game_data = p.tmp_variables
 
-    airtable_game_id = game_data['HUNT_INFO']['Airtable_Game_ID']
+    game_id = game_data['HUNT_INFO']['Airtable_Game_ID']
 
     RESULTS_GAME_TABLE = Airtable(
-        airtable_game_id,
+        game_id,
         'Results',
         api_key=settings.AIRTABLE_ACCESS_TOKEN
     )
@@ -138,8 +151,8 @@ async def save_game_data_in_airtable(p, compute_times):
 
 def save_survey_data_in_airtable(p):
     game_data = p.tmp_variables
-    airtable_game_id = game_data['HUNT_INFO']['Airtable_Game_ID']
-    results_survey_table = Airtable(airtable_game_id, 'Survey Answers', api_key=settings.AIRTABLE_ACCESS_TOKEN)
+    game_id = game_data['HUNT_INFO']['Airtable_Game_ID']
+    results_survey_table = Airtable(game_id, 'Survey Answers', api_key=settings.AIRTABLE_ACCESS_TOKEN)
     survey_row = {'LANGUAGE': p.language}
     survey_data = game_data['SURVEY_INFO']['COMPLETED']
     for row in survey_data:
@@ -151,10 +164,14 @@ def save_survey_data_in_airtable(p):
 # GAME MANAGEMENT FUNCTIONS
 ################################
 
-def get_hunt_languages(hunt_password):
-    hunt_info = HUNTS_PW[hunt_password]
-    airtable_game_id = hunt_info['Airtable_Game_ID']
-    hunt_settings = get_hunt_settings(airtable_game_id)
+def get_game_id_from_pw(hunt_pw):
+    hunt_info = HUNTS_PW[hunt_pw]
+    game_id = hunt_info['Airtable_Game_ID']
+    return game_id
+
+def get_hunt_languages(hunt_pw):
+    game_id = get_game_id_from_pw(hunt_pw)
+    hunt_settings = get_hunt_settings(game_id)
     hunt_languages =  [
         l.strip()
         for l in hunt_settings['LANGUAGES'].upper().split(',')
@@ -162,20 +179,20 @@ def get_hunt_languages(hunt_password):
     ]
     return hunt_languages
 
-def load_game(p, hunt_password, test_hunt_admin=False):
+def load_game(p, hunt_pw, test_hunt_admin=False):
     '''
     Save current game info user tmp_variable
     '''
 
     if not test_hunt_admin:
-        p.current_hunt = hunt_password  # avoid when testing
-    hunt_info = HUNTS_PW[hunt_password]
-    airtable_game_id = hunt_info['Airtable_Game_ID']
-    hunt_settings = get_hunt_settings(airtable_game_id)
-    hunt_languages =  get_hunt_languages(hunt_password)
-    hunt_ui = get_hunt_ui(airtable_game_id, hunt_languages)
-    instructions_table = Airtable(airtable_game_id, f'Instructions_{p.language}', api_key=settings.AIRTABLE_ACCESS_TOKEN)
-    survey_table = Airtable(airtable_game_id, f'Survey_{p.language}', api_key=settings.AIRTABLE_ACCESS_TOKEN)
+        p.current_hunt = hunt_pw  # avoid when testing
+    hunt_info = HUNTS_PW[hunt_pw]
+    game_id = hunt_info['Airtable_Game_ID']
+    hunt_settings = get_hunt_settings(game_id)
+    hunt_languages =  get_hunt_languages(hunt_pw)
+    hunt_ui = get_hunt_ui(game_id, hunt_languages)
+    instructions_table = Airtable(game_id, f'Instructions_{p.language}', api_key=settings.AIRTABLE_ACCESS_TOKEN)
+    survey_table = Airtable(game_id, f'Survey_{p.language}', api_key=settings.AIRTABLE_ACCESS_TOKEN)
     instructions_steps = airtable_utils.get_rows(
         instructions_table, view='Grid view',
         filter=lambda r: not r.get('Skip',False),
@@ -189,10 +206,10 @@ def load_game(p, hunt_password, test_hunt_admin=False):
     tvar['HUNT_NAME'] = hunt_info['Name']
     tvar['HUNT_LANGUAGES'] = hunt_languages
     tvar['TEST_HUNT_MISSION_ADMIN'] = test_hunt_admin
-    tvar['HUNT_START_GPS'] = get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name)
+    tvar['HUNT_START_GPS'] = get_closest_mission_lat_lon(p, game_id, mission_tab_name)
     tvar['SETTINGS'] = hunt_settings
     tvar['HUNT_UI'] = hunt_ui
-    tvar['HUNT_INFO'] = hunt_info
+    tvar['HUNT_INFO'] = hunt_info # HUNT CONFIG TABLE
     tvar['Notify_Group ID'] = hunt_info.get('Notify_Group ID', None)
     tvar['Validators IDs'] = hunt_info.get('Validators IDs', None)
     tvar['ID'] = p.get_id()
@@ -221,21 +238,24 @@ def load_game(p, hunt_password, test_hunt_admin=False):
 async def build_missions(p, test_all=False):
     hunt_settings = p.tmp_variables['SETTINGS']
     tvar = p.tmp_variables
-    airtable_game_id = tvar['HUNT_INFO']['Airtable_Game_ID']
+    hunt_name = tvar['HUNT_NAME']
+    hunt_info = tvar['HUNT_INFO']
+    # hunt_pw = hunt_info['Password']
+    game_id = hunt_info['Airtable_Game_ID']
     mission_tab_name = f'Missioni_{p.language}'
     if test_all:
-        missions_dict = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)
+        missions_dict = get_missions_name_fields_dict(game_id, mission_tab_name, active=True)
         missions = list(missions_dict.values())
     elif hunt_settings.get('MISSIONS_SELECTION', None) == 'ROUTING':
         from historic.bot.bot_telegram import send_message
         await send_message(p, p.ui().MSG_GAME_IS_LOADING, remove_keyboard=True)
-        missions = await get_missioni_routing(p, airtable_game_id, mission_tab_name)
+        missions = await get_missioni_routing(p, game_id, mission_tab_name)
         if missions is None:
             return False # problema selezione percorso
     else:
         # RANDOM - default
         start_lat_long = p.get_tmp_variable('HUNT_START_GPS')
-        missions = get_random_missions(airtable_game_id, mission_tab_name, start_lat_long)
+        missions = get_random_missions(game_id, mission_tab_name, start_lat_long)
 
         if p.is_admin_current_hunt():
             from historic.bot.bot_telegram import send_message
@@ -244,40 +264,29 @@ async def build_missions(p, test_all=False):
 
     p.tmp_variables['MISSIONI_INFO'] = {'TODO': missions, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(missions)}
 
-    # upload media files to bucket
-    await upload_missions_media_to_bucket(
-        hunt_name=tvar['HUNT_NAME'],
-        missions=missions
+    # upload instructions media files to bucket
+    # no overwrite but change the url in all cases
+    await upload_instructions_media_to_bucket(
+        game_id=game_id,
+        hunt_name=hunt_name,
+        lang=p.language,
+        overwrite=False
     )
+
+    # upload missions media files to bucket
+    # no overwrite but change the url in all cases
+    await upload_missions_media_to_bucket(
+        hunt_name=hunt_name,
+        missions=missions,
+        overwrite=False
+    )
+
     return True
 
-async def upload_missions_media_to_bucket(hunt_name, missions):
-    import requests
-    from google.cloud import storage
-    from historic.config.params import GOOGLE_BUCKET_NAME, MEDIA_FIELDS_MISSIONS
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(GOOGLE_BUCKET_NAME)
 
-    for m in missions:
-        for field in MEDIA_FIELDS_MISSIONS:
-            # print(field)
-            if field in m:
-                media_field = m[field][0]
-                url = media_field['url']
-                filename = media_field['filename']
-                blob = bucket.blob(f'{hunt_name}/{filename}')
-                if blob.exists():
-                    continue
-                request_response = requests.get(url, stream=True)
-                content_type = request_response.headers['content-type']
-                media_content = request_response.content
-                blob.upload_from_string(media_content, content_type=content_type)
-                media_field['url'] = blob.public_url
-    return True
-
-def get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True, only_kids=False):
+def get_missions_name_fields_dict(game_id, mission_tab_name, active=True, only_kids=False):
     # name -> fields dict (table row)
-    table = Airtable(airtable_game_id, mission_tab_name, api_key=settings.AIRTABLE_ACCESS_TOKEN)
+    table = Airtable(game_id, mission_tab_name, api_key=settings.AIRTABLE_ACCESS_TOKEN)
     missions_name_fields_dict = {
         row['fields']['NOME']: row['fields']
         for row in table.get_all()
@@ -291,9 +300,9 @@ def get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=Tru
 
 def update_airtable_urls_missions(p):
     tvar = p.tmp_variables
-    airtable_game_id = tvar['HUNT_INFO']['Airtable_Game_ID']
+    game_id = tvar['HUNT_INFO']['Airtable_Game_ID']
     mission_tab_name = f'Missioni_{p.language}'
-    missions_dict = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)
+    missions_dict = get_missions_name_fields_dict(game_id, mission_tab_name, active=True)
     missions = list(missions_dict.values())
     todo_missions = tvar['MISSIONI_INFO']['TODO']
     current_mission_list = [tvar['MISSIONI_INFO']['CURRENT']]
@@ -362,9 +371,9 @@ def get_final_missions_dict_names(missions_name_fields_dict):
 
     return final_missions_and_linked_names, remaining_missions_names
 
-def get_all_missions_lat_lon(airtable_game_id, mission_tab_name, exclude_finals_and_linked=True, exclude_in_next=True):
+def get_all_missions_lat_lon(game_id, mission_tab_name, exclude_finals_and_linked=True, exclude_in_next=True):
 
-    MISSIONI_ACTIVE = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)
+    MISSIONI_ACTIVE = get_missions_name_fields_dict(game_id, mission_tab_name, active=True)
 
     _, no_final_or_linked_names = get_final_missions_dict_names(MISSIONI_ACTIVE)
 
@@ -390,9 +399,9 @@ def get_all_missions_lat_lon(airtable_game_id, mission_tab_name, exclude_finals_
     return all_gps
 
 
-def get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name):
+def get_closest_mission_lat_lon(p, game_id, mission_tab_name):
 
-    all_gps = get_all_missions_lat_lon(airtable_game_id, mission_tab_name)
+    all_gps = get_all_missions_lat_lon(game_id, mission_tab_name)
 
     if len(all_gps) == 0:
         return None
@@ -404,9 +413,9 @@ def get_closest_mission_lat_lon(p, airtable_game_id, mission_tab_name):
     return closest_gps
 
 
-def get_random_missions(airtable_game_id, mission_tab_name, start_lat_long):
+def get_random_missions(game_id, mission_tab_name, start_lat_long):
 
-    MISSIONI_ACTIVE = get_missions_name_fields_dict(airtable_game_id, mission_tab_name, active=True)
+    MISSIONI_ACTIVE = get_missions_name_fields_dict(game_id, mission_tab_name, active=True)
 
     if start_lat_long is None:
         # in a hunt with no GPS initial location choose a random initial mission
@@ -478,21 +487,21 @@ def get_random_missions(airtable_game_id, mission_tab_name, start_lat_long):
 
     return missioni_random
 
-async def get_missioni_routing(p, airtable_game_id, mission_tab_name):
+async def get_missioni_routing(p, game_id, mission_tab_name):
 
     from historic.bot.bot_telegram import report_admins, send_message, send_photo_data
 
     only_kids = p.get_tmp_variable('ROUTE_AGE_GROUP') == 'KIDS'
 
     MISSIONI_ACTIVE = get_missions_name_fields_dict(
-        airtable_game_id, mission_tab_name, active=True, only_kids=only_kids,
+        game_id, mission_tab_name, active=True, only_kids=only_kids,
     )
     MISSIONI_SKIP = get_missions_name_fields_dict(
-        airtable_game_id, mission_tab_name, active=False,
+        game_id, mission_tab_name, active=False,
     )
 
     game_dm = DataMatrices(
-        dataset_name = airtable_game_id,
+        dataset_name = game_id,
         api = api_google
     )
 
@@ -558,7 +567,7 @@ async def get_missioni_routing(p, airtable_game_id, mission_tab_name):
 
     else:
         error_msg = f'⚠️ User {p.get_id()} encountered error in routing:\n'\
-                    f'dataset name = {airtable_game_id}\n'\
+                    f'dataset name = {game_id}\n'\
                     f'start num = {start_idx + 1}\n'\
                     f'duration min = {duration_min}\n'\
                     f'profile = {profile}\n'\

@@ -4,7 +4,7 @@ TIMEOUT = 5.0 # seconds
 
 # base dir (two levels up)
 # (works both in flask and gunicorn)
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) 
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 LANGUAGES = ['IT','EN', 'JA', 'DE']
 MAX_TEAM_NAME_LENGTH = 30
@@ -20,9 +20,12 @@ MAX_DISTANCE_KM_HUNT_GPS = 10
 GOOGLE_BUCKET_NAME = "historictrento"
 
 MEDIA_FIELDS_MISSIONS = [
-    'INTRO_MEDIA', 
-    'DOMANDA_MEDIA', 
-    'POST_LOC_MEDIA', 
-    'POST_INPUT_MEDIA', 
-    'POST_MEDIA'
+    'INTRO_MEDIA',
+    'POST_LOC_MEDIA',
+    'DOMANDA_MEDIA',
+    'POST_MEDIA',
+    'POST_INPUT_MEDIA',
+]
+MEDIA_FIELDS_INSTRUCTIONS = [
+    'Media'
 ]

@@ -10,42 +10,10 @@ from historic.bot import game
 import zipfile
 from historic.bot.utility import append_num_to_filename, is_int_between
 import random
+from historic.bot.bucket_utils import update_all_hunt_media_to_bucket
 
-async def update_media_bucket(hunt_name, hunt_pw):
-    from historic.bot.game import get_hunt_languages    
-    from historic.bot.game import HUNTS_PW
-    from historic.bot import airtable_utils
-    from historic.config.params import GOOGLE_BUCKET_NAME, MEDIA_FIELDS_MISSIONS
-    import requests
-    from google.cloud import storage
-    
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(GOOGLE_BUCKET_NAME)    
-    hunt_config_dict = HUNTS_PW[hunt_pw]   
-    game_id = hunt_config_dict['Airtable_Game_ID'] 
-    hunt_languages = get_hunt_languages(hunt_pw)
-    
-    for l in hunt_languages:
-        table_name = f'Missioni_{l}'
-        hunt_missioni_table = Airtable(game_id, table_name, api_key=settings.AIRTABLE_ACCESS_TOKEN)
-        missioni_row_dict_list = airtable_utils.get_rows(hunt_missioni_table)
-        for mission in missioni_row_dict_list:
-            for field in MEDIA_FIELDS_MISSIONS:
-                # print(field)
-                if field in mission:
-                    media_field = mission[field][0]
-                    url = media_field['url']
-                    filename = media_field['filename']                
-                    blob = bucket.blob(f'{hunt_name}/{filename}')           
-                    request_response = requests.get(url, stream=True)
-                    content_type = request_response.headers['content-type']
-                    media_content = request_response.content
-                    blob.upload_from_string(media_content, content_type=content_type) 
-                    media_field['url'] = blob.public_url
-
-
-def download_media_zip(hunt_password, table_name='Results', log=False, check_size=True):    
-    from historic.config.params import MAX_SIZE_FILE_BYTES    
+def download_media_zip(hunt_password, table_name='Results', log=False, check_size=True):
+    from historic.config.params import MAX_SIZE_FILE_BYTES
     base_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
     RESULTS_TABLE = Airtable(base_id, table_name, api_key=settings.AIRTABLE_ACCESS_TOKEN)
     table_entries = RESULTS_TABLE.get_all()
@@ -65,11 +33,11 @@ def download_media_zip(hunt_password, table_name='Results', log=False, check_siz
         if log:
             print(f'Downloading group {n}/{num_entries}', group_name)
         if 'GROUP_MEDIA_FILE_IDS' not in fields:
-            continue  
+            continue
         unique_media_names_list = []
         for media in fields['GROUP_MEDIA_FILE_IDS']:
             url = media['url']
-            file_name = media['filename']   
+            file_name = media['filename']
             while file_name in unique_media_names_list:
                 file_name = append_num_to_filename(file_name)
             unique_media_names_list.append(file_name)
@@ -77,7 +45,7 @@ def download_media_zip(hunt_password, table_name='Results', log=False, check_siz
             r = requests.get(url)
             zf.writestr(output_file, r.content)
             zf_info = zf.getinfo(output_file)
-            total_size += zf_info.file_size # zf_info.compress_size            
+            total_size += zf_info.file_size # zf_info.compress_size
             if check_size and total_size > MAX_SIZE_FILE_BYTES:
                 zf.close()
                 return 'MAX'
@@ -87,7 +55,7 @@ def download_media_zip(hunt_password, table_name='Results', log=False, check_siz
     zip_content = zip_buffer.getvalue()
     return zip_content
 
-def download_media(hunt_password, output_file):        
+def download_media(hunt_password, output_file):
     with open(output_file, 'wb') as output:
         zip_content = download_media_zip(hunt_password, log=True, check_size=False)
         output.write(zip_content)
@@ -102,7 +70,7 @@ def get_rows(table, view=None, filter=None, sort_key=None):
         return rows
 
 def get_wrong_answers(hunt_password, table_name='Results', output_file=None, output_file_digested=None):
-    from collections import defaultdict    
+    from collections import defaultdict
     base_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
     RESULTS_TABLE = Airtable(base_id, table_name, api_key=settings.AIRTABLE_ACCESS_TOKEN)
     table_entries = RESULTS_TABLE.get_all()
@@ -155,7 +123,6 @@ def process_errori(mission_error_dict):
     return '\n'.join(output)
 
 def get_report(hunt_password, table_name='Results'):
-    from historic.bot import date_time_util as dtu
     base_id = game.HUNTS_PW[hunt_password]['Airtable_Game_ID']
     RESULTS_TABLE = Airtable(base_id, table_name, api_key=settings.AIRTABLE_ACCESS_TOKEN)
     table_entries = RESULTS_TABLE.get_all()
@@ -163,14 +130,14 @@ def get_report(hunt_password, table_name='Results'):
     result = []
     header = [
         'User Info',
-        'Group Name', 
+        'Group Name',
         'Finished',
-        'Group Size', 
+        'Group Size',
         'Total Missions',
-        'Missions Completed',         
+        'Missions Completed',
         'Elapsed Mission Min',
         'Elapsed Total Min',
-        'Route Duration Min', 
+        'Route Duration Min',
         'Elapsed Difference Min'
     ]
     result.append(header)
@@ -188,14 +155,14 @@ def get_report(hunt_password, table_name='Results'):
                     user_info.append(f'@{vars[f]}')
                 else:
                     user_info.append(vars[f])
-        user_info = ' '.join(user_info)        
+        user_info = ' '.join(user_info)
         group_name = row.get('GROUP_NAME', '')
         group_size = vars.get('GROUP_SIZE', '')
         elapsed_missions_min = vars['ELAPSED MISSIONS'] // 60
         elapsed_total_sec = vars['ELAPSED GAME']
         elapsed_total_min = elapsed_total_sec // 60
         # missions_times_list = [
-        #     dtu.delta_seconds_iso(t[0], t[1]) if len(t)==2 else 0 
+        #     dtu.delta_seconds_iso(t[0], t[1]) if len(t)==2 else 0
         #     for t in vars['MISSION_TIMES']
         # ]
         # missions_times_total_sec = sum(missions_times_list)
@@ -203,35 +170,35 @@ def get_report(hunt_password, table_name='Results'):
         completed_missions = vars.get('COMPLETED_MISSIONS','')
         incompleted_missions = vars.get('INCOMPLETED_MISSIONS','')
         total_missions = completed_missions + incompleted_missions
-        route_duration_min = ''        
+        route_duration_min = ''
         route_duration_diff_min = ''
         if 'ROUTE_DURATION_MIN' in vars:
             route_duration_min = vars['ROUTE_DURATION_MIN']
             route_duration_sec = route_duration_min * 60
-            route_duration_extra_sec = elapsed_total_sec - route_duration_sec # secondi_in_piu_rispetto_a_quanto_richiesto            
+            route_duration_extra_sec = elapsed_total_sec - route_duration_sec # secondi_in_piu_rispetto_a_quanto_richiesto
             route_duration_diff_min = route_duration_extra_sec // 60
         row_result = [
             user_info,
-            group_name, 
+            group_name,
             finished,
-            group_size, 
+            group_size,
             total_missions,
-            completed_missions,             
+            completed_missions,
             elapsed_missions_min,
             elapsed_total_min,
-            route_duration_min, 
+            route_duration_min,
             route_duration_diff_min
         ]
         result.append(row_result)
     return '\n'.join(['\t'.join([str(f) for f in row]) for row in result])
-    
+
     # with open(output_file, 'w') as f_out:
     #     f_out.write('\n'.join(['\t'.join([str(f) for f in row]) for row in result]))
 
 async def main():
     from historic.bot.utils_cli import get_hunt_from_password
 
-    hunt_name, password, airtable_game_id = get_hunt_from_password()    
+    hunt_name, password, airtable_game_id = get_hunt_from_password()
 
     options = [
         '1. Scaricare media',
@@ -241,10 +208,10 @@ async def main():
         '5. Update media bucket'
         'q  Exit'
     ]
-    
+
     while True:
 
-        while True:            
+        while True:
             print('\nOpzioni:\n' + '\n'.join(options))
             opt = input('\nLa tua scelta --> ')
             if opt=='q':
@@ -262,8 +229,8 @@ async def main():
         elif opt==2:
             # Scaricare errori
             get_wrong_answers(
-                password, 
-                output_file=f'{hunt_name_no_space}_errori.txt', 
+                password,
+                output_file=f'{hunt_name_no_space}_errori.txt',
                 output_file_digested=f'{hunt_name_no_space}_errori_digested.txt'
             )
         elif opt==3:
@@ -278,10 +245,13 @@ async def main():
             missions = game.get_random_missions(airtable_game_id, mission_table_name, start_lat_long)
             random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missions,1)])
             print(random_missioni_names)
-        elif opt==5:            
-            # update_media_bucket
-            await update_media_bucket(hunt_name, password)
+        elif opt==5:
+            await update_all_hunt_media_to_bucket(
+                hunt_name=hunt_name,
+                hunt_pw=password,
+                overwrite=True
+            )
 
-if __name__ == "__main__":  
-    import asyncio  
+if __name__ == "__main__":
+    import asyncio
     asyncio.run(main())
