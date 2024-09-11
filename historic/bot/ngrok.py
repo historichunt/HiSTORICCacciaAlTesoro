@@ -12,13 +12,13 @@ def is_already_active():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('localhost', 4040)) == 0
 
-def start_pyngrok():    
+def start_pyngrok():
     if is_already_active():
         print('ngrok already running.')
         return get_ngrok_base()
     ngrok_tunnel = ngrok.connect(5000, bind_tls=True) # only https
-    return ngrok_tunnel.public_url 
-    
+    return ngrok_tunnel.public_url
+
 def stop_pyngrok():
     ngrok_tunnel = ngrok.get_tunnels()[0]
     ngrok.disconnect(ngrok_tunnel.public_url)

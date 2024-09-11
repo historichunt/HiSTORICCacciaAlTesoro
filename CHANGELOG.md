@@ -2,6 +2,8 @@
 
 ## 0.20
 - kids/adult option in hunts `Missioni_LANG`
+- google bucket - refatored and included all media (introduction, missions)
+- schema - improved schema check from template (check bugs)
 
 ## 0.19
 - storage of media via google bucket (copied from airtable)

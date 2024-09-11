@@ -151,7 +151,7 @@ async def save_game_data_in_airtable(p, compute_times):
 
 def save_survey_data_in_airtable(p):
     game_data = p.tmp_variables
-    game_id = game_data['HUNT_INFO']['Airtable_Game_ID']
+    game_id = game_data['HUNT_GAME_ID']
     results_survey_table = Airtable(game_id, 'Survey Answers', api_key=settings.AIRTABLE_ACCESS_TOKEN)
     survey_row = {'LANGUAGE': p.language}
     survey_data = game_data['SURVEY_INFO']['COMPLETED']
@@ -204,12 +204,13 @@ def load_game(p, hunt_pw, test_hunt_admin=False):
         # but we don't want to reset ADMIN_HUNT_NAME and ADMIN_HUNT_PW for admins (mission test)
     tvar = p.tmp_variables
     tvar['HUNT_NAME'] = hunt_info['Name']
+    tvar['HUNT_GAME_ID'] = hunt_info['Airtable_Game_ID']
     tvar['HUNT_LANGUAGES'] = hunt_languages
     tvar['TEST_HUNT_MISSION_ADMIN'] = test_hunt_admin
     tvar['HUNT_START_GPS'] = get_closest_mission_lat_lon(p, game_id, mission_tab_name)
     tvar['SETTINGS'] = hunt_settings
     tvar['HUNT_UI'] = hunt_ui
-    tvar['HUNT_INFO'] = hunt_info # HUNT CONFIG TABLE
+    tvar['HUNT_INFO'] = hunt_info # HUNT CONFIG TABLE HUNT ROW
     tvar['Notify_Group ID'] = hunt_info.get('Notify_Group ID', None)
     tvar['Validators IDs'] = hunt_info.get('Validators IDs', None)
     tvar['ID'] = p.get_id()

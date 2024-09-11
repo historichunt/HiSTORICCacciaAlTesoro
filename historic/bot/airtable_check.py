@@ -42,7 +42,8 @@ def check_hunt(hunt_pw):
     hunt_config_dict = HUNTS_PW[hunt_pw]
     # hunt_name = hunt_config_dict['Name']
     game_id = hunt_config_dict['Airtable_Game_ID']
-    schema_error = check_hunt_schema(game_id)
+    hunt_languages = get_hunt_languages(hunt_pw)
+    schema_error = check_hunt_schema(game_id, hunt_languages)
 
     # check errors schema
     if schema_error:
@@ -50,7 +51,6 @@ def check_hunt(hunt_pw):
 
     # check errors missions
     skip_columns = ['NOTE OPZIONALI']
-    hunt_languages = get_hunt_languages(hunt_pw)
     for l in hunt_languages:
         table_name = f'Missioni_{l}'
         hunt_missioni_table = Airtable(game_id, table_name, api_key=settings.AIRTABLE_ACCESS_TOKEN)

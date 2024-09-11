@@ -99,15 +99,20 @@ def get_hunt_schema(airtable_game_id, clean=True):
 
     # process schema from list to table_name -> dict form
     hunt_schema = {
-        table_name: [
+        d['name']: [
             {k:fields_list[k] for k in FIELDS_KEYS_FULL if k in fields_list}
             for fields_list in d['fields']
         ]
         for d in hunt_schema
-        if (table_name := matched_table(d['name']))
+    }
+    # replace table_name (Survey_EN) with normalized (Survey_..)
+    hunt_schema_norm = {
+        table_name: value
+        for table_name, value in hunt_schema.items()
+        if matched_table(table_name)
     }
 
-    return hunt_schema
+    return hunt_schema, hunt_schema_norm
 
 '''
 Make sure you chose the real `template`
@@ -119,46 +124,96 @@ def download_gold_hunt_schema(
     # - {'name': 'Settings', 'fields': [{'type': '...', 'name': 'Name' }, ...]
     # - {'name': 'UI',
     # - ...
-    hunt_schema_full = get_hunt_schema(airtable_game_id, clean)
+    _, hunt_schema_norm  = get_hunt_schema(airtable_game_id, clean)
 
     with open(filepath_full, 'w') as fout:
-        json.dump(hunt_schema_full, fout, ensure_ascii=False, indent=3)
+        json.dump(hunt_schema_norm, fout, ensure_ascii=False, indent=3)
 
     hunt_schema_simplified = {
         table_name: [d['name'] for d in fields_info]
-        for table_name, fields_info in hunt_schema_full.items()
+        for table_name, fields_info in hunt_schema_norm.items()
     }
 
     with open(filepath_simplified, 'w') as fout:
         json.dump(hunt_schema_simplified, fout, ensure_ascii=False, indent=3)
 
 
-def check_hunt_schema(airtable_game_id):
+def check_hunt_schema(airtable_game_id, hunt_languages):
 
     with open(SCHEMA_JSON_FULL) as fin:
         schema_gold = json.load(fin)
 
-    hunt_schema = get_hunt_schema(airtable_game_id)
+    hunt_schema, hunt_schema_norm = get_hunt_schema(airtable_game_id)
 
-    for table_name, hunt_fields in hunt_schema.items():
-        if table_name == 'UI':
-            continue # TODO fix me: here there are languages that may different for different hunts
+    missing_table_lang = [
+        table_name_lang
+        for table_name in ['Instructions', 'Missioni','Survey']
+        for lang in hunt_languages
+        if (table_name_lang := f'{table_name}_{lang}') not in hunt_schema.keys()
+    ]
+    if missing_table_lang:
+        return dedent(f'''
+            Missing the following tables in base:\n
+            Missing: `{missing_table_lang}`
+        ''')
 
-        table_name = matched_table(table_name)
+    for table_name, hunt_table_fields in hunt_schema_norm.items():
+        table_name = matched_table(table_name) # normalized
         if not table_name:
             return dedent(f'''
                 Table `{table_name}` is not a correct table name.
                 Please check simplified schema: {URL_SCHEMA_SIMPLIFIED}
             ''')
+        hunt_table_fields_names = [f['name'] for f in hunt_table_fields]
+        if table_name == 'UI':
+            # get set languages in UI but remove 'VAR'
+            ui_languages = list(hunt_table_fields_names)
+            ui_languages.remove('VAR')
+            if set(ui_languages) != set(hunt_languages):
+                return dedent(f'''
+                    Table `{table_name}` does not have the correct language fields.\n
+                    Found: `{ui_languages}`\n
+                    Correct: `{hunt_languages}`\n
+                    Please check simplified schema: {URL_SCHEMA_SIMPLIFIED}
+                ''')
+            continue
+        if table_name == 'Survey_..':
+            pass
+            # TODO: chek all Survey_lang tables have the same number of questions
+            # do NOT continue (check if fields are same as in gold)
+        if table_name == 'Survey Answers':
+            # DRAFT TODO...
+            # first_lang = hunt_languages[0]
+            # table_survey_first_lang = hunt_schema[f'Survey_{first_lang}']
+            # survey_table = Airtable(game_id, f'Survey_{p.language}', api_key=settings.AIRTABLE_ACCESS_TOKEN)
+            # ...TODO: check it has fields 'N', 'LANGUAGE', 'Q1', 'Q2', ..., 'Qmax' as in Survey_LANG
 
-        hunt_fields_names = [f['name'] for f in hunt_fields]
-        gold_fields = schema_gold[table_name]
-        gold_field_names = [f['name'] for f in gold_fields]
-        if hunt_fields_names != gold_field_names:
+            # check it has fields 'N', 'LANGUAGE', 'Q1', 'Q2', ..., 'Q\d+'
+            wrong_field_names = [
+                field_name
+                for field_name in hunt_table_fields_names
+                if (
+                    field_name not in ['N','LANGUAGE']
+                    and
+                    not re.match('Q\d+', field_name)
+                )
+            ]
+            if wrong_field_names:
+                return dedent(f'''
+                    Table `{table_name}` contains the following wrong fields:\n
+                    Wrong fields: `{wrong_field_names}`\n
+                    Correct: `TODO...`\n
+                    Please check simplified schema: {URL_SCHEMA_SIMPLIFIED}
+                ''')
+            continue
+        # check if table fields are same as in gold
+        gold_table_fields = schema_gold[table_name]
+        gold_table_fields_names = [f['name'] for f in gold_table_fields]
+        if hunt_table_fields_names != gold_table_fields_names:
             return dedent(f'''
                 Table `{table_name}` does not have the correct fields.\n
-                Found: `{hunt_fields_names}`\n
-                Correct: `{gold_field_names}`\n
+                Found: `{hunt_table_fields_names}`\n
+                Correct: `{gold_table_fields_names}`\n
                 Please check simplified schema: {URL_SCHEMA_SIMPLIFIED}
             ''')
 
