@@ -55,6 +55,12 @@ def check_hunt(hunt_pw):
         table_name = f'Missioni_{l}'
         hunt_missioni_table = Airtable(game_id, table_name, api_key=settings.AIRTABLE_ACCESS_TOKEN)
         missioni_row_dict_list = airtable_utils.get_rows(hunt_missioni_table)
+
+        gps_list = [m['GPS'] for m in missioni_row_dict_list]
+        duplicates = len(gps_list) != len(set(gps_list))
+        if duplicates:
+            return f'Errore {err_type} in tabella "{table_name}": multiple missions with same GPS'
+
         for row_dict in missioni_row_dict_list:
             for col,v in row_dict.items():
                 if col in skip_columns:
@@ -79,6 +85,6 @@ def check_hunt(hunt_pw):
 
 if __name__ == "__main__":
     import sys
-    assert len(sys.argv)==2
+    assert len(sys.argv)==2, "You need to provide a password"
     pw = sys.argv[1].lower()
     check_hunt(pw)
