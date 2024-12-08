@@ -29,13 +29,13 @@ def levenshtein(s1, s2):
             substitutions = previous_row[j] + (c1 != c2)
             current_row.append(min(insertions, deletions, substitutions))
         previous_row = current_row
-    
+
     return previous_row[-1]
 
 def answer_is_almost_correct(guess, solution_set):
     solution_set_word = [x for x in solution_set if len(x)>=4]
     if any(x.isdigit() for x in solution_set_word):
-        return False    
+        return False
     if min(len(x) for x in solution_set_word) <= 3:
         return False
     if any(x in solution_set_word for x in guess.split()):
@@ -86,13 +86,13 @@ def is_float_between(s, low, high):
     return False
 
 def append_num_to_filename(filename):
-    if '_' in filename: 
+    if '_' in filename:
         prefix, suffix = filename.rsplit('_', 1)
         if is_int(suffix):
             num = int(suffix)
             return f'{prefix}_{num+1}'
     return f'{filename}_1'
-    
+
 
 re_letters_space = re.compile('^[a-zA-Z ]+$')
 re_digits = re.compile(r'^\d+$')
@@ -258,17 +258,17 @@ def sec_to_hms(elapsed_sec):
     time_str = "%d:%02d:%02d" % (hour, mins, sec)
     return time_str
 
-def read_qr_from_url(file_url):    
+def read_qr_from_url(file_url):
     img_content = requests.get(file_url).content
-    img_array = np.asarray(bytearray(img_content), dtype=np.uint8)    
+    img_array = np.asarray(bytearray(img_content), dtype=np.uint8)
     img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
     detect = cv2.QRCodeDetector()
-    value, _, _ = detect.detectAndDecode(img) 
-    return value # full code potentially including html address    
+    value, _, _ = detect.detectAndDecode(img)
+    return value # full code potentially including html address
 
 def qr_matches(goal, target):
     if 'QR_' in target:
-        return goal == target.rsplit('QR_',1)[-1]    
+        return goal == target.rsplit('QR_',1)[-1]
     # last field after last forward slash (not necessary)
     return goal == target.rsplit('/',1)[-1]
 
@@ -280,7 +280,7 @@ def create_qr(text, transparent) -> None:
     qr.add_data(text)
     qr.make(fit=True)
     img = qr.make_image(fill="black", back_color="white")
-    
+
     if transparent:
         img = img.convert("RGBA")
         datas = img.getdata()
@@ -299,11 +299,17 @@ def create_qr(text, transparent) -> None:
     # tmp_filename = "tmp_qrcode.webp"
     img_bytes = io.BytesIO()
     img.save(img_bytes, format=format)
-    img_bytes.seek(0)    
+    img_bytes.seek(0)
     return img_bytes.read() # convert to byte-like object
 
 def get_str_param_boolean(d, param):
     return d.get(param, 'False').lower() in ['true', '1', 't', 'y', 'yes']
+
+def get_str_param_int(d, param):
+    value = d.get(param, None)
+    if value is None:
+        return None
+    return int(value)
 
 def get_lat_lon_from_string(latlong_string):
     return [float(x) for x in latlong_string.split(',')]

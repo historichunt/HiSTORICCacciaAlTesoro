@@ -76,6 +76,10 @@
          "type": "checkbox"
       },
       {
+         "name": "POSITION",
+         "type": "number"
+      },
+      {
          "name": "FINALE",
          "type": "checkbox"
       },
@@ -179,7 +183,7 @@
          "type": "checkbox"
       },
       {
-         "name": "POST_INUT_MEDIA",
+         "name": "POST_INPUT_MEDIA",
          "type": "multipleAttachments"
       },
       {

@@ -10,7 +10,7 @@ from historic.bot.bot_telegram import BOT, delete_commands, get_commands, get_me
     report_admins, send_text_document, send_media_url, \
     broadcast, reset_all_users, report_location_admin, set_commands, set_menu, get_photo_url_from_telegram, send_sticker_data
 from historic.config import params
-from historic.bot.utility import flatten, get_str_param_boolean, make_2d_array
+from historic.bot.utility import flatten, make_2d_array
 from historic.bot.ndb_person import Person
 from historic.routing.api import api_google
 
@@ -413,7 +413,7 @@ async def state_TERMINATE_USER_CONFIRM(p, message_obj=None, **kwargs):
             await send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS, kb)
 
 async def teminate_hunt(p):
-    reset_hunt_after_completion = get_str_param_boolean(p.tmp_variables['SETTINGS'], 'RESET_HUNT_AFTER_COMPLETION')
+    reset_hunt_after_completion = game.get_hunt_setting_value(p, 'RESET_HUNT_AFTER_COMPLETION')
     terminate_message_key = 'MSG_HUNT_TERMINATED_RESET_ON' if reset_hunt_after_completion else 'MSG_HUNT_TERMINATED_RESET_OFF'
     active = await send_message(p, p.ui().get_var(terminate_message_key), remove_keyboard=True, sleep=True)
     # await send_typing_action(p, sleep_time=1)
@@ -577,7 +577,7 @@ async def start_hunt(p, hunt_password):
         h_name = p.get_tmp_variable('HUNT_NAME')
         msg = f'{p_name} ha iniziato la caccia: {h_name}'
         await send_message(notify_group_id, msg)
-    skip_instructions = get_str_param_boolean(p.tmp_variables['SETTINGS'], 'SKIP_INSTRUCTIONS')
+    skip_instructions = game.get_hunt_setting_value(p, 'SKIP_INSTRUCTIONS')
     await set_commands(p) # refresh commands in menu
     if skip_instructions:
         await redirect_to_state(p, state_CHECK_INITIAL_POSITION)
@@ -790,13 +790,11 @@ async def state_INSTRUCTIONS(p, message_obj=None, **kwargs):
 
 async def state_CHECK_INITIAL_POSITION(p, message_obj=None, **kwargs):
     give_instruction = message_obj is None
-    goal_position = p.get_tmp_variable('HUNT_START_GPS')
-    # CHECK_LOCATION = p.tmp_variables['SETTINGS'].get('CHECK_INITIAL_LOCATION', True)
+    goal_position = p.get_tmp_variable('HUNT_FIRST_MISSION_GPS')
     if goal_position is None:
         await load_missions(p)
         return
-    # START_LOCATION = p.tmp_variables['SETTINGS'].get('START_LOCATION', 'PROXIMITY')
-    GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
+    GPS_TOLERANCE_METERS = game.get_hunt_setting_value(p, 'GPS_TOLERANCE_METERS')
     if give_instruction:
         current_position = p.get_location()
         distance = geo_utils.distance_meters(goal_position, current_position)
@@ -840,7 +838,7 @@ async def load_missions(p):
         await send_text_document(p, 'tmp_vars.json', game.debug_tmp_vars(p), caption=msg_admin)
         await report_admins(msg_admin)
     else:
-        WAIT_QR_MODE = p.tmp_variables['SETTINGS'].get('WAIT_QR_MODE', False)
+        WAIT_QR_MODE = game.get_hunt_setting_value(p, 'WAIT_QR_MODE') # false by default
         await send_message(p, p.ui().MSG_GO)
         if WAIT_QR_MODE:
             await redirect_to_state(p, state_WAIT_FOR_QR)
@@ -956,14 +954,21 @@ async def state_MISSION_INTRO(p, message_obj=None, **kwargs):
             await send_media_url(p, url_attachment, type, caption=caption)
             await send_typing_action(p, sleep_time=1)
         msg = current_mission['INTRODUZIONE_LOCATION'] # '*Introduzione*: ' +
-        kb = [[random.choice(bot_ui.BUTTON_CONTINUE_MULTI(p.language))]]
+        ALLOW_SKIP_MISSION = game.get_hunt_setting_value(p, 'GPS_TOLERANCE_METERS')
+        kb = [[p.ui().BUTTON_CONTINUE]]
+        if ALLOW_SKIP_MISSION:
+            kb.append([p.ui().BUTTON_SKIP_MISSION])
         await send_message(p, msg, kb)
         p.put()
     else:
         text_input = message_obj.text
         kb = p.get_keyboard()
         if text_input in flatten(kb):
-            if text_input in bot_ui.BUTTON_CONTINUE_MULTI(p.language):
+            if text_input == p.ui().BUTTON_SKIP_MISSION:
+                # go to next mission
+                await send_message(p, p.ui().MSG_MISSION_SKIPPED)
+                await redirect_to_state(p, state_COMPLETE_MISSION)
+            elif text_input == p.ui().BUTTON_CONTINUE:
                 current_mission = game.get_current_mission(p)
                 await redirect_to_state(p, state_VERIFY_LOCATION)
         else:
@@ -1013,7 +1018,7 @@ async def state_MISSION_GPS(p, message_obj=None, **kwargs):
     current_mission = game.get_current_mission(p)
     goal_position = utility.get_lat_lon_from_string(current_mission['GPS'])
     # TODO: see if we need the following
-    # if goal_position == p.get_tmp_variable('HUNT_START_GPS'):
+    # if goal_position == p.get_tmp_variable('HUNT_FIRST_MISSION_GPS'):
         # await redirect_to_state(p, state_DOMANDA)
         # return
     if give_instruction:
@@ -1025,7 +1030,7 @@ async def state_MISSION_GPS(p, message_obj=None, **kwargs):
         if not testing and first_mission and routing_mode:
             current_position = p.get_location()
             distance = geo_utils.distance_meters(goal_position, current_position)
-            GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
+            GPS_TOLERANCE_METERS = game.get_hunt_setting_value(p, 'GPS_TOLERANCE_METERS')
             if distance <= GPS_TOLERANCE_METERS:
                 await redirect_to_state(p, state_DOMANDA)
                 return
@@ -1040,7 +1045,7 @@ async def state_MISSION_GPS(p, message_obj=None, **kwargs):
             p.set_location(lat, lon)
             given_position = [lat, lon]
             distance = geo_utils.distance_meters(goal_position, given_position)
-            GPS_TOLERANCE_METERS = int(p.tmp_variables['SETTINGS']['GPS_TOLERANCE_METERS'])
+            GPS_TOLERANCE_METERS = game.get_hunt_setting_value(p, 'GPS_TOLERANCE_METERS')
             if distance <= GPS_TOLERANCE_METERS:
                 await send_message(p, p.ui().MSG_GPS_OK, remove_keyboard=True)
                 if not await send_post_message(p, current_mission, after_loc=True):
@@ -1123,8 +1128,8 @@ async def state_DOMANDA(p, message_obj=None, **kwargs):
             kb = p.get_keyboard()
             if text_input in flatten(kb):
                 now_string = dtu.now_utc_iso_format()
-                MIN_SEC_INDIZIO_1 = int(p.tmp_variables['SETTINGS']['MIN_SEC_INDIZIO_1'])
-                MIN_SEC_INDIZIO_2 = int(p.tmp_variables['SETTINGS']['MIN_SEC_INDIZIO_2'])
+                MIN_SEC_INDIZIO_1 = game.get_hunt_setting_value(p, 'MIN_SEC_INDIZIO_1') # int
+                MIN_SEC_INDIZIO_2 = game.get_hunt_setting_value(p, 'MIN_SEC_INDIZIO_2') # int
                 if text_input == p.ui().BUTTON_FIRST_HINT:
                     before_string = current_mission['start_time']
                     ellapsed = dtu.delta_seconds_iso(before_string, now_string)
@@ -1213,10 +1218,11 @@ async def send_post_message(p, current_mission, after_loc=False, after_input=Fal
 async def state_MEDIA_INPUT_MISSION(p, message_obj=None, **kwargs):
     give_instruction = message_obj is None
     current_mission = game.get_current_mission(p)
-    input_type = current_mission['INPUT_TYPE'] # PHOTO, VOICE
+    input_type = current_mission['INPUT_TYPE'] # PHOTO, VOICE, VIDEO
     assert input_type in ['PHOTO','VOICE','VIDEO']
     if give_instruction:
         msg = current_mission['INPUT_INSTRUCTIONS']
+        # TODO: ALLOW_SKIP_MEDIA_INPUT
         await send_message(p, msg, remove_keyboard=True)
     else:
         photo = message_obj.photo
@@ -1400,7 +1406,8 @@ async def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
         kb = p.get_keyboard()
         if text_input in flatten(kb):
             if text_input.startswith(p.ui().BUTTON_NEXT_MISSION):
-                if p.tmp_variables['SETTINGS'].get('WAIT_QR_MODE', False):
+                if game.get_hunt_setting_value(p, 'WAIT_QR_MODE'):
+                    # false by default
                     await redirect_to_state(p, state_WAIT_FOR_QR)
                 else:
                     await redirect_to_state(p, state_MISSION_INTRO)
@@ -1409,8 +1416,7 @@ async def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
                 await send_typing_action(p, sleep_time=1)
                 await send_message(p, p.ui().MSG_CONGRATS_PRE_SURVEY)
                 await send_typing_action(p, sleep_time=1)
-                settings = p.tmp_variables['SETTINGS']
-                skip_survey = get_str_param_boolean(settings, 'SKIP_SURVEY')
+                skip_survey = game.get_hunt_setting_value(p, 'SKIP_SURVEY')
                 # saving data in airtable
                 await game.save_game_data_in_airtable(p, compute_times=True)
                 if not skip_survey:
@@ -1479,8 +1485,7 @@ async def state_SURVEY(p, message_obj=None, **kwargs):
 
 async def state_END(p, message_obj=None, **kwargs):
     give_instruction = message_obj is None
-    hunt_settings = p.tmp_variables['SETTINGS']
-    reset_hunt_after_completion = get_str_param_boolean(hunt_settings, 'RESET_HUNT_AFTER_COMPLETION')
+    reset_hunt_after_completion = game.get_hunt_setting_value(p, 'RESET_HUNT_AFTER_COMPLETION')
     if give_instruction:
         penalty_hms, total_hms_game, ellapsed_hms_game, \
             total_hms_missions, ellapsed_hms_missions = game.get_elapsed_and_penalty_and_total_hms(p)

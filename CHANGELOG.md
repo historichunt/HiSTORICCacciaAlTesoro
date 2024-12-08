@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.21
+- added in Hunt Settings
+  - MISSIONS_SELECTION -> FIXED (related to POSITION in MISSIONI)
+  - ALLOW_SKIP_MISSION
+  - ALLOW_SKIP_MEDIA_INPUT
+- added filed POSITION in MISSIONI
+
 ## 0.20
 - kids/adult option in hunts `Missioni_LANG`
 - google bucket - refatored and included all media (introduction, missions)

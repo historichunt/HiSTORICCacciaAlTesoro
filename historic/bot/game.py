@@ -3,12 +3,14 @@ from airtable import Airtable
 from random import shuffle, choice
 from historic.config import params, settings
 from historic.bot import utility, airtable_utils
+from historic.bot.utility import get_str_param_boolean, get_str_param_int
 import historic.bot.date_time_util as dtu
 from historic.routing.api import api_google
 from historic.routing.data_matrices import DataMatrices
 from historic.routing.datasets.trento_hunt_params import get_trento_route_planner, NUM_PLANNER_ATTEMPTS
 from historic.bot.bucket_utils import upload_instructions_media_to_bucket, upload_missions_media_to_bucket
 import numpy as np
+
 
 #################
 # GAMES CONFIG
@@ -169,16 +171,6 @@ def get_game_id_from_pw(hunt_pw):
     game_id = hunt_info['Airtable_Game_ID']
     return game_id
 
-def get_hunt_languages(hunt_pw):
-    game_id = get_game_id_from_pw(hunt_pw)
-    hunt_settings = get_hunt_settings(game_id)
-    hunt_languages =  [
-        l.strip()
-        for l in hunt_settings['LANGUAGES'].upper().split(',')
-        if l.strip() in params.LANGUAGES
-    ]
-    return hunt_languages
-
 def load_game(p, hunt_pw, test_hunt_admin=False):
     '''
     Save current game info user tmp_variable
@@ -203,12 +195,12 @@ def load_game(p, hunt_pw, test_hunt_admin=False):
         p.tmp_variables = {} # resetting vars
         # but we don't want to reset ADMIN_HUNT_NAME and ADMIN_HUNT_PW for admins (mission test)
     tvar = p.tmp_variables
+    tvar['SETTINGS'] = hunt_settings
     tvar['HUNT_NAME'] = hunt_info['Name']
     tvar['HUNT_GAME_ID'] = hunt_info['Airtable_Game_ID']
     tvar['HUNT_LANGUAGES'] = hunt_languages
     tvar['TEST_HUNT_MISSION_ADMIN'] = test_hunt_admin
-    tvar['HUNT_START_GPS'] = get_closest_mission_lat_lon(p, game_id, mission_tab_name)
-    tvar['SETTINGS'] = hunt_settings
+    tvar['HUNT_FIRST_MISSION_GPS'] = get_first_mission_lat_lon(p, game_id, mission_tab_name)
     tvar['HUNT_UI'] = hunt_ui
     tvar['HUNT_INFO'] = hunt_info # HUNT CONFIG TABLE HUNT ROW
     tvar['Notify_Group ID'] = hunt_info.get('Notify_Group ID', None)
@@ -244,20 +236,25 @@ async def build_missions(p, test_all=False):
     # hunt_pw = hunt_info['Password']
     game_id = hunt_info['Airtable_Game_ID']
     mission_tab_name = f'Missioni_{p.language}'
+    mission_selection = hunt_settings.get('MISSIONS_SELECTION', None)
     if test_all:
         missions_dict = get_missions_name_fields_dict(game_id, mission_tab_name, active=True)
         missions = list(missions_dict.values())
-    elif hunt_settings.get('MISSIONS_SELECTION', None) == 'ROUTING':
+    elif mission_selection == 'ROUTING':
         from historic.bot.bot_telegram import send_message
         await send_message(p, p.ui().MSG_GAME_IS_LOADING, remove_keyboard=True)
         missions = await get_missioni_routing(p, game_id, mission_tab_name)
         if missions is None:
             return False # problema selezione percorso
     else:
-        # RANDOM - default
-        start_lat_long = p.get_tmp_variable('HUNT_START_GPS')
-        missions = get_random_missions(game_id, mission_tab_name, start_lat_long)
-
+        if mission_selection == 'FIXED':
+            # sort by POSITIONS
+            missions = get_fixed_missions(game_id, mission_tab_name)
+        else:
+            # RANDOM - default
+            start_lat_long = p.get_tmp_variable('HUNT_FIRST_MISSION_GPS')
+            missions = get_random_missions(game_id, mission_tab_name, start_lat_long)
+        # debug msg mission list
         if p.is_admin_current_hunt():
             from historic.bot.bot_telegram import send_message
             random_missioni_names = '\n'.join([' {}. {}'.format(n,x['NOME']) for n,x in enumerate(missions,1)])
@@ -400,18 +397,36 @@ def get_all_missions_lat_lon(game_id, mission_tab_name, exclude_finals_and_linke
     return all_gps
 
 
-def get_closest_mission_lat_lon(p, game_id, mission_tab_name):
+def get_first_mission_lat_lon(p, game_id, mission_tab_name):
 
-    all_gps = get_all_missions_lat_lon(game_id, mission_tab_name)
+    MISSIONS_SELECTION = get_hunt_setting_value(p, 'MISSIONS_SELECTION')
 
-    if len(all_gps) == 0:
-        return None
+    if MISSIONS_SELECTION == 'FIXED':
+        missions_fixed = get_fixed_missions(game_id, mission_tab_name)
+        first_mission = missions_fixed[0]
+        lat_lon = utility.get_lat_lon_from_string(first_mission['GPS'])
+        return lat_lon
+    else:
+        # RANDOM, ROUTE
+        all_gps = get_all_missions_lat_lon(game_id, mission_tab_name)
 
-    current_pos = np.asarray(p.get_location())
-    dist_2 = np.sum((all_gps - current_pos)**2, axis=1)
-    idx = np.argmin(dist_2)
-    closest_gps = all_gps[idx].tolist()
-    return closest_gps
+        if len(all_gps) == 0:
+            return None
+
+        current_pos = np.asarray(p.get_location())
+        dist_2 = np.sum((all_gps - current_pos)**2, axis=1)
+        idx = np.argmin(dist_2)
+        closest_gps = all_gps[idx].tolist()
+        return closest_gps
+
+def get_fixed_missions(game_id, mission_tab_name):
+
+    MISSIONI_ACTIVE = get_missions_name_fields_dict(game_id, mission_tab_name, active=True)
+    missioni_active_fields_dict = list(MISSIONI_ACTIVE.values())
+
+    missioni_fixed = sorted(missioni_active_fields_dict, key=lambda x: x['POSITION'])
+
+    return missioni_fixed
 
 
 def get_random_missions(game_id, mission_tab_name, start_lat_long):
@@ -506,7 +521,7 @@ async def get_missioni_routing(p, game_id, mission_tab_name):
         api = api_google
     )
 
-    lat, long = p.get_tmp_variable('HUNT_START_GPS')
+    lat, long = p.get_tmp_variable('HUNT_FIRST_MISSION_GPS')
     start_idx = game_dm.get_coordinate_index(lat=lat, long=long)
     skip_points_idx = [
         game_dm.get_stop_name_index(m)
@@ -581,6 +596,52 @@ def is_mission_selection_routing_based(p):
     tvar = p.tmp_variables
     hunt_settings = tvar['SETTINGS']
     return hunt_settings.get('MISSIONS_SELECTION', None) == 'ROUTING'
+
+def get_hunt_languages(hunt_pw):
+    game_id = get_game_id_from_pw(hunt_pw)
+    hunt_settings = get_hunt_settings(game_id)
+    hunt_languages =  [
+        l.strip()
+        for l in hunt_settings['LANGUAGES'].upper().split(',')
+        if l.strip() in params.LANGUAGES
+    ]
+    return hunt_languages
+
+def get_hunt_setting_value(p, setting_name):
+    tvar = p.tmp_variables
+    hunt_settings = tvar['SETTINGS']
+
+    string_settings = [
+        'VERSION', 'MISSIONS_SELECTION'
+    ]
+
+    bool_settings = [
+        'SKIP_INSTRUCTIONS', 'SKIP_SURVEY', 'RESET_HUNT_AFTER_COMPLETION',
+        'ALLOW_SKIP_MISSION', 'ALLOW_SKIP_MEDIA_INPUT',
+        'RESET_HUNT_AFTER_COMPLETION',
+        'WAIT_QR_MODE',
+    ]
+
+    # boolean settings: all default to False
+    int_settings = [
+        'MIN_SEC_INDIZIO_1', 'MIN_SEC_INDIZIO_2',
+        'GPS_TOLERANCE_METERS', 'SEC_PENALITY_WRONG_ANSWER'
+    ]
+
+    if setting_name in string_settings:
+        return hunt_settings.get(setting_name, None)
+    if setting_name == 'LANGUAGES':
+        hunt_languages =  [
+            l.strip()
+            for l in hunt_settings['LANGUAGES'].upper().split(',')
+            if l.strip() in params.LANGUAGES
+        ]
+        return hunt_languages
+    if setting_name in int_settings:
+        return get_str_param_int(hunt_settings, setting_name)
+    if setting_name in bool_settings:
+        return get_str_param_boolean(hunt_settings, setting_name)
+    return None
 
 def user_in_game(p):
     return p.current_hunt is not None

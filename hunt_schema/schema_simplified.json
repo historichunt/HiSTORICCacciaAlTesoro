@@ -17,6 +17,7 @@
    "Missioni_..": [
       "NOME",
       "ACTIVE",
+      "POSITION",
       "FINALE",
       "NEXT",
       "ONLY_KIDS",
@@ -41,7 +42,7 @@
       "INPUT_INSTRUCTIONS",
       "INPUT_TYPE",
       "INPUT_CONFIRMATION",
-      "POST_INUT_MEDIA",
+      "POST_INPUT_MEDIA",
       "POST_INPUT_MEDIA_CAPTION",
       "POST_INPUT_MESSAGE",
       "NOTE OPZIONALI"
