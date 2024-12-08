@@ -2,7 +2,7 @@
 # gcloud app deploy -q -v production
 
 entrypoint: uvicorn --port $PORT --host 0.0.0.0 historic.main:app
-runtime: python38
+runtime: python310
 
 # change instance class
 # https://cloud.google.com/appengine/docs/standard

@@ -1857,7 +1857,7 @@ async def deal_with_request(request_json):
             msg = "Bot riattivato!"
             await send_message(p, msg)
 
-    if message_obj.forward_from and not p.is_admin_current_hunt():
+    if message_obj.forward_origin and not p.is_admin_current_hunt():
         await send_message(p, p.ui().MSG_NO_FORWARDING_ALLOWED)
         return
 
