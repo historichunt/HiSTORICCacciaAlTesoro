@@ -644,9 +644,10 @@ def get_hunt_setting_value(p, setting_name):
     if setting_name in int_settings:
         return get_str_param_int(hunt_settings, setting_name)
     if setting_name in bool_settings_false:
-        return get_str_param_boolean(hunt_settings, setting_name, default=False)
+        # defaults to false
+        return get_str_param_boolean(hunt_settings, setting_name)
     if setting_name in bool_settings_true:
-        return get_str_param_boolean(hunt_settings, setting_name, default=True)
+        return get_str_param_boolean(hunt_settings, setting_name, default='true')
     return None
 
 def user_in_game(p):
