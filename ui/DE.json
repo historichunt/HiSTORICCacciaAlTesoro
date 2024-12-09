@@ -76,6 +76,7 @@
    "MSG_EMAIL_WRONG": "⛔️ Ungültige Eingabe, schreib deine E-Mail-Adresse ins Feld oder klicke auf ⏩ WEITER.",
    "MSG_END": "🏆 Bravo!\n\n🏁 ihr habt in *{1}* Sekunde die Schatzsuche beendet!!\n({2} zeit + {0} Strafe)\n\n🏁 Ihr habt in *{3}* alle Aufgabe gemeistert!!! ({4} zeit+ {0} strafe)",
    "MSG_END_NO_PENALTY": "🏆 Herzliche Glückwünsche!\n\n🏁 Ihr habt die Schatzsuche in *{}* beendet!!\n\n🏁  Ihr habt in *{}* alle Aufgabe gemeistert!",
+   "MSG_END_NO_TIME": "🏆 Herzliche Glückwünsche!\n\n🏁 Ihr habt die Schatzsuche beendet!!",
    "MSG_ERROR_ROUTING": "🙇 Es tut mir leid, ich konnte keinen angemessenen Pfad für die eingefügten Einstellungen finden.",
    "MSG_EXITED_FROM_GAME": "🚪 Du hast die Schatzsuche verlassen.",
    "MSG_EXIT_FROM_GAME_CONFIRM": "⚠️ Bist du wirklich sicher, dass du die Schatzsuche beenden möchtest? Alles wird gelöscht und wird nicht fortgesetzt. ",

@@ -138,6 +138,17 @@ MSG_END_NO_PENALTY,,"🏆 Bravi! Che soddisfazione!
 🏁 Ihr habt die Schatzsuche in *{}* beendet!!
 
 🏁  Ihr habt in *{}* alle Aufgabe gemeistert!"
+MSG_END_NO_TIME,,"🏆 Bravi! Che soddisfazione!
+
+🏁 Avete completato la caccia al tesoro!!
+","🏆 Congratulations!
+
+🏁 You have completed the treasure hunt!!
+","🏆おめでとう！
+
+🏁 の宝狩りを完了しました!!","🏆 Herzliche Glückwünsche!
+
+🏁 Ihr habt die Schatzsuche beendet!!"
 MSG_ERROR_ROUTING,,"🙇 Ci dispiace, si è verificato un problema nel trovare un percorso.","🙇 I'm sorry, I was unable to find an adequate path for the settings inserted.",🙇 申し訳ありませんが、挿入された設定に適したパスを見つけることができませんでした。,"🙇 Es tut mir leid, ich konnte keinen angemessenen Pfad für die eingefügten Einstellungen finden."
 MSG_EXIT_FROM_GAME_CONFIRM,,⚠️ Sei proprio sicuro/a di voler uscire dalla caccia? La caccia verrà eliminata e non potrai riprenderla. ,⚠️ Are you really sure you want to exit from the hunt? The hunt will be deleted and you cannot resume it.,⚠️ ハントを終了してもよろしいですか？ ハントは削除され、再開できなくなります。,"⚠️ Bist du wirklich sicher, dass du die Schatzsuche beenden möchtest? Alles wird gelöscht und wird nicht fortgesetzt. "
 MSG_EXIT_FROM_GAME_CONFIRM_COMMAND,,"⚠️ Sei proprio sicuro/a di voler uscire dalla caccia? La caccia verrà eliminata e non potrai riprenderla. Se sei sicuro/a, premi su → {} ←","⚠️ Are you really sure you want to exit from the hunt? The hunt will be deleted and you cannot resume it. If you are sure, please press on → {} ←",⚠️ ハントを終了してもよろしいですか？ ハントは削除され、再開できなくなります。 よろしければ、→ {} ← を押してください,"⚠️ Bist du wirklich sicher, dass du die Schatzsuche beenden möchtest? Alles wird gelöscht und wird nicht fortgesetzt. Wenn du sicher bist, drück bitte auf → {} ←"

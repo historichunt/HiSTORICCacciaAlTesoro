@@ -76,6 +76,7 @@
    "MSG_EMAIL_WRONG": "⛔️ Input non valido, devi inserire un indirizzo email o premere su ⏩ SALTA.",
    "MSG_END": "🏆 Bravi! Che soddisfazione!\n\n🏁 Avete completato la caccia al tesoro in *{1}*!!\n({2} tempo + {0} penalità)\n\n🏁 Avete completato le missioni in *{3}*!! ({4} tempo + {0} penalità)",
    "MSG_END_NO_PENALTY": "🏆 Bravi! Che soddisfazione!\n\n🏁 Avete completato la caccia al tesoro in *{}*!!\n\n🏁 Avete completato le missioni in *{}*!!",
+   "MSG_END_NO_TIME": "🏆 Bravi! Che soddisfazione!\n\n🏁 Avete completato la caccia al tesoro!!\n",
    "MSG_ERROR_ROUTING": "🙇 Ci dispiace, si è verificato un problema nel trovare un percorso.",
    "MSG_EXITED_FROM_GAME": "🚪 Sei uscito/a dalla caccia al tesoro!",
    "MSG_EXIT_FROM_GAME_CONFIRM": "⚠️ Sei proprio sicuro/a di voler uscire dalla caccia? La caccia verrà eliminata e non potrai riprenderla. ",

@@ -980,7 +980,9 @@ async def check_if_first_mission_and_start_time(p):
     mission_number = game.get_num_compleded_missions(p) + 1
     if mission_number == 1:
         # first one
-        await send_message(p, p.ui().MSG_START_TIME, remove_keyboard=True)
+        use_stopwatch = game.get_hunt_setting_value(p, 'USE_STOPWATCH')
+        if use_stopwatch:
+            await send_message(p, p.ui().MSG_START_TIME, remove_keyboard=True)
         game.set_game_start_time(p)
         p.set_tmp_variable('TIME_STARTED', True)
         await send_typing_action(p, sleep_time=1)
@@ -1430,8 +1432,10 @@ async def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
                 else:
                     await redirect_to_state(p, state_MISSION_INTRO)
             elif text_input == p.ui().BUTTON_END:
-                await send_message(p, p.ui().MSG_TIME_STOP, remove_keyboard=True)
-                await send_typing_action(p, sleep_time=1)
+                use_stopwatch = game.get_hunt_setting_value(p, 'USE_STOPWATCH')
+                if use_stopwatch:
+                    await send_message(p, p.ui().MSG_TIME_STOP, remove_keyboard=True)
+                    await send_typing_action(p, sleep_time=1)
                 await send_message(p, p.ui().MSG_CONGRATS_PRE_SURVEY)
                 await send_typing_action(p, sleep_time=1)
                 skip_survey = game.get_hunt_setting_value(p, 'SKIP_SURVEY')
@@ -1505,15 +1509,20 @@ async def state_END(p, message_obj=None, **kwargs):
     give_instruction = message_obj is None
     reset_hunt_after_completion = game.get_hunt_setting_value(p, 'RESET_HUNT_AFTER_COMPLETION')
     if give_instruction:
-        penalty_hms, total_hms_game, ellapsed_hms_game, \
-            total_hms_missions, ellapsed_hms_missions = game.get_elapsed_and_penalty_and_total_hms(p)
-        penalty_sec = p.get_tmp_variable('penalty_sec')
-        if penalty_sec > 0:
-            msg = p.ui().MSG_END.format(penalty_hms, \
-                total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)
+        use_stopwatch = game.get_hunt_setting_value(p, 'USE_STOPWATCH')
+        if use_stopwatch:
+            penalty_hms, total_hms_game, ellapsed_hms_game, \
+                total_hms_missions, ellapsed_hms_missions = game.get_elapsed_and_penalty_and_total_hms(p)
+            penalty_sec = p.get_tmp_variable('penalty_sec')
+            if penalty_sec > 0:
+                msg = p.ui().MSG_END.format(penalty_hms, \
+                    total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)
+            else:
+                msg = p.ui().MSG_END_NO_PENALTY.format(\
+                    total_hms_game, total_hms_missions)
         else:
-            msg = p.ui().MSG_END_NO_PENALTY.format(\
-                total_hms_game, total_hms_missions)
+            # no time
+            msg = p.ui().MSG_END_NO_TIME
         await send_message(p, msg, remove_keyboard=True)
         notify_group_id = game.get_notify_group_id(p)
         if notify_group_id:
@@ -1665,6 +1674,10 @@ async def deal_with_admin_commands(p, message_obj):
         if text_input == '/version':
             msg = f'{settings.ENV_VERSION} {settings.APP_VERSION}'
             await send_message(p, msg)
+            return True
+        if text_input == '/test_notify_group':
+            notify_group_id = game.get_notify_group_id(p)
+            await send_message(notify_group_id, 'test')
             return True
         if text_input.startswith('/test_zip'):
             pw = text_input.split()[1]

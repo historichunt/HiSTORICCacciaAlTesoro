@@ -615,14 +615,18 @@ def get_hunt_setting_value(p, setting_name):
         'VERSION', 'MISSIONS_SELECTION'
     ]
 
-    bool_settings = [
+    # boolean settings: all default to False
+    bool_settings_false = [
         'SKIP_INSTRUCTIONS', 'SKIP_SURVEY', 'RESET_HUNT_AFTER_COMPLETION',
         'ALLOW_SKIP_MISSION', 'ALLOW_SKIP_MEDIA_INPUT',
         'RESET_HUNT_AFTER_COMPLETION',
         'WAIT_QR_MODE',
     ]
+    # boolean settings: all default to True
+    bool_settings_true = [
+        'USE_STOPWATCH'
+    ]
 
-    # boolean settings: all default to False
     int_settings = [
         'MIN_SEC_INDIZIO_1', 'MIN_SEC_INDIZIO_2',
         'GPS_TOLERANCE_METERS', 'SEC_PENALITY_WRONG_ANSWER'
@@ -639,8 +643,10 @@ def get_hunt_setting_value(p, setting_name):
         return hunt_languages
     if setting_name in int_settings:
         return get_str_param_int(hunt_settings, setting_name)
-    if setting_name in bool_settings:
-        return get_str_param_boolean(hunt_settings, setting_name)
+    if setting_name in bool_settings_false:
+        return get_str_param_boolean(hunt_settings, setting_name, default=False)
+    if setting_name in bool_settings_true:
+        return get_str_param_boolean(hunt_settings, setting_name, default=True)
     return None
 
 def user_in_game(p):

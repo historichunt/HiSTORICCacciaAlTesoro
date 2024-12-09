@@ -302,8 +302,8 @@ def create_qr(text, transparent) -> None:
     img_bytes.seek(0)
     return img_bytes.read() # convert to byte-like object
 
-def get_str_param_boolean(d, param):
-    return d.get(param, 'False').lower() in ['true', '1', 't', 'y', 'yes']
+def get_str_param_boolean(d, param, default=False):
+    return d.get(param, default).lower() in ['true', '1', 't', 'y', 'yes']
 
 def get_str_param_int(d, param):
     value = d.get(param, None)
