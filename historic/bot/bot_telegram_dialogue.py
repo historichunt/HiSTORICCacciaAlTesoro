@@ -953,8 +953,8 @@ async def state_MISSION_INTRO(p, message_obj=None, **kwargs):
             type = media_dict['type']
             await send_media_url(p, url_attachment, type, caption=caption)
             await send_typing_action(p, sleep_time=1)
-        msg = current_mission['INTRODUZIONE_LOCATION'] # '*Introduzione*: ' +
-        ALLOW_SKIP_MISSION = game.get_hunt_setting_value(p, 'GPS_TOLERANCE_METERS')
+        msg = current_mission['INTRODUZIONE_LOCATION']
+        ALLOW_SKIP_MISSION = game.get_hunt_setting_value(p, 'ALLOW_SKIP_MISSION')
         kb = [[p.ui().BUTTON_CONTINUE]]
         if ALLOW_SKIP_MISSION:
             kb.append([p.ui().BUTTON_SKIP_MISSION])
@@ -1220,14 +1220,31 @@ async def state_MEDIA_INPUT_MISSION(p, message_obj=None, **kwargs):
     current_mission = game.get_current_mission(p)
     input_type = current_mission['INPUT_TYPE'] # PHOTO, VOICE, VIDEO
     assert input_type in ['PHOTO','VOICE','VIDEO']
+    skip_button_dict = {
+        'PHOTO': p.ui().BUTTON_SKIP_INPUT_PHOTO,
+        'VOICE': p.ui().BUTTON_SKIP_INPUT_VOICE,
+        'VIDEO': p.ui().BUTTON_SKIP_INPUT_VIDEO
+    }
     if give_instruction:
         msg = current_mission['INPUT_INSTRUCTIONS']
-        # TODO: ALLOW_SKIP_MEDIA_INPUT
-        await send_message(p, msg, remove_keyboard=True)
+        ALLOW_SKIP_MEDIA_INPUT = game.get_hunt_setting_value(p, 'ALLOW_SKIP_MEDIA_INPUT')
+        if ALLOW_SKIP_MEDIA_INPUT:
+            kb = [[skip_button_dict[input_type]]]
+            await send_message(p, msg, kb)
+        else:
+            await send_message(p, msg, remove_keyboard=True)
     else:
+        text_input = message_obj.text
+        kb = p.get_keyboard()
+        if text_input in flatten(kb):
+            if text_input in skip_button_dict.values():
+                await send_message(p, p.ui().MSG_INPUT_SKIPPED)
+                await redirect_to_state(p, state_COMPLETE_MISSION)
+                return
         photo = message_obj.photo
         voice = message_obj.voice
         video = message_obj.video
+        file_id = None
         if input_type == 'PHOTO':
             if photo is None or len(photo)==0:
                 await send_message(p, p.ui().MSG_WRONG_INPUT_SEND_PHOTO)
@@ -1246,6 +1263,7 @@ async def state_MEDIA_INPUT_MISSION(p, message_obj=None, **kwargs):
                     await send_message(p, p.ui().MSG_WRONG_INPUT_SEND_VIDEO)
                 return
             file_id = video['file_id']
+        assert file_id is not None
         current_mission['MEDIA_INPUT_ID_TYPE'] = [file_id, input_type]
         if current_mission.get('INPUT_CONFIRMATION', False):
             await redirect_to_state(p, state_CONFIRM_MEDIA_INPUT)
