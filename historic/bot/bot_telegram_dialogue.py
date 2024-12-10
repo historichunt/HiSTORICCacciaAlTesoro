@@ -814,7 +814,6 @@ async def state_CHECK_INITIAL_POSITION(p, message_obj=None, **kwargs):
             distance = geo_utils.distance_meters(goal_position, given_position)
             if distance <= GPS_TOLERANCE_METERS:
                 await send_message(p, p.ui().MSG_GPS_OK, remove_keyboard=True)
-                await send_typing_action(p, sleep_time=1)
                 await load_missions(p)
             else:
                 msg = p.ui().MSG_TOO_FAR.format(distance)
@@ -829,6 +828,7 @@ async def state_CHECK_INITIAL_POSITION(p, message_obj=None, **kwargs):
 # ================================
 
 async def load_missions(p):
+    await send_message(p, p.ui().MSG_GAME_IS_LOADING, remove_keyboard=True)
     success = await game.build_missions(p)
     if not success:
         await send_message(p, p.ui().MSG_ERROR_ROUTING)
@@ -1102,7 +1102,9 @@ async def state_MISSION_QR(p, message_obj=None, **kwargs):
 async def state_DOMANDA(p, message_obj=None, **kwargs):
     give_instruction = message_obj is None
     current_mission = game.get_current_mission(p)
-    if give_instruction:
+    if 'DOMANDA' not in current_mission:
+        await domanda_next_step(p, current_mission)
+    elif give_instruction:
         if 'DOMANDA_MEDIA' in current_mission:
             caption = current_mission.get('DOMANDA_MEDIA_CAPTION',None)
             media_dict = current_mission['DOMANDA_MEDIA'][0]
@@ -1169,15 +1171,7 @@ async def state_DOMANDA(p, message_obj=None, **kwargs):
                     except regex.error: correct_answers_regex.remove(r)
                 #correct_answers_upper_word_set = set(flatten([x.split() for x in correct_answers_upper]))
                 if text_input.upper() in correct_answers_upper or functools.reduce(lambda a, r: a or regex.match(r, text_input, regex.I), correct_answers_regex, False):
-                    await game.set_mission_end_time(p) # set time of ending the mission (after solution)
-                    if not await send_post_message(p, current_mission):
-                        await send_message(p, bot_ui.MSG_ANSWER_OK(p.language), remove_keyboard=True)
-                        await send_typing_action(p, sleep_time=1)
-                    if 'INPUT_INSTRUCTIONS' in current_mission:
-                        # only missioni with GPS require selfies
-                        await redirect_to_state(p, state_MEDIA_INPUT_MISSION)
-                    else:
-                        await redirect_to_state(p, state_COMPLETE_MISSION)
+                    await domanda_next_step(p, current_mission)
                 # elif utility.answer_is_almost_correct(text_input.upper(), correct_answers_upper_word_set):
                 #     await send_message(p, p.ui().MSG_ANSWER_ALMOST)
                 else:
@@ -1191,6 +1185,17 @@ async def state_DOMANDA(p, message_obj=None, **kwargs):
                         await send_message(p, bot_ui.MSG_ANSWER_WRONG_NO_PENALTY(p.language))
         else:
             await send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
+
+async def domanda_next_step(p, current_mission):
+    await game.set_mission_end_time(p) # set time of ending the mission (after solution)
+    if not await send_post_message(p, current_mission):
+        await send_message(p, bot_ui.MSG_ANSWER_OK(p.language), remove_keyboard=True)
+        await send_typing_action(p, sleep_time=1)
+    if 'INPUT_INSTRUCTIONS' in current_mission:
+        # only missioni with GPS require selfies
+        await redirect_to_state(p, state_MEDIA_INPUT_MISSION)
+    else:
+        await redirect_to_state(p, state_COMPLETE_MISSION)
 
 async def send_post_message(p, current_mission, after_loc=False, after_input=False):
     assert not (after_loc and after_input) # can't be both True
@@ -1436,16 +1441,17 @@ async def state_COMPLETE_MISSION(p, message_obj=None, **kwargs):
                 if use_stopwatch:
                     await send_message(p, p.ui().MSG_TIME_STOP, remove_keyboard=True)
                     await send_typing_action(p, sleep_time=1)
-                await send_message(p, p.ui().MSG_CONGRATS_PRE_SURVEY)
-                await send_typing_action(p, sleep_time=1)
                 skip_survey = game.get_hunt_setting_value(p, 'SKIP_SURVEY')
                 # saving data in airtable
                 await game.save_game_data_in_airtable(p, compute_times=True)
-                if not skip_survey:
-                    await redirect_to_state(p, state_SURVEY)
-                else:
-                    # end game
+                if skip_survey:
+                     # end game
                     await redirect_to_state(p, state_END)
+                else:
+                    # go to survey
+                    await send_message(p, p.ui().MSG_CONGRATS_PRE_SURVEY)
+                    await send_typing_action(p, sleep_time=1)
+                    await redirect_to_state(p, state_SURVEY)
         else:
             await send_message(p, p.ui().MSG_WRONG_INPUT_USE_BUTTONS)
 
@@ -1510,10 +1516,10 @@ async def state_END(p, message_obj=None, **kwargs):
     reset_hunt_after_completion = game.get_hunt_setting_value(p, 'RESET_HUNT_AFTER_COMPLETION')
     if give_instruction:
         use_stopwatch = game.get_hunt_setting_value(p, 'USE_STOPWATCH')
-        if use_stopwatch:
-            penalty_hms, total_hms_game, ellapsed_hms_game, \
+        penalty_hms, total_hms_game, ellapsed_hms_game, \
                 total_hms_missions, ellapsed_hms_missions = game.get_elapsed_and_penalty_and_total_hms(p)
-            penalty_sec = p.get_tmp_variable('penalty_sec')
+        penalty_sec = p.get_tmp_variable('penalty_sec')
+        if use_stopwatch:
             if penalty_sec > 0:
                 msg = p.ui().MSG_END.format(penalty_hms, \
                     total_hms_game, ellapsed_hms_game, total_hms_missions, ellapsed_hms_missions)

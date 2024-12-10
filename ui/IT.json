@@ -111,7 +111,7 @@
    "MSG_MEDIA_INPUT_MISSIONE_OK_01": "😀 Fantastico!",
    "MSG_MEDIA_INPUT_MISSIONE_OK_02": "😀 Super!",
    "MSG_MISSION_N_TOT": "*🎳 Missione {}/{}*",
-   "MSG_MISSION_SKIPPED": "⏩ Ok, saltiamo alla prossima missione!",
+   "MSG_MISSION_SKIPPED": "⏩ Ok, saltiamo questa missione!",
    "MSG_NOT_IN_GAME": "❌ Non hai iniziato una caccia al tesoro.",
    "MSG_NO_CHANGE_LANG_IN_HUNT": "❌ Non puoi cambiare la lingua durante la caccia.",
    "MSG_NO_FORWARDING_ALLOWED": "⛔️ Input non valido! Non puoi inoltrarmi messaggi!",

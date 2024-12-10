@@ -14,7 +14,7 @@ from io import BytesIO
 BOT = telegram.Bot(token=settings.TELEGRAM_API_TOKEN)
 
 def get_chat_id_from_str(s):
-    if s.startswith('T_'): 
+    if s.startswith('T_'):
         return s[2:]
     return s # e.g., HISTORIC_GROUP for notification has id "-1001499..."
 
@@ -23,7 +23,7 @@ def make_kb_serializable(kb):
     for line in kb:
         new_kb.append(
             [
-                b.text 
+                b.text
                 if type(b)==telegram.KeyboardButton
                 else b
                 for b in line
@@ -38,7 +38,7 @@ def get_reply_markup(p, kb=None, remove_keyboard=None, inline_keyboard=False):
             return {'inline_keyboard': kb}
         elif remove_keyboard:
             if is_person:
-                p.set_keyboard(kb=[])            
+                p.set_keyboard(kb=[])
             return telegram.ReplyKeyboardRemove()
         else:
             if is_person:
@@ -89,7 +89,7 @@ async def send_location(p, lat, lon):
         return False
     return True
 
-async def send_typing_action(p, sleep_time=None):    
+async def send_typing_action(p, sleep_time=None):
     chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
     await BOT.send_chat_action(
         chat_id = chat_id,
@@ -100,20 +100,20 @@ async def send_typing_action(p, sleep_time=None):
 
 async def send_photo_data(p, img_content, kb=None, caption=None,
     remove_keyboard=False, inline_keyboard=False, markdown=True):
-    
-    rm = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)      
+
+    rm = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)
     chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
-    parse_mode = ParseMode.MARKDOWN if markdown else None 
+    parse_mode = ParseMode.MARKDOWN if markdown else None
     data = BytesIO(img_content)
     await BOT.send_photo(
-        chat_id, photo=data, caption=caption, 
+        chat_id, photo=data, caption=caption,
         reply_markup=rm, parse_mode=parse_mode
     )
 
-async def send_sticker_data(p, img_content, kb=None, 
+async def send_sticker_data(p, img_content, kb=None,
     remove_keyboard=False, inline_keyboard=False, markdown=True):
-    
-    rm = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)      
+
+    rm = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)
     chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
     data = BytesIO(img_content)
     await BOT.send_sticker(
@@ -124,12 +124,12 @@ async def send_sticker_data(p, img_content, kb=None,
 async def send_media_url(p, url_attachment, type='image/png', kb=None, caption=None,
     remove_keyboard=False, inline_keyboard=False, markdown=True):
     chat_id = p.chat_id if isinstance(p, Person) else get_chat_id_from_str(p)
-    # attach_type = url_attachment.rsplit('.',1)[1].lower()     
+    # attach_type = url_attachment.rsplit('.',1)[1].lower()
     # if '?' in attach_type:
     #     attach_type = attach_type.split('?')[0]
-    attach_type = type.split('/')[1]    
-    rm = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)       
-    parse_mode = ParseMode.MARKDOWN if markdown else None 
+    attach_type = type.split('/')[1]
+    rm = get_reply_markup(p, kb, remove_keyboard, inline_keyboard)
+    parse_mode = ParseMode.MARKDOWN if markdown else None
     if attach_type in ['jpg','png','jpeg']:
         try:
             await BOT.send_photo(chat_id, photo=url_attachment, caption=caption, reply_markup=rm, parse_mode=parse_mode)
@@ -141,17 +141,17 @@ async def send_media_url(p, url_attachment, type='image/png', kb=None, caption=N
             await BOT.send_sticker(chat_id, sticker=url_attachment, reply_markup=rm)
         except telegram.error.BadRequest:
             await report_admins(f'Error on sending sticker: {url_attachment}')
-    elif attach_type in ['mp3']:
+    elif type=='audio/mpeg' or attach_type in ['mp3']:
         await BOT.send_audio(chat_id, audio=url_attachment, caption=caption, reply_markup=rm)
     elif attach_type in ['ogg']:
-        await BOT.send_voice(chat_id, voice=url_attachment, caption=caption, reply_markup=rm)       
-    elif attach_type in ['gif']:        
+        await BOT.send_voice(chat_id, voice=url_attachment, caption=caption, reply_markup=rm)
+    elif attach_type in ['gif']:
         await BOT.send_animation(chat_id, animation=url_attachment, caption=caption, reply_markup=rm)
     elif attach_type in ['mp4']:
         await BOT.send_video(chat_id, video=url_attachment, caption=caption, reply_markup=rm)
     elif attach_type in ['tgs']:
         await BOT.send_sticker(chat_id, sticker=url_attachment, reply_markup=rm)
-    else:            
+    else:
         error_msg = "Found attach_type: {}".format(attach_type)
         logging.error(error_msg)
         raise ValueError('Wrong attach type: {}'.format(error_msg))
@@ -167,7 +167,7 @@ async def send_text_document(p, file_name, file_content, caption=None):
     logging.debug("Sent documnet. Response status code: {}".format(resp.status_code))
 
 async def get_photo_url_from_telegram(file_id):
-    import requests    
+    import requests
     r = requests.post(settings.TELEGRAM_API_URL + 'getFile', data={'file_id': file_id})
     r_json = r.json()
     success = r_json['ok']
@@ -207,13 +207,13 @@ async def get_menu(p):
 async def set_menu(p):
     menu_button = telegram.MenuButtonCommands()
     return await BOT.set_chat_menu_button(
-        p.chat_id, 
+        p.chat_id,
         menu_button
     )
 
 async def remove_menu(p):
     return await BOT.set_chat_menu_button(
-        p.chat_id, 
+        p.chat_id,
         telegram.MenuButtonDefault()
     )
 
@@ -223,7 +223,7 @@ async def remove_menu(p):
 
 async def get_commands(p):
     return  [
-        (c.command, c.description) 
+        (c.command, c.description)
         for c in await BOT.get_my_commands(
             scope=telegram.BotCommandScopeChat(p.chat_id)
         )
