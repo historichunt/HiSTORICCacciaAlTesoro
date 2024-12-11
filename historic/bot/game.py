@@ -744,20 +744,34 @@ def set_game_end_time(p, finished):
     p.tmp_variables['END_TIME'] = end_time
     p.tmp_variables['FINISHED'] = finished
 
-def start_mission(p):
+def set_next_mission(p, current_mission=None, remove_from_todo=False):
+    indovinello_info = p.tmp_variables['MISSIONI_INFO']
+    todo_missioni = indovinello_info['TODO']
+    if current_mission is None:
+        current_mission = todo_missioni.pop(0)
+    elif remove_from_todo:
+        todo_missioni.remove(current_mission)
+    indovinello_info['CURRENT'] = current_mission
+    current_mission['wrong_answers'] = []
+    return current_mission
+
+def set_mission_start_time(p):
     start_time = dtu.now_utc_iso_format()
     current_mission = get_current_mission(p)
     current_mission['wrong_answers'] = []
     current_mission['start_time'] = start_time
-    p.tmp_variables['MISSION_TIMES'].append([start_time])
+    # append new time pair (init it with only start_time for now)
+    mission_times = p.tmp_variables['MISSION_TIMES']
+    mission_times.append([start_time])
 
 async def set_mission_end_time(p):
     end_time = dtu.now_utc_iso_format()
     current_mission = get_current_mission(p)
     current_mission['end_time'] = end_time
-    last_mission_time = p.tmp_variables['MISSION_TIMES'][-1]
+    mission_times = p.tmp_variables['MISSION_TIMES']
+    last_mission_time = mission_times[-1]
 
-    # bug on 2022/12/15
+    # bug on 2024/12/12
     # last_mission_time is supposed to have only 1 element
     # in a specific case last_mission_time was already with 2 elements
     if len(last_mission_time)==1:
@@ -768,6 +782,17 @@ async def set_mission_end_time(p):
 
     mission_ellapsed = dtu.delta_seconds_iso(*last_mission_time)
     return mission_ellapsed
+
+def set_current_mission_as_completed(p):
+    indovinello_info = p.tmp_variables['MISSIONI_INFO']
+    current_mission = indovinello_info['CURRENT']
+    indovinello_info['COMPLETED'].append(current_mission)
+    indovinello_info['CURRENT'] = None
+    completed_missions = len(indovinello_info['COMPLETED'])
+    next_mission_num = completed_missions + 1
+    todo_missions = len(indovinello_info['TODO'])
+    total_mission = completed_missions + todo_missions
+    return next_mission_num, total_mission
 
 def set_elapsed_and_penalty_and_compute_total(p):
     tvar = p.tmp_variables
@@ -831,17 +856,6 @@ def get_num_compleded_missions(p):
     indovinello_info = p.tmp_variables['MISSIONI_INFO']
     return len(indovinello_info['COMPLETED'])
 
-def set_next_mission(p, current_mission=None, remove_from_todo=False):
-    indovinello_info = p.tmp_variables['MISSIONI_INFO']
-    todo_missioni = indovinello_info['TODO']
-    if current_mission is None:
-        current_mission = todo_missioni.pop(0)
-    elif remove_from_todo:
-        todo_missioni.remove(current_mission)
-    indovinello_info['CURRENT'] = current_mission
-    current_mission['wrong_answers'] = []
-    return current_mission
-
 def get_current_mission(p):
     indovinello_info = p.tmp_variables['MISSIONI_INFO']
     return indovinello_info['CURRENT']
@@ -858,17 +872,6 @@ def get_mission_matching_qr(p, qr_code):
 
 def append_group_media_input_file_id(p, file_id):
     p.tmp_variables['GROUP_MEDIA_FILE_IDS'].append(file_id)
-
-def set_current_mission_as_completed(p):
-    indovinello_info = p.tmp_variables['MISSIONI_INFO']
-    current_mission = indovinello_info['CURRENT']
-    indovinello_info['COMPLETED'].append(current_mission)
-    indovinello_info['CURRENT'] = None
-    completed_missions = len(indovinello_info['COMPLETED'])
-    next_mission_num = completed_missions + 1
-    todo_missions = len(indovinello_info['TODO'])
-    total_mission = completed_missions + todo_missions
-    return next_mission_num, total_mission
 
 def increase_wrong_answers_current_indovinello(p, answer, give_penalty, put=True):
     indovinello_info = p.tmp_variables['MISSIONI_INFO']

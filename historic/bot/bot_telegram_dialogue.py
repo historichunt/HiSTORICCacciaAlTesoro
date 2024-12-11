@@ -1,7 +1,6 @@
 import logging
 import telegram
 import json
-import random
 import asyncio
 from historic.config import params, settings
 from historic.bot import airtable_utils, utility, ndb_person, bot_ui, game, geo_utils
@@ -13,6 +12,7 @@ from historic.config import params
 from historic.bot.utility import flatten, make_2d_array
 from historic.bot.ndb_person import Person
 from historic.routing.api import api_google
+import functools, regex
 
 # ================================
 # RESTART
@@ -1061,7 +1061,6 @@ async def state_MISSION_GPS(p, message_obj=None, **kwargs):
         else:
             await send_message(p, p.ui().MSG_WRONG_INPUT_SEND_LOCATION)
 
-
 # ================================
 # GPS state
 # ================================
@@ -1093,9 +1092,6 @@ async def state_MISSION_QR(p, message_obj=None, **kwargs):
                 await send_typing_action(p, sleep_time=1)
                 await repeat_state(p)
 
-
-
-
 # ================================
 # DOMANDA state
 # ================================
@@ -1118,14 +1114,9 @@ async def state_DOMANDA(p, message_obj=None, **kwargs):
             await send_message(p, msg, kb)
         else:
             await send_message(p, msg, remove_keyboard=True)
-        game.start_mission(p) # set start time of the mission
+        # set start time of the mission and initialize `wrong_answers` to empty list
+        game.set_mission_start_time(p)
         p.put()
-
-        # SOLUZIONI must be present, below old code when it was optional
-        # if 'SOLUZIONI' not in current_mission:
-        #     # if there is no solution required go to required_input (photo or voice)
-        #     assert all(x in current_mission for x in ['INPUT_INSTRUCTIONS', 'INPUT_TYPE'])
-        #     await redirect_to_state(p, state_MEDIA_INPUT_MISSION)
     else:
         text_input = message_obj.text
         if text_input:
@@ -1159,40 +1150,63 @@ async def state_DOMANDA(p, message_obj=None, **kwargs):
                         remaining = MIN_SEC_INDIZIO_2 - ellapsed
                         await send_message(p, p.ui().MSG_TOO_EARLY.format(remaining))
             else:
-                import functools, regex
-                soluzioni_list = [
-                    x.strip() for x in
-                    regex.split(r"(?<!\\)(?:\\{2})*\K,", current_mission['SOLUZIONI'])
-                ] # split on comma but not on /, (when comma is used in regex)
-                correct_answers_upper = [x.upper() for x in soluzioni_list if not regex.match(r'^/.*/$', x)]
-                correct_answers_regex = [x[1:-1].replace('\\,',',') for x in soluzioni_list if regex.match(r'^/.*/$', x)]
-                for r in correct_answers_regex:
-                    try: regex.compile(r)
-                    except regex.error: correct_answers_regex.remove(r)
-                #correct_answers_upper_word_set = set(flatten([x.split() for x in correct_answers_upper]))
-                if text_input.upper() in correct_answers_upper or functools.reduce(lambda a, r: a or regex.match(r, text_input, regex.I), correct_answers_regex, False):
-                    await domanda_next_step(p, current_mission)
-                # elif utility.answer_is_almost_correct(text_input.upper(), correct_answers_upper_word_set):
-                #     await send_message(p, p.ui().MSG_ANSWER_ALMOST)
-                else:
-                    give_penalty = current_mission.get('PENALTY',False)
-                    game.increase_wrong_answers_current_indovinello(p, text_input, give_penalty)
-                    if give_penalty:
-                        penalties, penalty_sec = game.get_total_penalty(p)
-                        msg = p.ui().MSG_ANSWER_WRONG_SG if penalties==1 else p.ui().MSG_ANSWER_WRONG_PL
-                        await send_message(p, msg.format(penalties, penalty_sec))
-                    else:
-                        await send_message(p, bot_ui.MSG_ANSWER_WRONG_NO_PENALTY(p.language))
+                # check solution and if correct go to domanda_next_step()
+                await check_domanda_solution(p, text_input, current_mission)
         else:
             await send_message(p, p.ui().MSG_WRONG_INPUT_INSERT_TEXT)
 
+async def check_domanda_solution(p, text_input, current_mission):
+    if 'SOLUZIONI' not in current_mission:
+        # missing solutions, assume all answers correct
+        correct_answer = True
+    else:
+        correct_solutions_string = current_mission['SOLUZIONI']
+        soluzioni_list = [
+            x.strip() for x in
+            regex.split(r"(?<!\\)(?:\\{2})*\K,", correct_solutions_string)
+        ] # split on comma but not on /, (when comma is used in regex)
+        correct_answers_upper = [x.upper() for x in soluzioni_list if not regex.match(r'^/.*/$', x)]
+        correct_answers_regex = [x[1:-1].replace('\\,',',') for x in soluzioni_list if regex.match(r'^/.*/$', x)]
+        for r in correct_answers_regex:
+            try: regex.compile(r)
+            except regex.error: correct_answers_regex.remove(r)
+
+        # main check of correct answer
+        correct_answer = (
+            text_input.upper() in correct_answers_upper or
+            functools.reduce(
+                lambda a, r: a or regex.match(r, text_input, regex.I),
+                correct_answers_regex,
+                False
+            )
+        )
+
+        # fuzzy checker - commented out
+        # correct_answers_upper_word_set = set(flatten([x.split() for x in correct_answers_upper]))
+        # elif utility.answer_is_almost_correct(text_input.upper(), correct_answers_upper_word_set):
+        #     await send_message(p, p.ui().MSG_ANSWER_ALMOST)
+    if correct_answer:
+        await domanda_next_step(p, current_mission)
+    else:
+        give_penalty = current_mission.get('PENALTY',False)
+        game.increase_wrong_answers_current_indovinello(p, text_input, give_penalty)
+        if give_penalty:
+            penalties, penalty_sec = game.get_total_penalty(p)
+            msg = p.ui().MSG_ANSWER_WRONG_SG if penalties==1 else p.ui().MSG_ANSWER_WRONG_PL
+            await send_message(p, msg.format(penalties, penalty_sec))
+        else:
+            await send_message(p, bot_ui.MSG_ANSWER_WRONG_NO_PENALTY(p.language))
+
 async def domanda_next_step(p, current_mission):
-    await game.set_mission_end_time(p) # set time of ending the mission (after solution)
+    # set time of ending the mission (after solution)
+    # this should be called only once per mission
+    await game.set_mission_end_time(p)
     if not await send_post_message(p, current_mission):
         await send_message(p, bot_ui.MSG_ANSWER_OK(p.language), remove_keyboard=True)
         await send_typing_action(p, sleep_time=1)
     if 'INPUT_INSTRUCTIONS' in current_mission:
-        # only missioni with GPS require selfies
+        # only missioni with INPUT_INSTRUCTIONS require media input from user
+        # e.g., selfies, voices, videos
         await redirect_to_state(p, state_MEDIA_INPUT_MISSION)
     else:
         await redirect_to_state(p, state_COMPLETE_MISSION)
@@ -1245,7 +1259,7 @@ async def state_MEDIA_INPUT_MISSION(p, message_obj=None, **kwargs):
         kb = p.get_keyboard()
         if text_input in flatten(kb):
             if text_input in skip_button_dict.values():
-                await send_message(p, p.ui().MSG_INPUT_SKIPPED)
+                await send_message(p, p.ui().MSG_INPUT_SKIPPED, remove_keyboard=True)
                 await redirect_to_state(p, state_COMPLETE_MISSION)
                 return
         photo = message_obj.photo
