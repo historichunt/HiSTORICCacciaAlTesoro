@@ -20,13 +20,13 @@ def build_ui_dict():
         for lang in LANGUAGES
     }
 
-    # update entries bot specific
+    # update entries bot specific (Airtable BOTS_UI base)
 
     if settings.BOT_UI_BASE_ID is not None:
 
         bot_ui_table_rows = Airtable(
-            settings.BOT_UI_BASE_ID, 
-            settings.BOT_UI_TABLE_NAME, 
+            settings.BOT_UI_BASE_ID,
+            settings.BOT_UI_TABLE_NAME,
             api_key=settings.AIRTABLE_ACCESS_TOKEN
         ).get_all()
 
@@ -38,17 +38,17 @@ def build_ui_dict():
 build_ui_dict()
 
 class UI_LANG:
-    
+
     def __init__(self, lang, ui_custom_dict=None):
         assert lang in LANGUAGES
         self.lang = lang
         self.ui_custom_dict = ui_custom_dict
 
     def get_var(self, var):
-        if (self.ui_custom_dict and 
-            self.lang in self.ui_custom_dict and 
-            var in self.ui_custom_dict[self.lang]):            
-            
+        if (self.ui_custom_dict and
+            self.lang in self.ui_custom_dict and
+            var in self.ui_custom_dict[self.lang]):
+
             result = self.ui_custom_dict[self.lang][var]
         else:
             result = UI_DICT[self.lang].get(var, None)
@@ -69,8 +69,8 @@ class UI_LANG:
 # ================================
 
 COMMANDS_LANG = lambda l: [
-    (c.split('_',1)[1].lower(), UI_DICT[l][c]) 
-    for c in UI_DICT[l]   
+    (c.split('_',1)[1].lower(), UI_DICT[l][c])
+    for c in UI_DICT[l]
     if c.startswith('COMMAND_')
 ]
 
@@ -94,8 +94,8 @@ MSG_ANSWER_WRONG_NO_PENALTY =  lambda l: random.choice(
 
 MSG_ANSWER_OK = lambda l: random.choice(
     [
-        UI_LANG(l).MSG_ANSWER_OK_01, 
-        UI_LANG(l).MSG_ANSWER_OK_02, 
+        UI_LANG(l).MSG_ANSWER_OK_01,
+        UI_LANG(l).MSG_ANSWER_OK_02,
         UI_LANG(l).MSG_ANSWER_OK_03
     ]
 )
@@ -162,8 +162,8 @@ def build_ui_csv():
         for lang in LANGUAGES
     }
     primary_lang = LANGUAGES[0]
-    keys = lang_dict[primary_lang].keys()    
-    
+    keys = lang_dict[primary_lang].keys()
+
     with open(UI_CSV_FILE, 'w') as csvfile:
         writer = csv.writer(csvfile)
         # header
@@ -206,7 +206,7 @@ def build_json_lang_dict_from_ui_csv():
 if __name__ == "__main__":
     download_ui_csv()
     build_json_lang_dict_from_ui_csv()
-    # build_ui_csv()    
+    # build_ui_csv()
     # sort_alphabetically()
     # build_ui_dict()
     # check_language_consistency()

@@ -3,7 +3,7 @@ from airtable import Airtable
 from historic.config.params import ROOT_DIR
 
 APP_NAME = 'historictrentobot'
-APP_VERSION = '0.21.5'
+APP_VERSION = '0.21.6'
 # CLOUD_ENVS = ['test', 'production', 'oist']
 GAE_SERVER = 'GAE_VERSION' in os.environ # check if we are on the cloud version
 
@@ -94,6 +94,7 @@ BOT_UI_TABLE_NAME = Airtable(
     api_key=AIRTABLE_ACCESS_TOKEN
 )
 
+# bot specific UI (BOTS_UI base on Airtable)
 BOT_UI_BASE_ID, BOT_UI_TABLE_NAME = next(
     (
         (row['fields']['Airtable_UI_Base_ID'], row['fields']['UI_Table_Name'])
