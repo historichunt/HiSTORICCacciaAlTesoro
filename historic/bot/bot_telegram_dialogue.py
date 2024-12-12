@@ -1114,8 +1114,8 @@ async def state_DOMANDA(p, message_obj=None, **kwargs):
             await send_message(p, msg, kb)
         else:
             await send_message(p, msg, remove_keyboard=True)
-        # set start time of the mission and initialize `wrong_answers` to empty list
-        game.set_mission_start_time(p)
+        # set start time of the riddle and initialize `wrong_answers` to empty list
+        game.set_riddle_start_time(p)
         p.put()
     else:
         text_input = message_obj.text
@@ -1180,12 +1180,13 @@ async def check_domanda_solution(p, text_input, current_mission):
                 False
             )
         )
-
         # fuzzy checker - commented out
         # correct_answers_upper_word_set = set(flatten([x.split() for x in correct_answers_upper]))
         # elif utility.answer_is_almost_correct(text_input.upper(), correct_answers_upper_word_set):
         #     await send_message(p, p.ui().MSG_ANSWER_ALMOST)
     if correct_answer:
+        # time is only the one to solve the riddle
+        await game.set_riddle_end_time(p)
         await domanda_next_step(p, current_mission)
     else:
         give_penalty = current_mission.get('PENALTY',False)
@@ -1200,7 +1201,6 @@ async def check_domanda_solution(p, text_input, current_mission):
 async def domanda_next_step(p, current_mission):
     # set time of ending the mission (after solution)
     # this should be called only once per mission
-    await game.set_mission_end_time(p)
     if not await send_post_message(p, current_mission):
         await send_message(p, bot_ui.MSG_ANSWER_OK(p.language), remove_keyboard=True)
         await send_typing_action(p, sleep_time=1)

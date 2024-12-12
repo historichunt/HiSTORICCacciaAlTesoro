@@ -210,7 +210,7 @@ def load_game(p, hunt_pw, test_hunt_admin=False):
     tvar['COGNOME'] = p.get_last_name(escape_markdown=False)
     tvar['USERNAME'] = p.get_username(escape_markdown=False)
     tvar['EMAIL'] = ''
-    tvar['MISSION_TIMES'] = []
+    tvar['RIDDLE_TIMES'] = []
     tvar['INSTRUCTIONS'] = {'STEPS': instructions_steps, 'COMPLETED': 0}
     tvar['SURVEY_INFO'] = {'TODO': survey, 'CURRENT': None, 'COMPLETED': [], 'TOTAL': len(survey)}
     tvar['GROUP_NAME'] = ''
@@ -755,32 +755,32 @@ def set_next_mission(p, current_mission=None, remove_from_todo=False):
     current_mission['wrong_answers'] = []
     return current_mission
 
-def set_mission_start_time(p):
+def set_riddle_start_time(p):
     start_time = dtu.now_utc_iso_format()
     current_mission = get_current_mission(p)
     current_mission['wrong_answers'] = []
     current_mission['start_time'] = start_time
     # append new time pair (init it with only start_time for now)
-    mission_times = p.tmp_variables['MISSION_TIMES']
-    mission_times.append([start_time])
+    riddles_times = p.tmp_variables['RIDDLE_TIMES']
+    riddles_times.append([start_time])
 
-async def set_mission_end_time(p):
+async def set_riddle_end_time(p):
     end_time = dtu.now_utc_iso_format()
     current_mission = get_current_mission(p)
     current_mission['end_time'] = end_time
-    mission_times = p.tmp_variables['MISSION_TIMES']
-    last_mission_time = mission_times[-1]
+    riddles_times = p.tmp_variables['RIDDLE_TIMES']
+    last_riddle_time = riddles_times[-1]
 
     # bug on 2024/12/12
     # last_mission_time is supposed to have only 1 element
     # in a specific case last_mission_time was already with 2 elements
-    if len(last_mission_time)==1:
-        last_mission_time.append(end_time)
+    if len(last_riddle_time)==1:
+        last_riddle_time.append(end_time)
     else:
         from historic.bot.bot_telegram import report_admins
-        await report_admins(f'Bug MISSION_TIMES (length={len(last_mission_time)}) for user {p.chat_id}')
+        await report_admins(f'Bug RIDDLE_TIMES (length={len(last_riddle_time)}) for user {p.chat_id}')
 
-    mission_ellapsed = dtu.delta_seconds_iso(*last_mission_time)
+    mission_ellapsed = dtu.delta_seconds_iso(*last_riddle_time)
     return mission_ellapsed
 
 def set_current_mission_as_completed(p):
@@ -806,7 +806,7 @@ def set_elapsed_and_penalty_and_compute_total(p):
     elapsed_sec_game = dtu.delta_seconds_iso(start_time, end_time)
     elapsed_sec_missions = sum(
         dtu.delta_seconds_iso(times[0], times[1]) if len(times)==2 else 0
-        for times in tvar['MISSION_TIMES']
+        for times in tvar['RIDDLE_TIMES']
     )
 
     _, penalty_sec = get_total_penalty(p)

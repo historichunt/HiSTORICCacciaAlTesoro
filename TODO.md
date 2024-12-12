@@ -1,2 +1,1 @@
-- fix Bug MISSION_TIMES
 - check initial message: ⚠️ Attention, this is a test bot

@@ -161,12 +161,6 @@ def get_report(hunt_password, table_name='Results'):
         elapsed_missions_min = vars['ELAPSED MISSIONS'] // 60
         elapsed_total_sec = vars['ELAPSED GAME']
         elapsed_total_min = elapsed_total_sec // 60
-        # missions_times_list = [
-        #     dtu.delta_seconds_iso(t[0], t[1]) if len(t)==2 else 0
-        #     for t in vars['MISSION_TIMES']
-        # ]
-        # missions_times_total_sec = sum(missions_times_list)
-        # missions_times_total_min = missions_times_total_sec // 60
         completed_missions = vars.get('COMPLETED_MISSIONS','')
         incompleted_missions = vars.get('INCOMPLETED_MISSIONS','')
         total_missions = completed_missions + incompleted_missions
